@@ -282,14 +282,78 @@ const fields = new Set([
 ]);
 export function searchQuery(search) {
   const params = new URLSearchParams(search);
+  const invalid = (message = 'Bộ lọc không hợp lệ.') => ({
+    params,
+    error: message,
+  });
   for (const [key] of params)
-    if (!fields.has(key) || params.getAll(key).length !== 1)
-      return { error: 'Bộ lọc không hợp lệ.' };
+    if (!fields.has(key) || params.getAll(key).length !== 1) return invalid();
+  for (const [key, max] of [
+    ['q', 120],
+    ['tag', 40],
+  ]) {
+    if (!params.has(key)) continue;
+    const raw = params.get(key);
+    if (raw.length > max || /[<>\p{Cc}\p{Cf}]/u.test(raw)) return invalid();
+    const value = raw.normalize('NFC').trim();
+    if (!value || value.length > max) return invalid();
+    if (key === 'q') {
+      const words = new Set(
+        value
+          .normalize('NFKD')
+          .replace(/\p{M}/gu, '')
+          .replace(/[đĐ]/g, 'd')
+          .toLowerCase()
+          .match(/[\p{L}\p{N}]+/gu) || [],
+      );
+      if (!words.size || words.size > 10)
+        return invalid('Tìm kiếm cần từ 1 đến 10 từ, tối đa 120 ký tự.');
+    }
+    params.set(key, key === 'tag' ? value.toLowerCase() : value);
+  }
+  for (const [key, min, max] of [
+    ['page', 1, 1000],
+    ['limit', 1, 100],
+    ['maxMinutes', 0, 2880],
+  ]) {
+    if (!params.has(key)) continue;
+    const value = params.get(key);
+    if (
+      !/^(0|[1-9][0-9]*)$/.test(value) ||
+      Number(value) < min ||
+      Number(value) > max
+    )
+      return invalid();
+  }
+  if (params.has('category')) {
+    if (!/^[a-f0-9]{24}$/i.test(params.get('category'))) return invalid();
+    params.set('category', params.get('category').toLowerCase());
+  }
   if (
-    params.has('q') &&
-    (!params.get('q').trim() || params.get('q').length > 120)
+    params.has('difficulty') &&
+    !['easy', 'medium', 'hard'].includes(params.get('difficulty'))
   )
-    return { error: 'Từ khóa cần từ 1 đến 120 ký tự.' };
+    return invalid();
+  if (
+    params.has('sort') &&
+    !['publishedAt', '-publishedAt'].includes(params.get('sort'))
+  )
+    return invalid();
+  if (
+    params.has('ingredientMatch') &&
+    (!params.has('ingredientIds') ||
+      !['any', 'all'].includes(params.get('ingredientMatch')))
+  )
+    return invalid();
+  if (params.has('ingredientIds')) {
+    const ids = params.get('ingredientIds').split(',');
+    if (ids.length > 20 || !ids.every((id) => /^[a-f0-9]{24}$/i.test(id)))
+      return invalid();
+    params.set(
+      'ingredientIds',
+      [...new Set(ids.map((id) => id.toLowerCase()))].join(','),
+    );
+  }
   return {
     params,
     path: '/recipes' + (params.size ? '?' + params.toString() : ''),

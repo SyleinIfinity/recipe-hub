@@ -1,4 +1,4 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h, useEffect, useState } from 'react';
 import { Link } from '../../app/router.js';
 
 const icons = {
@@ -115,7 +115,9 @@ export function Skeleton({ count = 4 }) {
       className: 'recipe-grid skeleton-grid',
       'aria-label': 'Đang tải công thức',
       'aria-busy': true,
+      'aria-live': 'polite',
     },
+    h('span', { className: 'sr-only' }, 'Đang tải công thức'),
     Array.from({ length: count }, (_, i) =>
       h('div', { key: i, className: 'skeleton', 'aria-hidden': true }),
     ),
@@ -134,6 +136,21 @@ export function ErrorState({
   onRetry,
   title = 'Không tải được nội dung',
 }) {
+  const seconds = Number.isFinite(error?.retryAfterSeconds)
+    ? Math.max(0, Math.ceil(error.retryAfterSeconds))
+    : 0;
+  const [remaining, setRemaining] = useState(seconds);
+  useEffect(() => {
+    setRemaining(seconds);
+    if (!seconds) return;
+    const deadline = Date.now() + seconds * 1000;
+    const timer = setInterval(
+      () =>
+        setRemaining(Math.max(0, Math.ceil((deadline - Date.now()) / 1000))),
+      1000,
+    );
+    return () => clearInterval(timer);
+  }, [error, seconds]);
   const message =
     error?.status === 400
       ? 'Bộ lọc không hợp lệ. Vui lòng kiểm tra lại.'
@@ -154,7 +171,11 @@ export function ErrorState({
     'div',
     { className: 'error-state', role: 'alert' },
     h('p', null, message),
-    onRetry && h(Button, { onClick: onRetry }, 'Thử lại'),
+    onRetry &&
+      remaining > 0 &&
+      h('p', { role: 'status' }, `Có thể thử lại sau ${remaining} giây.`),
+    onRetry &&
+      h(Button, { onClick: onRetry, disabled: remaining > 0 }, 'Thử lại'),
   );
 }
 export function ImageFallback({ className = '' }) {

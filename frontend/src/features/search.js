@@ -2,6 +2,7 @@ import { createElement as h, useEffect, useState } from 'react';
 import { Link, navigate } from '../app/router.js';
 import { useRead, searchQuery } from '../services/api.js';
 import { SearchForm, ErrorState, Button } from '../components/ui/primitives.js';
+import { useCategoryOptions } from './category-options.js';
 import { RecipeGrid } from './recipes.js';
 
 function Field({ label, name, value, children, type = 'text', min, max }) {
@@ -36,16 +37,23 @@ export function Explore({ search }) {
   const parsed = searchQuery(search);
   const [reload, setReload] = useState(0);
   const result = useRead(parsed.path || null, reload);
-  const categories = useRead('/categories?limit=100');
+  const categories = useCategoryOptions();
   const params = parsed.params || new URLSearchParams();
   const [ingredientTerm, setIngredientTerm] = useState('');
   const [catalogTerm, setCatalogTerm] = useState('');
+  const [catalogLimit, setCatalogLimit] = useState(20);
+  const [catalogReload, setCatalogReload] = useState(0);
   useEffect(() => {
-    const timer = setTimeout(() => setCatalogTerm(ingredientTerm), 250);
+    const timer = setTimeout(() => {
+      setCatalogTerm(ingredientTerm);
+      setCatalogLimit(20);
+    }, 250);
     return () => clearTimeout(timer);
   }, [ingredientTerm]);
   const catalog = useRead(
-    '/ingredients?' + new URLSearchParams({ q: catalogTerm, limit: '20' }),
+    '/ingredients?' +
+      new URLSearchParams({ q: catalogTerm, limit: String(catalogLimit) }),
+    catalogReload,
   );
   const updateQuery = (patch) => {
     const next = new URLSearchParams(params);
@@ -89,11 +97,12 @@ export function Explore({ search }) {
         Field,
         { label: 'Danh mục', name: 'category', value: params.get('category') },
         h('option', { value: '' }, 'Tất cả'),
-        categories.status === 'ready' &&
-          Array.isArray(categories.body?.data) &&
-          categories.body.data.map((c) =>
-            h('option', { key: c.id, value: c.id }, c.name),
-          ),
+        params.get('category') &&
+          !categories.options.some((c) => c.id === params.get('category')) &&
+          h('option', { value: params.get('category') }, 'Danh mục đã chọn'),
+        categories.options.map((c) =>
+          h('option', { key: c.id, value: c.id }, c.name),
+        ),
       ),
       h(Field, { label: 'Nhãn', name: 'tag', value: params.get('tag') }),
       h(
@@ -158,8 +167,13 @@ export function Explore({ search }) {
     catalog.status === 'error' &&
       h(
         'p',
-        { className: 'form-error' },
+        { className: 'form-error', role: 'alert' },
         'Chưa tải được danh mục nguyên liệu.',
+        h(
+          Button,
+          { onClick: () => setCatalogReload((n) => n + 1) },
+          'Thử lại nguyên liệu',
+        ),
       ),
     h(
       'div',
@@ -191,6 +205,25 @@ export function Explore({ search }) {
         ),
       ),
     ),
+    catalog.status === 'loading' &&
+      h('p', { role: 'status' }, 'Đang tải nguyên liệu…'),
+    catalog.status === 'ready' &&
+      options.length === catalogLimit &&
+      h(
+        'div',
+        null,
+        h(
+          'p',
+          null,
+          `Đang hiển thị ${catalogLimit} kết quả đầu. Nhập tên cụ thể hơn để thu hẹp danh mục.`,
+        ),
+        catalogLimit < 100 &&
+          h(
+            Button,
+            { onClick: () => setCatalogLimit((n) => Math.min(100, n + 20)) },
+            'Tải thêm nguyên liệu',
+          ),
+      ),
     selectedIds.length > 0 &&
       h(
         'div',
@@ -271,8 +304,7 @@ export function Explore({ search }) {
       { className: 'filter-panel', open: true },
       h('summary', null, 'Bộ lọc'),
       filterForm,
-      categories.status === 'error' &&
-        h('p', { className: 'form-error' }, 'Chưa tải được danh mục.'),
+      categories.controls,
       ingredientPicker,
     ),
     params.size > 0 &&

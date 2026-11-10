@@ -114,3 +114,14 @@ User giao FE-05 và trong Task B xác nhận đã xem/chấp nhận hướng vis
 - FE-DEC-041: chỉ chốt hai expected Home từ reviewed VR candidates, old baselines/hash/diff giữ riêng, threshold0.005 không đổi; E2E chạy không auto-update. [Evidence](FE-05-Visual-Baseline-Finalization.md).
 
 [FE-05 report](FE-05-report.md) và [test results](FE-05-Test-Results.md) là trạng thái hiện hành. FE-06/07 chỉ đánh giá readiness, không tự triển khai.
+
+## FE-06 — Public completion và verification
+
+[FE-06 report](FE-06-report.md) cập nhật phạm vi public trên FE-05; không supersede Backend contracts hoặc approved Kitchen 2D.
+
+- FE-DEC-042: query validation dựa Backend thật, canonical IDs distinct/lowercase, giữ input lỗi; category paging và ingredient limit controls explicit, không fabricated totals/cursor.
+- FE-DEC-043: Detail category dùng catalog name khi có, fallback link theo ID thật; public profile vẫn DTO-only/G04blocked. Error codes/Retry-After giữ tới UI, không auto retry.
+- FE-DEC-044: sửa hai long-content overflow bằng scoped Detail CSS, không đổi scene/Home typography/layout; giữ approved snapshot SHA/threshold.
+- FE-DEC-045: screenshots/logs FE-06 riêng; 30audit scopes không tương đương76SRS hoặc1012planned tests. Native zoom/AT/provider/CWV chưa verified; chỉ đo browser/contract hiện hành.
+
+Không tự chuyển FE-07 hoặc commit/push.

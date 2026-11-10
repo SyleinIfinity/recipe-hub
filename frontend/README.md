@@ -73,3 +73,11 @@ Các đoạn FE-04/VR bên trên là lịch sử. FE-05 Task B đã cho phép ch
 App sở hữu một `useSession`; router/feature metadata tại `app/registry.js`. Client duy nhất `services/api.js` hỗ trợ `requestApi` và public-compatible `readApi`. Mutation lấy CSRF từ `/auth/csrf` trong memory, không retry tự động. Sau auth transition, FE-07 phải gọi session.refresh; private reads dùng `{privateRequest:true, revision:session.revision}` và chỉ mount khi authenticated. Errors giữ status/code/field/retry/uncertain context, không raw message/token/headers. 202 chỉ accepted.
 
 Root/feature ErrorBoundary giữ recovery khi render lỗi; API errors xử lý ở data layer. Không có Login/Editor/Admin/P2 pages hoặc navigation giả trong FE-05. CSS/art/fonts giữ FE-04-VR; không đổi Backend/env/dependencies. Các giới hạn scroll theo URL/cross-tab/native zoom được ghi trong [Open Issues](../docs/FE-05-Open-Issues.md).
+
+## FE-06 — Public completion
+
+[Report](../docs/FE-06-report.md), [coverage/results](../docs/FE-06-Test-Coverage-and-Results.md), [issues](../docs/FE-06-Open-Issues.md). Query/filter IDs tuân Backend, invalid input giữ để sửa; categories có load-more page100, ingredients tănglimit20→100 rồi refine prefix. Detail có category link/ordered content, status-aware error/retry và long-text wrap. Public profile chỉ DTO, không author listing giả. Hai Home expected snapshots giữ nguyên, browser artifacts mới sang `docs/screenshots/FE-06`.
+
+Deployment chưa chọn hosting: History API cần SPA fallback về `index.html` cho navigation HTML không phải `/api`/static asset. Giữ reverse proxy `/api` cùng origin và đúng404 của API/assets; không rewrite mọi request thành HTML. Vite development deep links đã test; chưa xác minh production hosting. Không tự thêm config cho một provider chưa được chọn.
+
+464unit/component,390integration và20Firefox E2E là kết quả mới FE-06, logs trong report. Native zoom200%, screen reader, provider binary live và CWV chưa verified; không full WCAG claim. Dừng FE-06, FE-07 chờ Work Order riêng.

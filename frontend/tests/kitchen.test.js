@@ -124,8 +124,10 @@ it('query whitelist rejects duplicates and unknowns', () => {
   expect(searchQuery('?role=admin').error).toBeTruthy();
   expect(searchQuery('?q=a&q=b').error).toBeTruthy();
   expect(searchQuery('?q=%20').error).toBeTruthy();
-  expect(searchQuery('?maxMinutes=30&ingredientMatch=all').path).toBe(
-    '/recipes?maxMinutes=30&ingredientMatch=all',
+  // Backend requires canonical IDs when ingredientMatch is present.
+  expect(searchQuery('?maxMinutes=30&ingredientMatch=all').error).toBeTruthy();
+  expect(searchQuery('?maxMinutes=30&difficulty=easy').path).toBe(
+    '/recipes?maxMinutes=30&difficulty=easy',
   );
 });
 it('API includes credentials and never parses 204', async () => {

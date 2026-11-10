@@ -90,6 +90,15 @@ export function PageError({ forbidden = false }) {
 export function RecipeDetail({ slug }) {
   const [reload, setReload] = useState(0);
   const result = useRead('/recipes/' + encodeURIComponent(slug), reload);
+  const categoryId = result.body?.data?.categoryId;
+  const categories = useRead(
+    result.status === 'ready' && /^[a-f0-9]{24}$/i.test(categoryId || '')
+      ? '/categories?limit=100'
+      : null,
+  );
+  const category = Array.isArray(categories.body?.data)
+    ? categories.body.data.find((c) => c.id === categoryId)
+    : null;
   if (result.status === 'loading')
     return h('section', { className: 'page-panel' }, h(Skeleton, { count: 1 }));
   if (result.status === 'error')
@@ -99,6 +108,7 @@ export function RecipeDetail({ slug }) {
           'section',
           { className: 'page-panel' },
           h(ErrorState, {
+            error: result.error,
             onRetry: () => setReload(reload + 1),
             title: 'Không tải được công thức',
           }),
@@ -138,6 +148,21 @@ export function RecipeDetail({ slug }) {
       'dl',
       { className: 'detail-facts' },
       [
+        [
+          'Danh mục',
+          /^[a-f0-9]{24}$/i.test(r.categoryId || '')
+            ? h(
+                Link,
+                {
+                  className: 'text-link',
+                  href:
+                    '/recipes?' +
+                    new URLSearchParams({ category: r.categoryId }),
+                },
+                category?.name || 'Xem công thức cùng danh mục',
+              )
+            : null,
+        ],
         ['Khẩu phần', r.servings],
         ['Chuẩn bị', r.prepMinutes == null ? null : r.prepMinutes + ' phút'],
         ['Nấu', r.cookMinutes == null ? null : r.cookMinutes + ' phút'],
@@ -155,21 +180,23 @@ export function RecipeDetail({ slug }) {
       h(
         'ul',
         null,
-        r.ingredients.map((v, i) =>
-          h(
-            'li',
-            { key: v.order || i },
-            h('span', null, v.name),
+        r.ingredients
+          .toSorted((a, b) => a.order - b.order)
+          .map((v, i) =>
             h(
-              'strong',
-              null,
-              v.quantity != null
-                ? [v.quantity, v.unit].filter((x) => x != null).join(' ')
-                : v.quantityText || '',
+              'li',
+              { key: v.order || i },
+              h('span', null, v.name),
+              h(
+                'strong',
+                null,
+                v.quantity != null
+                  ? [v.quantity, v.unit].filter((x) => x != null).join(' ')
+                  : v.quantityText || '',
+              ),
+              v.note && h('small', null, v.note),
             ),
-            v.note && h('small', null, v.note),
           ),
-        ),
       ),
     ),
     h(
@@ -179,21 +206,23 @@ export function RecipeDetail({ slug }) {
       h(
         'ol',
         null,
-        r.steps.map((s) =>
-          h(
-            'li',
-            { key: s.stepId },
-            h('p', null, s.instruction),
-            s.durationMinutes != null &&
-              h('small', null, s.durationMinutes + ' phút'),
-            s.imageUrl &&
-              h(
-                'div',
-                { className: 'step-image' },
-                h(RecipeImage, { url: s.imageUrl }),
-              ),
+        r.steps
+          .toSorted((a, b) => a.order - b.order)
+          .map((s) =>
+            h(
+              'li',
+              { key: s.stepId },
+              h('p', null, s.instruction),
+              s.durationMinutes != null &&
+                h('small', null, s.durationMinutes + ' phút'),
+              s.imageUrl &&
+                h(
+                  'div',
+                  { className: 'step-image' },
+                  h(RecipeImage, { url: s.imageUrl }),
+                ),
+            ),
           ),
-        ),
       ),
     ),
   );
@@ -209,7 +238,10 @@ export function PublicProfile({ userId }) {
       : h(
           'section',
           { className: 'page-panel' },
-          h(ErrorState, { onRetry: () => setReload(reload + 1) }),
+          h(ErrorState, {
+            error: result.error,
+            onRetry: () => setReload(reload + 1),
+          }),
         );
   const user = result.body?.data;
   if (typeof user?.displayName !== 'string')

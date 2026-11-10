@@ -1,0 +1,28 @@
+npm notice run npx
+npm notice run 'playwright' test e2e/public-kitchen.spec.js --workers=1
+[WebServer] (node:771273) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:771397) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 11 tests using 1 worker
+
+(node:771425) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/public-kitchen.spec.js:166:1 › FE04 Home six viewports, real public data, artwork, fonts and console (4.3s)
+  ✓   2 e2e/public-kitchen.spec.js:356:1 › FE04 search, filters, paging, Back/Forward, detail and profile use real API (1.7s)
+  ✓   3 e2e/public-kitchen.spec.js:414:1 › FE04 public screens desktop/mobile snapshots and private visibility (2.7s)
+  ✓   4 e2e/public-kitchen.spec.js:446:1 › FE04 native drawer keyboard, outside, focus restoration, resize and reduced motion (1.1s)
+  ✓   5 e2e/public-kitchen.spec.js:501:1 › FE04 controlled transport failures distinguish loading, empty, retry and malformed filters (774ms)
+  ✓   6 e2e/public-kitchen.spec.js:535:1 › FE04VR long authenticated name/title, loading and text-spacing reflow (1.9s)
+  ✓   7 e2e/public-kitchen.spec.js:649:1 › FE05 approved FE04-VR visual baseline (1.1s)
+  ✓   8 e2e/public-kitchen.spec.js:664:1 › FE05 navigation cancels pending GET, respects fragments and browser history (744ms)
+  ✓   9 e2e/public-kitchen.spec.js:702:1 › PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced colors (8.2s)
+  ✓  10 e2e/public-kitchen.spec.js:827:1 › PUB-E02 FE06 real catalog page2 and ingredient result cap (1.9s)
+  ✓  11 e2e/public-kitchen.spec.js:917:1 › PUB-E03 FE06 rapid search, Enter, URL preservation and real retry (2.6s)
+
+  11 passed (30.8s)

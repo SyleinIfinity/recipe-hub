@@ -1,0 +1,21 @@
+{
+  "method": "Current FE-06 Firefox heading/transparent-backdrop captures; solid glyph pixels within3 per RGB channel of CSS ink, exclude unchanged/antialias fringes. Read-only pixel analysis, no screenshot editing. Only measured Hero glyph contrast, not full WCAG.",
+  "results": [
+    {
+      "width": 1672,
+      "samples": 2054,
+      "minContrast": 12.71,
+      "maxContrast": 13.68,
+      "largeTextThreshold": 3,
+      "pass": true
+    },
+    {
+      "width": 390,
+      "samples": 528,
+      "minContrast": 12.33,
+      "maxContrast": 13.59,
+      "largeTextThreshold": 3,
+      "pass": true
+    }
+  ]
+}

@@ -846,6 +846,8 @@ summary {
   color: var(--rh-color-text-secondary);
 }
 .detail-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin: 4px 0 0;
   font-weight: 600;
 }
@@ -863,6 +865,11 @@ summary {
   gap: 8px 16px;
   padding: 14px 0;
   border-bottom: 1px solid var(--rh-color-border-subtle);
+}
+.ingredients li > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .ingredients li strong {
   margin-left: auto;
@@ -1327,4 +1334,11 @@ summary {
   align-items: center;
   min-height: var(--rh-size-target);
   min-width: var(--rh-size-target);
+}
+
+.detail-author {
+  overflow-wrap: anywhere;
+}
+.detail-author a {
+  max-width: 100%;
 }

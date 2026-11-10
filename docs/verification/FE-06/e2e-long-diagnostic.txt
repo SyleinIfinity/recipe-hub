@@ -1,0 +1,41 @@
+npm notice run npx
+npm notice run 'playwright' test e2e/public-kitchen.spec.js --grep PUB-E04 --workers=1
+[WebServer] (node:774509) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:774703) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:774734) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/public-kitchen.spec.js:1007:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths (1.9s)
+
+
+  1) e2e/public-kitchen.spec.js:1007:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      155 |       () => document.documentElement.scrollWidth <= innerWidth,
+      156 |     ),
+    > 157 |   ).toBe(true);
+          |     ^
+      158 | }
+      159 | async function capture(page, name, fullPage = true) {
+      160 |   await page.screenshot({
+        at noOverflow (/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/public-kitchen.spec.js:157:5)
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/public-kitchen.spec.js:1095:9
+
+    Error Context: test-results/public-kitchen-PUB-E04-FE0-2af90--Profile-text-at-six-widths/error-context.md
+
+    Error Context: test-results/public-kitchen-PUB-E04-FE0-2af90--Profile-text-at-six-widths/error-context.md
+
+  1 failed
+    e2e/public-kitchen.spec.js:1007:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths 
