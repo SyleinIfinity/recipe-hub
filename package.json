@@ -1,0 +1,49 @@
+{
+  "name": "recipe-hub",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26 <27",
+    "npm": ">=12 <13"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run dev -w backend",
+    "dev:web": "npm run dev -w frontend --",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run --project unit --project web",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "playwright test",
+    "build": "npm run build --workspaces",
+    "check": "npm run lint && npm run format:check && npm run openapi:validate && npm test && npm run build",
+    "openapi:validate": "node scripts/validate-openapi.js",
+    "media:cleanup": "npm run media:cleanup -w backend --"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "13.1.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "jsdom": "^31.0.0",
+    "prettier": "^3.9.10",
+    "supertest": "^7.3.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.5"
+  }
+}

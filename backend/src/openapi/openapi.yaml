@@ -1,0 +1,6189 @@
+openapi: 3.1.0
+info:
+  title: Recipe Hub API
+  version: 0.13.0
+  description: >-
+    Live APIs BE-00..13 (private media upload/list/delete). Docs development only. Cookie HttpOnly
+    do browser quản lý, không dán session token vào Authorize.
+
+
+    Manual Try it out: GET /api/v1/auth/csrf → copy data.csrfToken vào X-CSRF-Token → login → GET
+    csrf lại → mutation. Token trước login không dùng sau login. Backend origin cần nằm trong
+    APP_ORIGINS.
+
+
+    Email endpoints có thể gửi thư nếu SMTP bật; chỉ thử khi được phép. 202 không chứng minh
+    delivery. Admin được cấp qua quy trình quản trị, không có public API cấp quyền. Recipe draft
+    owner CRUD và publish/unpublish/public read đã live; P2 chưa có; media có upload/list/delete;
+    attach/release là internal service. Search/filter/favorites live. Cloudinary live and binary
+    delivery deferred until Frontend integration. Reviews, comments (one reply level), reports and
+    audited moderation live. Mongo standalone durable intents; no Notification/Feed/Cloudinary live.
+servers:
+  - url: /
+    description: Cùng origin với backend
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Categories
+  - name: Ingredients
+  - name: Media
+  - name: Recipes
+    description: Owner drafts, publication, strict public visibility and fail-closed media gateway.
+  - name: Favorites
+    description: Private relations; visible public recipes only. A relation never grants private access.
+  - name: Reviews
+  - name: Comments
+  - name: Reports
+  - name: Moderation
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      tags:
+        - Health
+      summary: Liveness
+      description: Không phụ thuộc MongoDB.
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/LiveDTO'
+                required:
+                  - success
+                  - data
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /health/ready:
+    get:
+      operationId: getReadiness
+      tags:
+        - Health
+      summary: MongoDB readiness
+      description: ''
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ReadyDTO'
+                required:
+                  - success
+                  - data
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/health:
+    get:
+      operationId: getApiHealth
+      tags:
+        - Health
+      summary: MongoDB readiness
+      description: ''
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ReadyDTO'
+                required:
+                  - success
+                  - data
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/auth/csrf:
+    get:
+      operationId: getCsrf
+      tags:
+        - Auth
+      summary: Lấy CSRF token
+      description: Thiết lập browser/CSRF cookies HttpOnly. Lấy lại sau login.
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+            Set-Cookie:
+              schema:
+                type: string
+              description:
+                Browser-managed HttpOnly cookies, Path=/, SameSite=Lax, Secure khi HTTPS; login có
+                expires. Logout/change/reset xóa cookies. Không đọc hoặc dán giá trị session token.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/CsrfDTO'
+                required:
+                  - success
+                  - data
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/auth/register:
+    post:
+      operationId: register
+      tags:
+        - Auth
+      summary: Đăng ký
+      description: Role mặc định user, không tự đăng nhập.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '201':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PrivateUserDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: developer@example.test
+              password: Example passphrase only
+              displayName: Developer Test
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      tags:
+        - Auth
+      summary: Đăng nhập
+      description:
+        Set-Cookie HttpOnly. Lấy lại CSRF sau login. Sai email/password/suspended đều
+        INVALID_CREDENTIALS.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+            Set-Cookie:
+              schema:
+                type: string
+              description:
+                Browser-managed HttpOnly cookies, Path=/, SameSite=Lax, Secure khi HTTPS; login có
+                expires. Logout/change/reset xóa cookies. Không đọc hoặc dán giá trị session token.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PrivateUserDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+  /api/v1/auth/me:
+    get:
+      operationId: getCurrentUser
+      tags:
+        - Auth
+      summary: Thông tin phiên
+      description: 'Cần active session. '
+      security:
+        - SessionCookie: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PrivateUserDTO'
+                required:
+                  - success
+                  - data
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      tags:
+        - Auth
+      summary: Đăng xuất
+      description:
+        Cần active session. Revoke phiên hiện tại, clear session/CSRF cookies. Gọi lại trả 401
+        nếu CSRF hợp lệ.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Thành công, không body.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+            Set-Cookie:
+              schema:
+                type: string
+              description:
+                Browser-managed HttpOnly cookies, Path=/, SameSite=Lax, Secure khi HTTPS; login có
+                expires. Logout/change/reset xóa cookies. Không đọc hoặc dán giá trị session token.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/auth/change-password:
+    post:
+      operationId: changePassword
+      tags:
+        - Auth
+      summary: Đổi mật khẩu
+      description: Cần active session. Thu hồi mọi phiên/outstanding tokens, xóa cookie. Đăng nhập lại.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Thành công, không body.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+            Set-Cookie:
+              schema:
+                type: string
+              description:
+                Browser-managed HttpOnly cookies, Path=/, SameSite=Lax, Secure khi HTTPS; login có
+                expires. Logout/change/reset xóa cookies. Không đọc hoặc dán giá trị session token.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+  /api/v1/auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags:
+        - Auth
+      summary: Yêu cầu email
+      description:
+        SMTP disabled trả 503. 202 chung, không chứng minh delivery. Không thử SMTP thật khi
+        chưa được phép.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '202':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/AcceptedDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+  /api/v1/auth/request-email-verification:
+    post:
+      operationId: requestEmailVerification
+      tags:
+        - Auth
+      summary: Yêu cầu email
+      description:
+        SMTP disabled trả 503. 202 chung, không chứng minh delivery. Không thử SMTP thật khi
+        chưa được phép.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '202':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/AcceptedDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+  /api/v1/auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags:
+        - Auth
+      summary: Đặt lại mật khẩu
+      description: Token một lần có hạn; invalid/expired/used trả 422. Reset thu hồi mọi phiên.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Thành công, không body.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+            Set-Cookie:
+              schema:
+                type: string
+              description:
+                Browser-managed HttpOnly cookies, Path=/, SameSite=Lax, Secure khi HTTPS; login có
+                expires. Logout/change/reset xóa cookies. Không đọc hoặc dán giá trị session token.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+  /api/v1/auth/verify-email:
+    post:
+      operationId: verifyEmail
+      tags:
+        - Auth
+      summary: Xác minh email
+      description: Token một lần có hạn; invalid/expired/used trả 422. Reset thu hồi mọi phiên.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Thành công, không body.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+  /api/v1/users/{userId}:
+    get:
+      operationId: getPublicProfile
+      tags:
+        - Users
+      summary: Hồ sơ công khai
+      description: ''
+      security: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PublicUserDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/me/profile:
+    patch:
+      operationId: updateProfile
+      tags:
+        - Users
+      summary: Sửa hồ sơ
+      description: 'Cần active session. '
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PrivateUserDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+            example:
+              bio: Developer test profile
+  /api/v1/me/preferences:
+    get:
+      operationId: getPreferences
+      tags:
+        - Users
+      summary: Sở thích của tôi
+      description: 'Cần active session. '
+      security:
+        - SessionCookie: []
+      parameters: []
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PreferencesDTO'
+                required:
+                  - success
+                  - data
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      operationId: updatePreferences
+      tags:
+        - Users
+      summary: Sửa sở thích
+      description: Cần active session. Patch nested settings giữ field không gửi.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PreferencesDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+  /api/v1/admin/users:
+    get:
+      operationId: listUsers
+      tags:
+        - Users
+      summary: Danh sách tài khoản (Admin)
+      description: Chỉ active Admin. Sort createdAt DESC, _id DESC; query strict.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 1
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - suspended
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUserDTO'
+                  meta:
+                    $ref: '#/components/schemas/UserPaginationMeta'
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/admin/users/{userId}/status:
+    patch:
+      operationId: changeUserStatus
+      tags:
+        - Users
+      summary: Khóa/mở tài khoản (Admin)
+      description: Chỉ active Admin. Không tự sửa status mình; vô hiệu phiên cũ, ghi audit.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/AdminUserDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeUserStatusRequest'
+  /api/v1/categories:
+    get:
+      operationId: listCategories
+      tags:
+        - Categories
+      summary: Danh mục active
+      description: active=false/query lạ trả 400. Sort sortOrder ASC, _id ASC; meta không total.
+      security: []
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: string
+            const: 'true'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CategoryDTO'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/ingredients:
+    get:
+      operationId: searchIngredients
+      tags:
+        - Ingredients
+      summary: Tìm nguyên liệu
+      description:
+        Active only, prefix literal trên tên/alias NFC/lowercase, giữ dấu; không
+        fuzzy/substring. Query lạ/control chars trả 400. Sort normalized name, _id; không meta.
+      security: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+            default: ''
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IngredientDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/admin/categories:
+    post:
+      operationId: createCategory
+      tags:
+        - Categories
+      summary: Tạo Category (Admin)
+      description: Chỉ active Admin. Chỉ whitelist fields. Duplicate 409.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '201':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/CategoryDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+            example:
+              name: Món thử nghiệm
+  /api/v1/admin/categories/{categoryId}:
+    patch:
+      operationId: updateCategory
+      tags:
+        - Categories
+      summary: Sửa Category (Admin)
+      description:
+        Chỉ active Admin. PATCH không rỗng. false deactivate, không xóa. Optimistic save
+        conflict 409; không có client If-Match contract.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/CategoryDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+            example:
+              isActive: false
+  /api/v1/admin/ingredients:
+    post:
+      operationId: createIngredient
+      tags:
+        - Ingredients
+      summary: Tạo Ingredient (Admin)
+      description: Chỉ active Admin. Chỉ whitelist fields. Duplicate 409.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '201':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/IngredientDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIngredientRequest'
+            example:
+              name: Nguyên liệu thử nghiệm
+  /api/v1/admin/ingredients/{ingredientId}:
+    patch:
+      operationId: updateIngredient
+      tags:
+        - Ingredients
+      summary: Sửa Ingredient (Admin)
+      description:
+        Chỉ active Admin. PATCH không rỗng. false deactivate, không xóa. Optimistic save
+        conflict 409; không có client If-Match contract.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: ingredientId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Thành công.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/IngredientDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIngredientRequest'
+            example:
+              isActive: false
+  /api/v1/media/images:
+    post:
+      operationId: uploadImage
+      tags:
+        - Media
+      summary: Upload a private temporary image
+      description:
+        Requires dynamic mode and authenticated policy. BE-08 local fake provider only; live
+        Cloudinary gated. Exactly one file/purpose. Reuse UUID key for retries with identical
+        bytes/purpose. Pending identity is retained for reconciliation; URL is null.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+            pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MediaUploadRequest'
+      responses:
+        '201':
+          description: Temporary private image; replay of a completed matching key returns the same asset.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/MediaAssetDTO'
+        '400':
+          description: Malformed multipart/query or missing/invalid Idempotency-Key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Missing/expired/suspended session (after CSRF).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Missing/invalid CSRF or forbidden origin.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Idempotency key conflict, pending/uncertain/rejected/expired upload; no automatic retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description: Image or multipart body too large.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '415':
+          description: Unsupported MIME/signature or corrupt image.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Invalid purpose, animated image or excessive dimensions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Upload rate, process capacity or 20 outstanding quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Mongo reservation/finalize or internal failure; no false success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Private policy unavailable, live blocked or storage rejected/uncertain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/media:
+    get:
+      operationId: listOwnMedia
+      tags:
+        - Media
+      summary: List own private media
+      description:
+        Default excludes deleted; explicit status=deleted includes tombstones. Expired
+        temporary media remains visible until cleanup. Stable createdAt/_id descending. No ownerId
+        parameter.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: purpose
+          in: query
+          schema:
+            type: string
+            enum:
+              - avatar
+              - recipe_cover
+              - recipe_step
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending_upload
+              - temporary
+              - attached
+              - pending_delete
+              - delete_failed
+              - deleted
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Owner-only metadata; private URL null.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - success
+                  - data
+                  - meta
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MediaAssetDTO'
+                  meta:
+                    $ref: '#/components/schemas/UserPaginationMeta'
+        '400':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/media/images/{assetId}:
+    delete:
+      operationId: deleteMediaImage
+      tags:
+        - Media
+      summary: Queue deletion of an owned unused image
+      description:
+        202 means durable Mongo work item, not completed provider deletion. Repeated
+        pending/failed requests preserve job and attempts. Already deleted returns 200.
+        Attached/in-use/uncertain media returns 409. Previously attached media retains grace.
+        Fake-only; no live calls.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Already deleted; idempotent metadata tombstone.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/MediaAssetDTO'
+        '202':
+          description: Durable pending_delete/delete_failed work item.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/MediaAssetDTO'
+        '400':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Validation, authentication, ownership, state conflict or service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes:
+    post:
+      operationId: createRecipeDraft
+      tags:
+        - Recipes
+      summary: Create an owner-private draft idempotently
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+            pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+          description:
+            UUID v4. Reuse key and identical input after unknown response; different payload
+            returns 409.
+      responses:
+        '201':
+          description: Complete draft and confirmed media references; repeated key returns same Recipe.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/OwnerRecipeDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeDraftInput'
+            example: {}
+    get:
+      operationId: listPublicRecipes
+      tags:
+        - Recipes
+      summary: Search and filter visible recipes
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - publishedAt
+              - -publishedAt
+            default: -publishedAt
+        - name: q
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+          description:
+            1..10 normalized words; no markup/control characters. AND exact words, accents/case
+            folded.
+          example: thit kho trung
+        - name: category
+          in: query
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+          description:
+            Category ObjectId; missing returns empty. Inactive category does not auto-hide
+            previously published recipes.
+        - name: tag
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 40
+          description: Exact NFC/trim/lowercase tag, accent-sensitive. No markup/control characters.
+          example: bữa tối
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum:
+              - easy
+              - medium
+              - hard
+          description: Exact difficulty.
+        - name: maxMinutes
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2880
+          description: Inclusive upper bound on server-calculated totalMinutes; null excluded.
+        - name: ingredientIds
+          in: query
+          schema:
+            type: string
+            maxLength: 499
+            pattern: ^[a-fA-F0-9]{24}(,[a-fA-F0-9]{24}){0,19}$
+          description:
+            Single comma-separated string of 1..20 IDs (before deduplication), no spaces/repeated
+            keys/bracket arrays. IDs deduplicated. Canonical IDs only, not free-text ingredient
+            names.
+        - name: ingredientMatch
+          in: query
+          schema:
+            type: string
+            enum:
+              - any
+              - all
+          description:
+            Default any when ingredientIds is present. Requires ingredientIds. all requires every
+            distinct ID on the same recipe.
+      responses:
+        '200':
+          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicRecipeCardDTO'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - page
+                      - limit
+                      - total
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: RATE_LIMITED; independent search bucket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: QUERY_TIMEOUT after bounded Mongo query; narrow filters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description:
+        'Strict query whitelist. Groups combine with AND. q: exact distinct words across
+        title/description, NFKD, lowercase, remove combining marks, đ→d; 1..10 words, no
+        fuzzy/substring/relevance. Missing q lists public recipes; empty q rejected. Public
+        predicate + active-author join before count/pagination. No cache. Sort publishedAt with _id
+        same-direction tie-breaker; no cross-request snapshot. Page/limit/maxMinutes accept
+        canonical decimal strings only. Search bucket 600 requests per AUTH_RATE_WINDOW_MS per
+        IP/process, isolated from health. Legacy pre-BE12 records require bounded search backfill
+        before q rollout; ordinary filters/list unaffected.'
+  /api/v1/me/recipes:
+    get:
+      operationId: listOwnRecipes
+      tags:
+        - Recipes
+      summary: List own nondeleted drafts
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            const: draft
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - -createdAt
+              - updatedAt
+              - -updatedAt
+            default: -updatedAt
+      responses:
+        '200':
+          description: Owner-scoped stable list; pending creations excluded.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OwnerRecipeDTO'
+                  meta:
+                    $ref: '#/components/schemas/UserPaginationMeta'
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/recipes/{recipeId}:
+    get:
+      operationId: getOwnRecipe
+      tags:
+        - Recipes
+      summary: Read an owned nondeleted draft
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+      responses:
+        '200':
+          description: Owner-only recipe; private image URLs remain null.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/OwnerRecipeDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}:
+    patch:
+      operationId: updateRecipeDraft
+      tags:
+        - Recipes
+      summary: Update draft using one canonical version CAS
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Version incremented; all references committed together.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/OwnerRecipeDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeDraftUpdate'
+            example:
+              version: 0
+              title: Canh rau
+      description:
+        Missing fields preserve values. Supplied arrays replace the whole array ordered by
+        unique order; existing stepId preserves identity and omitted imageAssetId, null clears
+        image. New steps omit stepId. New catalog references must be active; retained inactive
+        references and snapshots survive. Version in JSON required; If-Match is not the concurrency
+        contract.
+    delete:
+      operationId: deleteRecipeDraft
+      tags:
+        - Recipes
+      summary: Soft-delete owned draft while preserving media references
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Soft deleted, or already deleted by this owner. No body.
+        '400':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '413':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            Invalid input, session/CSRF, ownership, version/idempotency conflict or unavailable
+            persistence/reconciliation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/publish:
+    patch:
+      operationId: publishRecipe
+      tags:
+        - Recipes
+      summary: publish own recipe with version CAS
+      description:
+        Strict version body; stale or repeated transition returns 409. Slug and first
+        publishedAt retained. Unpublish hidden allowed without clearing moderation. No provider side
+        effects.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeTransitionRequest'
+            example:
+              version: 0
+      responses:
+        '200':
+          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/OwnerRecipeDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Active session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Not found or not visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Version/state/slug conflict or media not stable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: RECIPE_NOT_PUBLISHABLE with field/code details or invalid body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Transition outcome uncertain or secure delivery unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/unpublish:
+    patch:
+      operationId: unpublishRecipe
+      tags:
+        - Recipes
+      summary: unpublish own recipe with version CAS
+      description:
+        Strict version body; stale or repeated transition returns 409. Slug and first
+        publishedAt retained. Unpublish hidden allowed without clearing moderation. No provider side
+        effects.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeTransitionRequest'
+            example:
+              version: 0
+      responses:
+        '200':
+          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/OwnerRecipeDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Active session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Not found or not visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Version/state/slug conflict or media not stable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: RECIPE_NOT_PUBLISHABLE with field/code details or invalid body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Transition outcome uncertain or secure delivery unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{slug}:
+    get:
+      operationId: getPublicRecipe
+      tags:
+        - Recipes
+      summary: Read a publicly visible recipe by stable slug
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      responses:
+        '200':
+          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/PublicRecipeDetailDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Not found or not visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/images/{assetId}:
+    get:
+      operationId: getRecipeImage
+      tags:
+        - Recipes
+      summary: Authorize recipe image delivery (transport unavailable in current runtime)
+      description:
+        Guest allowed only while recipe is public; otherwise active owner only.
+        Hidden/deleted/pending deny all. No raw URLs or redirect; no-store. Current runtime returns
+        503 for authorized requests because provider binary capability is unavailable. 200 contract
+        exercised only with controlled test transport; not live Cloudinary acceptance.
+      security:
+        - {}
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: Bounded image bytes from trusted transport; private, no-store; no redirects or validators
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Active session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Not found or not visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Transition outcome uncertain or secure delivery unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/favorites:
+    get:
+      operationId: listMyFavorites
+      tags:
+        - Favorites
+      summary: List my visible saved recipes
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      description:
+        Active session. Only page/limit accepted. Sort favorite.createdAt DESC, favorite._id
+        DESC. Shared public predicate and author policy applied before pagination/count. Hidden
+        relations retained and reappear on valid republish. No private DTO or userId filter. No
+        cross-request snapshot.
+      responses:
+        '200':
+          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicRecipeCardDTO'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - page
+                      - limit
+                      - total
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: QUERY_TIMEOUT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/favorites/{recipeId}:
+    put:
+      operationId: addFavorite
+      tags:
+        - Favorites
+      summary: Save a public recipe idempotently
+      security:
+        - SessionCookie: []
+      parameters: &a2
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      description:
+        Active actor from session; valid CSRF. No body (empty object tolerated), no query.
+        Requires current public eligibility; invisible/unknown404. Unique (userId,recipeId) index
+        serializes concurrent PUT. First201, existing200. Visibility may change after eligibility
+        read; retained relation never grants access. Retry unknown outcome with same PUT.
+      responses:
+        '200': &a1
+          description: Favorite relation saved; no private access granted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/FavoriteStateDTO'
+                required:
+                  - success
+                  - data
+        '201': *a1
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: RECIPE_NOT_FOUND; invisible or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Unexpected body fields or type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: removeFavorite
+      tags:
+        - Favorites
+      summary: Remove my favorite idempotently
+      security:
+        - SessionCookie: []
+      parameters: *a2
+      description:
+        Active session and CSRF. No body (empty object tolerated), no query. Delete only actor
+        relation; absent/hidden/deleted target still204. Recipe/Media/other users relations
+        unchanged.
+      responses:
+        '204':
+          description: Removed or already absent. No body.
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Unexpected body fields or type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/reviews:
+    get:
+      operationId: listRecipeReviews
+      tags:
+        - Reviews
+      summary: List public reviews and live rating summary
+      description:
+        Shared Recipe visibility and active-review-author filter applied inside aggregation
+        before page/count/summary. Empty summary {averageRating:null,ratingCount:0}. Hidden reviews
+        excluded.
+      security: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: &a3
+            type: string
+            minLength: 24
+            maxLength: 24
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - -createdAt
+            default: -createdAt
+          description: createdAt and _id same direction, bounded pages, no cross-request snapshot.
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReviewDTO'
+                  meta: &a5
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - page
+                      - limit
+                      - total
+                  summary:
+                    $ref: '#/components/schemas/RatingSummaryDTO'
+                required:
+                  - success
+                  - data
+                  - meta
+                  - summary
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/my-review:
+    put:
+      operationId: putMyReview
+      tags:
+        - Reviews
+      summary: Create or replace my review
+      description:
+        Public Recipe only; no self-review, even Admin. One pair unique. First201/update200,
+        PUT full replacement (omitted content empty). Concurrent PUT serialized by unique index;
+        final rating is last atomic PUT. Hidden review cannot be edited. Deleted visible review
+        reactivates200 with same ID. Hidden moderation persists through delete and blocks
+        recreation.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema: &a4
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ReviewDTO'
+                required:
+                  - success
+                  - data
+        '201':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema: *a4
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+    delete:
+      operationId: deleteMyReview
+      tags:
+        - Reviews
+      summary: Delete only my review
+      description:
+        Soft-delete own review relation; unique pair/tombstone and moderation status retained.
+        Repeated absent/deleted204. Allowed after Recipe private. Re-review visible
+        tombstone200/same ID; hidden tombstone409 (cannot bypass moderation by delete/recreate). No
+        Recipe/Comment/Media deletion. No body/query.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Success or already removed. No body.
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/comments:
+    get:
+      operationId: listRecipeComments
+      tags:
+        - Comments
+      summary: List public root comments and one-level replies
+      description:
+        Flat cards with parentId, default ascending createdAt/_id. Shared Recipe visibility,
+        active authors and visible/nondeleted/complete root parent before pagination/count.
+        Hidden/deleted/suspended parent suppresses replies without deleting them.
+      security: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - -createdAt
+            default: createdAt
+          description: createdAt and _id same direction, bounded pages, no cross-request snapshot.
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommentDTO'
+                  meta: *a5
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: createRecipeComment
+      tags:
+        - Comments
+      summary: Create a root comment or one-level reply
+      description:
+        Required Idempotency-Key UUID v4, same payload replay201/same ID. Public recipe only,
+        root parent same recipe/visible/active, no reply-to-reply. Durable pending reply seed +
+        parent version fence/marker + finalize; uncertainty503 retry same key. Reply increments root
+        version.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+        - &a6
+          name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+            pattern: ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$
+          description:
+            Required UUID v4. Keep same key and identical request after timeout/503; another
+            payload409. Admin keys scoped to actor across decisions. Comment keys scoped to author.
+      responses:
+        '201':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/CommentDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+  /api/v1/comments/{commentId}:
+    patch:
+      operationId: updateMyComment
+      tags:
+        - Comments
+      summary: Edit my visible comment with version
+      description:
+        Owner only; Recipe and parent currently visible. Cannot edit hidden/deleted/pending
+        comment or change ownership/parent. CAS version409, cannot overwrite moderation.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/CommentDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateRequest'
+    delete:
+      operationId: deleteMyComment
+      tags:
+        - Comments
+      summary: Soft-delete only my comment
+      description:
+        Owner-only soft-delete, repeat204, no body/query. Other owner404. Server reads version
+        then CAS409 on race. Allowed after Recipe private/hidden. Replies retained but hidden from
+        public when root unavailable.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Success or already removed. No body.
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/reports:
+    post:
+      operationId: createReport
+      tags:
+        - Reports
+      summary: Report visible recipe or comment
+      description:
+        Public eligible target only, same shared policy as reads. Partial unique
+        pending(reporterId,targetType,targetId), duplicate409 including concurrency. No
+        reporter-selected status/reviewer. Reports retained if target later private/deleted.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '201':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ReportDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+  /api/v1/admin/reports:
+    get:
+      operationId: listAdminReports
+      tags:
+        - Reports
+      summary: List reports and bounded target context
+      description:
+        Active Admin only; status pending(default)/resolved/rejected, page/limit/sort. Context
+        only for reported historically public target. Never return current draft text or deleted
+        comment content; metadata may remain. No blanket draft/image access. processing marks
+        unfinished durable decision.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - -createdAt
+            default: -createdAt
+          description: createdAt and _id same direction, bounded pages, no cross-request snapshot.
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - resolved
+              - rejected
+            default: pending
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminReportDTO'
+                  meta: *a5
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/reports/{reportId}/resolve:
+    patch:
+      operationId: resolveReport
+      tags:
+        - Moderation
+      summary: Resolve or reject pending report with durable audit
+      description:
+        Required Idempotency-Key, report version. pending→resolved|rejected only; rejected
+        requires action none. hide requires targetVersion; none forbids it and permits already
+        deleted/missing target. Durable report claim→audited target CAS→report finalization→audit
+        projection.503 means uncertain, replay same key or reconcile CLI. Stale competing Admin409.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+        - *a6
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ModerationReceiptDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportResolutionRequest'
+  /api/v1/admin/recipes/{recipeId}/moderation:
+    patch:
+      operationId: moderateRecipe
+      tags:
+        - Moderation
+      summary: Hide or restore recipe moderation with audit
+      description:
+        Required key + version + reason for both states. Historically published,
+        complete/notdeleted target only. Change moderationStatus/version/reason, never publish/alter
+        content/ownership/media/slug. Durable audit intent before target CAS; pending marker blocks
+        new decisions until repaired. Repeated same-key replay original receipt200, new key
+        same-state409.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+        - *a6
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ModerationReceiptDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeModerationRequest'
+  /api/v1/admin/comments/{commentId}/moderation:
+    patch:
+      operationId: moderateComment
+      tags:
+        - Moderation
+      summary: Hide or restore comment moderation with audit
+      description:
+        Required key/version/reason. Complete/nondeleted comment; cannot undelete, reparent or
+        rewrite. Admin-only, durable audit/CAS/reconciliation. Restore visible does not bypass
+        parent/Recipe/author policy.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema: *a3
+        - $ref: '#/components/parameters/CsrfToken'
+        - *a6
+      responses:
+        '200':
+          description: Success; Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/ModerationReceiptDTO'
+                required:
+                  - success
+                  - data
+        '400':
+          description: Invalid ID/query/header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID or FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Invisible, unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Unique/state/version/idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Strict body validation or eligibility error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Shared social mutation rate limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description:
+            MODERATION_UNCERTAIN, MODERATION_PENDING, COMMENT_UNCERTAIN or QUERY_TIMEOUT; retry
+            safely/reconcile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentModerationRequest'
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          format: email
+          description: Trim/lowercase trước validation; giới hạn sau trim.
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+          pattern: \S
+          description: Passphrase không trim, không toàn whitespace.
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Giới hạn sau trim.
+      required:
+        - email
+        - password
+        - displayName
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          format: email
+          description: Trim/lowercase trước validation; giới hạn sau trim.
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          writeOnly: true
+      required:
+        - email
+        - password
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        currentPassword:
+          type: string
+          minLength: 1
+          maxLength: 128
+          writeOnly: true
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+          pattern: \S
+          description: Passphrase không trim, không toàn whitespace.
+      required:
+        - currentPassword
+        - newPassword
+    ForgotPasswordRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          format: email
+          description: Trim/lowercase trước validation; giới hạn sau trim.
+      required:
+        - email
+    ResetPasswordRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{43}$
+          writeOnly: true
+          description: Token email một lần; không phải session token.
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+          pattern: \S
+          description: Passphrase không trim, không toàn whitespace.
+      required:
+        - token
+        - newPassword
+    VerifyEmailRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{43}$
+          writeOnly: true
+          description: Token email một lần; không phải session token.
+      required:
+        - token
+    UpdateProfileRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Giới hạn sau trim.
+        bio:
+          type: string
+          maxLength: 500
+        avatarAssetId:
+          anyOf:
+            - type: string
+              pattern: ^[a-fA-F0-9]{24}$
+            - type: 'null'
+          description:
+            Validator nhận ObjectId nhưng service hiện trả 422 MEDIA_NOT_AVAILABLE cho giá trị khác
+            null.
+      minProperties: 1
+    UpdatePreferencesRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        dietaryTags:
+          type: array
+          items:
+            type: string
+            enum:
+              - vegetarian
+              - vegan
+              - gluten-free
+              - dairy-free
+              - low-carb
+              - halal
+          maxItems: 6
+        excludedIngredientIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+          maxItems: 100
+          uniqueItems: true
+        favoriteCategoryIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+          maxItems: 100
+          uniqueItems: true
+        maxPrepMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        timezone:
+          type: string
+          maxLength: 100
+          description: Timezone hợp lệ theo Intl.DateTimeFormat.
+        notificationSettings:
+          type: object
+          additionalProperties: false
+          properties:
+            follows:
+              type: boolean
+            recipes:
+              type: boolean
+            comments:
+              type: boolean
+        recommendationOptIn:
+          type: boolean
+      minProperties: 1
+    ChangeUserStatusRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Trim trước kiểm tra; không sửa status chính mình.
+      required:
+        - status
+        - reason
+    PublicUserDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+          readOnly: true
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Giới hạn sau trim.
+          readOnly: true
+        bio:
+          type: string
+          maxLength: 500
+          readOnly: true
+        avatarUrl:
+          type: 'null'
+          description: Hiện luôn null; chưa có Media module.
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - displayName
+        - bio
+        - avatarUrl
+        - createdAt
+    PrivateUserDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+          readOnly: true
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Giới hạn sau trim.
+          readOnly: true
+        bio:
+          type: string
+          maxLength: 500
+          readOnly: true
+        avatarUrl:
+          type: 'null'
+          description: Hiện luôn null; chưa có Media module.
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        email:
+          type: string
+          maxLength: 254
+          format: email
+          description: Trim/lowercase trước validation; giới hạn sau trim.
+          readOnly: true
+        emailVerifiedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          readOnly: true
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          readOnly: true
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+          readOnly: true
+        preferences:
+          $ref: '#/components/schemas/PreferencesDTO'
+          readOnly: true
+      required:
+        - id
+        - displayName
+        - bio
+        - avatarUrl
+        - createdAt
+        - email
+        - emailVerifiedAt
+        - role
+        - status
+        - preferences
+    AdminUserDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+          readOnly: true
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Giới hạn sau trim.
+          readOnly: true
+        bio:
+          type: string
+          maxLength: 500
+          readOnly: true
+        avatarUrl:
+          type: 'null'
+          description: Hiện luôn null; chưa có Media module.
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        email:
+          type: string
+          maxLength: 254
+          format: email
+          description: Trim/lowercase trước validation; giới hạn sau trim.
+          readOnly: true
+        emailVerifiedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          readOnly: true
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          readOnly: true
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+          readOnly: true
+      required:
+        - id
+        - displayName
+        - bio
+        - avatarUrl
+        - createdAt
+        - email
+        - emailVerifiedAt
+        - role
+        - status
+    PreferencesDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        dietaryTags:
+          type: array
+          items:
+            type: string
+            enum:
+              - vegetarian
+              - vegan
+              - gluten-free
+              - dairy-free
+              - low-carb
+              - halal
+          maxItems: 6
+          readOnly: true
+        excludedIngredientIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+          maxItems: 100
+          uniqueItems: true
+          readOnly: true
+        favoriteCategoryIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+          maxItems: 100
+          uniqueItems: true
+          readOnly: true
+        maxPrepMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+          readOnly: true
+        timezone:
+          type: string
+          maxLength: 100
+          description: Timezone hợp lệ theo Intl.DateTimeFormat.
+          readOnly: true
+        notificationSettings:
+          type: object
+          additionalProperties: false
+          properties:
+            follows:
+              type: boolean
+            recipes:
+              type: boolean
+            comments:
+              type: boolean
+          required:
+            - follows
+            - recipes
+            - comments
+          readOnly: true
+        recommendationOptIn:
+          type: boolean
+          readOnly: true
+      required:
+        - dietaryTags
+        - excludedIngredientIds
+        - favoriteCategoryIds
+        - maxPrepMinutes
+        - timezone
+        - notificationSettings
+        - recommendationOptIn
+    CreateCategoryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+        slug:
+          type: string
+          maxLength: 200
+          description:
+            'Input <=200, chuẩn hóa thành Unicode slug dài 1–100. Bỏ qua khi create: sinh từ name.
+            Đổi name không tự đổi slug.'
+        description:
+          type: string
+          maxLength: 1000
+          default: ''
+        isActive:
+          type: boolean
+          default: true
+        sortOrder:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          default: 0
+      required:
+        - name
+      description: Name phải sinh được slug hoặc cung cấp slug hợp lệ.
+    UpdateCategoryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+        slug:
+          type: string
+          maxLength: 200
+          description:
+            'Input <=200, chuẩn hóa thành Unicode slug dài 1–100. Bỏ qua khi create: sinh từ name.
+            Đổi name không tự đổi slug.'
+        description:
+          type: string
+          maxLength: 1000
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+          minimum: 0
+          maximum: 100000
+      minProperties: 1
+    CreateIngredientRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+          maxItems: 20
+          description:
+            Dedupe theo lookup lowercase/NFC, loại self alias. Canonical/alias dành riêng cho một
+            document kể cả inactive.
+          default: []
+        defaultUnit:
+          type: string
+          maxLength: 32
+          description: Giới hạn sau normalization như name; chỉ nhãn, không conversion.
+          default: ''
+        group:
+          type: string
+          maxLength: 80
+          description: Giới hạn sau normalization như name.
+          default: ''
+        isActive:
+          type: boolean
+          default: true
+      required:
+        - name
+    UpdateIngredientRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+          maxItems: 20
+          description:
+            Dedupe theo lookup lowercase/NFC, loại self alias. Canonical/alias dành riêng cho một
+            document kể cả inactive.
+        defaultUnit:
+          type: string
+          maxLength: 32
+          description: Giới hạn sau normalization như name; chỉ nhãn, không conversion.
+        group:
+          type: string
+          maxLength: 80
+          description: Giới hạn sau normalization như name.
+        isActive:
+          type: boolean
+      minProperties: 1
+    CategoryDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+          readOnly: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+          readOnly: true
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+          readOnly: true
+        description:
+          type: string
+          maxLength: 1000
+          readOnly: true
+        isActive:
+          type: boolean
+          readOnly: true
+        sortOrder:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - isActive
+        - sortOrder
+        - createdAt
+        - updatedAt
+    IngredientDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+          readOnly: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+          readOnly: true
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Giới hạn sau NFC/trim/gộp whitespace, không control/format characters, giữ dấu.
+          maxItems: 20
+          description:
+            Dedupe theo lookup lowercase/NFC, loại self alias. Canonical/alias dành riêng cho một
+            document kể cả inactive.
+          readOnly: true
+        defaultUnit:
+          type: string
+          maxLength: 32
+          description: Giới hạn sau normalization như name; chỉ nhãn, không conversion.
+          readOnly: true
+        group:
+          type: string
+          maxLength: 80
+          description: Giới hạn sau normalization như name.
+          readOnly: true
+        isActive:
+          type: boolean
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - name
+        - aliases
+        - defaultUnit
+        - group
+        - isActive
+        - createdAt
+        - updatedAt
+    PaginationMeta:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+      required:
+        - page
+        - limit
+    UserPaginationMeta:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+      required:
+        - page
+        - limit
+        - total
+    SuccessEnvelope:
+      type: object
+      additionalProperties: false
+      properties:
+        success:
+          const: true
+        data: {}
+      required:
+        - success
+        - data
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      properties:
+        success:
+          const: false
+        error:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  field:
+                    type: string
+                  code:
+                    type: string
+                required:
+                  - field
+                  - code
+          required:
+            - code
+            - message
+        requestId:
+          type: string
+      required:
+        - success
+        - error
+        - requestId
+    CsrfDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        csrfToken:
+          type: string
+          description: CSRF token hiện tại; lấy mới sau login, không lưu/chia sẻ.
+          readOnly: true
+      required:
+        - csrfToken
+    AcceptedDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          const: If eligible, an email will be sent
+          readOnly: true
+      required:
+        - message
+    LiveDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          const: alive
+          readOnly: true
+      required:
+        - status
+    ReadyDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          const: ready
+          readOnly: true
+      required:
+        - status
+    MediaUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+        - purpose
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 'JPEG/PNG/WebP: avatar ≤2 MiB, cover/step ≤5 MiB; 20MP, 10000px/side, static only.'
+        purpose:
+          type: string
+          enum:
+            - avatar
+            - recipe_cover
+            - recipe_step
+    MediaAssetDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - purpose
+        - url
+        - width
+        - height
+        - format
+        - bytes
+        - status
+        - expiresAt
+        - createdAt
+      properties:
+        assetId:
+          type: string
+          pattern: ^[a-f0-9]{24}$
+        purpose:
+          type: string
+          enum:
+            - avatar
+            - recipe_cover
+            - recipe_step
+        url:
+          type: 'null'
+          description: Private storage; authorized delivery is not implemented.
+        width:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        height:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        format:
+          type: string
+          enum:
+            - jpg
+            - png
+            - webp
+        bytes:
+          type: integer
+          minimum: 1
+          maximum: 5242880
+        status:
+          type: string
+          enum:
+            - pending_upload
+            - temporary
+            - attached
+            - pending_delete
+            - delete_failed
+            - deleted
+        expiresAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    RecipeIngredientInput:
+      type: object
+      additionalProperties: false
+      properties:
+        ingredientId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+        quantity:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+          maximum: 1000000000
+        unit:
+          type:
+            - string
+            - 'null'
+          minLength: 0
+          maxLength: 32
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        quantityText:
+          type:
+            - string
+            - 'null'
+          minLength: 0
+          maxLength: 100
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        note:
+          type:
+            - string
+            - 'null'
+          minLength: 0
+          maxLength: 500
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        order:
+          type: integer
+          minimum: 1
+          maximum: 40
+      required:
+        - name
+        - order
+    RecipeStepInput:
+      type: object
+      additionalProperties: false
+      properties:
+        stepId:
+          type: string
+          format: uuid
+          description: Server UUID v4; on PATCH only an existing step ID is accepted. Omit for new step.
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        order:
+          type: integer
+          minimum: 1
+          maximum: 30
+        instruction:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        durationMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        imageAssetId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+      required:
+        - order
+    RecipeDraftInput:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 0
+          maxLength: 150
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        description:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        coverImageAssetId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        categoryId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        tags:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+            description: NFC trimmed plain text; markup and control characters rejected.
+            pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+        difficulty:
+          type:
+            - string
+            - 'null'
+          enum:
+            - easy
+            - medium
+            - hard
+            - null
+        prepMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        cookMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        servings:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          maximum: 100
+        ingredients:
+          type: array
+          maxItems: 40
+          items:
+            $ref: '#/components/schemas/RecipeIngredientInput'
+        steps:
+          type: array
+          maxItems: 30
+          items:
+            $ref: '#/components/schemas/RecipeStepInput'
+    RecipeDraftUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 0
+          maxLength: 150
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        description:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        coverImageAssetId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        categoryId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        tags:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+            description: NFC trimmed plain text; markup and control characters rejected.
+            pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+        difficulty:
+          type:
+            - string
+            - 'null'
+          enum:
+            - easy
+            - medium
+            - hard
+            - null
+        prepMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        cookMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        servings:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          maximum: 100
+        ingredients:
+          type: array
+          maxItems: 40
+          items:
+            $ref: '#/components/schemas/RecipeIngredientInput'
+        steps:
+          type: array
+          maxItems: 30
+          items:
+            $ref: '#/components/schemas/RecipeStepInput'
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740990
+      required:
+        - version
+      minProperties: 2
+    OwnerRecipeDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId:
+          type: string
+          pattern: ^[a-fA-F0-9]{24}$
+        title:
+          type: string
+          minLength: 0
+          maxLength: 150
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        slug:
+          type:
+            - string
+            - 'null'
+          minLength: 0
+          maxLength: 200
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        description:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        coverImageAssetId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        coverImageUrl:
+          type: 'null'
+        categoryId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        tags:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+            description: NFC trimmed plain text; markup and control characters rejected.
+            pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+        difficulty:
+          type:
+            - string
+            - 'null'
+          enum:
+            - easy
+            - medium
+            - hard
+            - null
+        prepMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        cookMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 1440
+        totalMinutes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 2880
+        servings:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          maximum: 100
+        ingredients:
+          type: array
+          maxItems: 40
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              ingredientId:
+                type:
+                  - string
+                  - 'null'
+                pattern: ^[a-fA-F0-9]{24}$
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+              quantity:
+                type:
+                  - number
+                  - 'null'
+                minimum: 0
+                maximum: 1000000000
+              unit:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 32
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              quantityText:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 100
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              note:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 500
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              order:
+                type: integer
+                minimum: 1
+                maximum: 40
+            required:
+              - ingredientId
+              - name
+              - quantity
+              - unit
+              - quantityText
+              - note
+              - order
+        steps:
+          type: array
+          maxItems: 30
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              stepId:
+                type: string
+                format: uuid
+                description: Server UUID v4; on PATCH only an existing step ID is accepted. Omit for new step.
+                pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+              order:
+                type: integer
+                minimum: 1
+                maximum: 30
+              instruction:
+                type: string
+                minLength: 0
+                maxLength: 2000
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              durationMinutes:
+                type:
+                  - integer
+                  - 'null'
+                minimum: 0
+                maximum: 1440
+              imageAssetId:
+                type:
+                  - string
+                  - 'null'
+                pattern: ^[a-fA-F0-9]{24}$
+              imageUrl:
+                type: 'null'
+            required:
+              - stepId
+              - order
+              - instruction
+              - durationMinutes
+              - imageAssetId
+              - imageUrl
+        status:
+          const: draft
+        moderationStatus:
+          type: string
+          enum:
+            - normal
+            - hidden
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740990
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - recipeId
+        - title
+        - slug
+        - description
+        - coverImageAssetId
+        - coverImageUrl
+        - categoryId
+        - tags
+        - difficulty
+        - prepMinutes
+        - cookMinutes
+        - totalMinutes
+        - servings
+        - ingredients
+        - steps
+        - status
+        - moderationStatus
+        - version
+        - createdAt
+        - updatedAt
+    RecipeTransitionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740990
+      required:
+        - version
+    PublicRecipeCardDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        slug:
+          type: string
+          maxLength: 200
+        title:
+          type: string
+          minLength: 0
+          maxLength: 150
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        summary:
+          type: string
+          maxLength: 200
+        categoryId:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+        totalMinutes:
+          type: integer
+          minimum: 0
+          maximum: 2880
+        coverImageUrl:
+          type: 'null'
+        publishedAt:
+          type: string
+          format: date-time
+        author:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: ^[0-9a-f]{24}$
+            displayName:
+              type: string
+          required:
+            - id
+            - displayName
+      required:
+        - recipeId
+        - slug
+        - title
+        - summary
+        - categoryId
+        - difficulty
+        - totalMinutes
+        - coverImageUrl
+        - publishedAt
+        - author
+    PublicRecipeDetailDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        slug:
+          type: string
+          maxLength: 200
+        title:
+          type: string
+          minLength: 0
+          maxLength: 150
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        summary:
+          type: string
+          maxLength: 200
+        categoryId:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+        totalMinutes:
+          type: integer
+          minimum: 0
+          maximum: 2880
+        coverImageUrl:
+          type: 'null'
+        publishedAt:
+          type: string
+          format: date-time
+        author:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: ^[0-9a-f]{24}$
+            displayName:
+              type: string
+          required:
+            - id
+            - displayName
+        description:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC trimmed plain text; markup and control characters rejected.
+          pattern: ^[^<>\p{Cc}\p{Cf}]*$
+        servings:
+          type: integer
+          minimum: 1
+          maximum: 100
+        prepMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        cookMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        tags:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+            description: NFC trimmed plain text; markup and control characters rejected.
+            pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+        ingredients:
+          type: array
+          maxItems: 40
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              ingredientId:
+                type:
+                  - string
+                  - 'null'
+                pattern: ^[a-fA-F0-9]{24}$
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^(?=.*\S)[^<>\p{Cc}\p{Cf}]*$
+              quantity:
+                type:
+                  - number
+                  - 'null'
+                minimum: 0
+                maximum: 1000000000
+              unit:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 32
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              quantityText:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 100
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              note:
+                type:
+                  - string
+                  - 'null'
+                minLength: 0
+                maxLength: 500
+                description: NFC trimmed plain text; markup and control characters rejected.
+                pattern: ^[^<>\p{Cc}\p{Cf}]*$
+              order:
+                type: integer
+                minimum: 1
+                maximum: 40
+            required:
+              - ingredientId
+              - name
+              - quantity
+              - unit
+              - quantityText
+              - note
+              - order
+        steps:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              stepId:
+                type: string
+                format: uuid
+              order:
+                type: integer
+                minimum: 1
+                maximum: 30
+              instruction:
+                type: string
+                minLength: 5
+                maxLength: 2000
+              durationMinutes:
+                type:
+                  - integer
+                  - 'null'
+                minimum: 0
+                maximum: 1440
+              imageUrl:
+                type: 'null'
+            required:
+              - stepId
+              - order
+              - instruction
+              - durationMinutes
+              - imageUrl
+      required:
+        - recipeId
+        - slug
+        - title
+        - summary
+        - categoryId
+        - difficulty
+        - totalMinutes
+        - coverImageUrl
+        - publishedAt
+        - author
+        - description
+        - servings
+        - prepMinutes
+        - cookMinutes
+        - tags
+        - ingredients
+        - steps
+    FavoriteStateDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId:
+          type: string
+          pattern: ^[a-f0-9]{24}$
+        favorited:
+          const: true
+      required:
+        - recipeId
+        - favorited
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        content:
+          type: string
+          minLength: 0
+          maxLength: 1000
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+      required:
+        - rating
+    CommentCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1500
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+        parentId: &a9
+          type:
+            - string
+            - 'null'
+          minLength: 24
+          maxLength: 24
+          pattern: ^[a-fA-F0-9]{24}$
+      required:
+        - content
+    CommentUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1500
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+        version: &a7
+          type: integer
+          minimum: 0
+          maximum: 9007199254740990
+      required:
+        - content
+        - version
+    ReportRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        targetType:
+          type: string
+          enum:
+            - recipe
+            - comment
+        targetId: *a3
+        reason:
+          type: string
+          enum:
+            - spam
+            - abuse
+            - copyright
+            - other
+        details:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+      required:
+        - targetType
+        - targetId
+        - reason
+    RecipeModerationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        version: *a7
+        status:
+          type: string
+          enum:
+            - normal
+            - hidden
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+      required:
+        - version
+        - status
+        - reason
+    CommentModerationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        version: *a7
+        status:
+          type: string
+          enum:
+            - visible
+            - hidden
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+      required:
+        - version
+        - status
+        - reason
+    ReportResolutionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        version: *a7
+        resolution:
+          type: string
+          enum:
+            - resolved
+            - rejected
+        action:
+          type: string
+          enum:
+            - none
+            - hide
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: NFC/trim plain text. Reject markup, controls and format characters.
+        targetVersion: *a7
+      required:
+        - version
+        - resolution
+        - action
+        - reason
+      allOf:
+        - if:
+            properties:
+              resolution:
+                const: rejected
+            required:
+              - resolution
+          then:
+            properties:
+              action:
+                const: none
+        - if:
+            properties:
+              action:
+                const: hide
+            required:
+              - action
+          then:
+            required:
+              - targetVersion
+          else:
+            not:
+              required:
+                - targetVersion
+    ReviewDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        reviewId: *a3
+        recipeId: *a3
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        content:
+          type: string
+        author: &a10
+          type: object
+          additionalProperties: false
+          properties:
+            id: *a3
+            displayName:
+              type: string
+          required:
+            - id
+            - displayName
+        createdAt: &a8
+          type: string
+          format: date-time
+        updatedAt: *a8
+      required:
+        - reviewId
+        - recipeId
+        - rating
+        - content
+        - author
+        - createdAt
+        - updatedAt
+    CommentDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        commentId: *a3
+        recipeId: *a3
+        parentId: *a9
+        content:
+          type: string
+        author: *a10
+        version: *a7
+        createdAt: *a8
+        updatedAt: *a8
+      required:
+        - commentId
+        - recipeId
+        - parentId
+        - content
+        - author
+        - version
+        - createdAt
+        - updatedAt
+    ReportDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        reportId: *a3
+        targetType: &a11
+          type: string
+          enum:
+            - recipe
+            - comment
+        targetId: *a3
+        status: &a12
+          type: string
+          enum:
+            - pending
+            - resolved
+            - rejected
+        createdAt: *a8
+      required:
+        - reportId
+        - targetType
+        - targetId
+        - status
+        - createdAt
+    RatingSummaryDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        averageRating:
+          type:
+            - number
+            - 'null'
+          minimum: 1
+          maximum: 5
+        ratingCount:
+          type: integer
+          minimum: 0
+      required:
+        - averageRating
+        - ratingCount
+    ModerationReceiptDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        auditId: *a3
+        targetId: *a3
+        targetType:
+          type: string
+          enum:
+            - recipe
+            - comment
+            - report
+        status:
+          type: string
+          enum:
+            - normal
+            - hidden
+            - visible
+            - resolved
+            - rejected
+        version: *a7
+      required:
+        - auditId
+        - targetId
+        - targetType
+        - status
+        - version
+    AdminReportDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        reportId: *a3
+        targetType: *a11
+        targetId: *a3
+        status: *a12
+        createdAt: *a8
+        reporterId: *a3
+        reason:
+          type: string
+          enum:
+            - spam
+            - abuse
+            - copyright
+            - other
+        details:
+          type: string
+        reviewedBy: *a9
+        reviewedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        resolutionNote:
+          type:
+            - string
+            - 'null'
+        resolutionAction:
+          type:
+            - string
+            - 'null'
+          enum:
+            - none
+            - hide
+            - null
+        version: *a7
+        processing:
+          type: boolean
+        target:
+          oneOf:
+            - type: 'null'
+            - type: object
+              additionalProperties: false
+              properties:
+                version: *a7
+                status:
+                  type: string
+                recipeId: *a3
+                available:
+                  type: boolean
+                title:
+                  type:
+                    - string
+                    - 'null'
+                content:
+                  type:
+                    - string
+                    - 'null'
+              required:
+                - version
+                - status
+                - recipeId
+                - available
+                - title
+                - content
+      required:
+        - reportId
+        - targetType
+        - targetId
+        - status
+        - createdAt
+        - reporterId
+        - reason
+        - details
+        - reviewedBy
+        - reviewedAt
+        - resolutionNote
+        - resolutionAction
+        - version
+        - processing
+        - target
+  parameters:
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: GET /api/v1/auth/csrf cùng browser, lấy lại sau login. Không phải session token.
+      schema:
+        type: string
+        minLength: 1
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    BadRequest:
+      description: INVALID_JSON hoặc VALIDATION_ERROR (params/query).
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: INVALID_JSON hoặc VALIDATION_ERROR (params/query).
+            requestId: example-request-id
+    Unauthorized:
+      description: UNAUTHENTICATED (missing/expired/revoked/suspended session) hoặc INVALID_CREDENTIALS.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: UNAUTHENTICATED
+              message: UNAUTHENTICATED (missing/expired/revoked/suspended session) hoặc INVALID_CREDENTIALS.
+            requestId: example-request-id
+    Forbidden:
+      description: CSRF_INVALID hoặc FORBIDDEN. CSRF kiểm tra trước authentication.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: CSRF_INVALID
+              message: CSRF_INVALID hoặc FORBIDDEN. CSRF kiểm tra trước authentication.
+            requestId: example-request-id
+    NotFound:
+      description: USER_NOT_FOUND, CATEGORY_NOT_FOUND, INGREDIENT_NOT_FOUND hoặc NOT_FOUND.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: USER_NOT_FOUND, CATEGORY_NOT_FOUND, INGREDIENT_NOT_FOUND hoặc NOT_FOUND.
+            requestId: example-request-id
+    Conflict:
+      description:
+        EMAIL_EXISTS, CATEGORY_SLUG_EXISTS, INGREDIENT_NAME_CONFLICT, VERSION_CONFLICT,
+        SELF_STATUS_CHANGE, AUTH_STATE_CHANGED.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: VERSION_CONFLICT
+              message:
+                EMAIL_EXISTS, CATEGORY_SLUG_EXISTS, INGREDIENT_NAME_CONFLICT, VERSION_CONFLICT,
+                SELF_STATUS_CHANGE, AUTH_STATE_CHANGED.
+            requestId: example-request-id
+    PayloadTooLarge:
+      description: JSON request vượt 100kb.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: PAYLOAD_TOO_LARGE
+              message: JSON request vượt 100kb.
+            requestId: example-request-id
+    UnsupportedMediaType:
+      description: Request encoding không hỗ trợ.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: UNSUPPORTED_MEDIA_TYPE
+              message: Request encoding không hỗ trợ.
+            requestId: example-request-id
+    ValidationError:
+      description: VALIDATION_ERROR (body), INVALID_TOKEN hoặc MEDIA_NOT_AVAILABLE.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: VALIDATION_ERROR (body), INVALID_TOKEN hoặc MEDIA_NOT_AVAILABLE.
+            requestId: example-request-id
+    RateLimited:
+      description: Shared sensitive bucket hoặc CSRF bucket.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 0
+          description: Seconds until retry.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: RATE_LIMITED
+              message: Shared sensitive bucket hoặc CSRF bucket.
+            requestId: example-request-id
+    InternalError:
+      description: Lỗi nội bộ đã sanitize.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: INTERNAL_ERROR
+              message: Lỗi nội bộ đã sanitize.
+            requestId: example-request-id
+    Unavailable:
+      description: Readiness hoặc email disabled.
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error:
+              code: SERVICE_UNAVAILABLE
+              message: Readiness hoặc email disabled.
+            requestId: example-request-id
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: recipe-hub-session
+      description:
+        Browser-managed HttpOnly cookie. HTTPS dùng prefix __Host-; JSON runtime phản ánh tên
+        thực tế. Login qua API, không nhập raw token.
