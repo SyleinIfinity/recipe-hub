@@ -1,0 +1,22 @@
+npm notice run npx
+npm notice run 'playwright' test e2e/public-kitchen.spec.js --workers=1
+[WebServer] (node:427288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:427469) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:427496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/public-kitchen.spec.js:153:1 › FE04 Home six viewports, real public data, artwork, fonts and console (6.3s)
+  ✓  2 e2e/public-kitchen.spec.js:247:1 › FE04 search, filters, paging, Back/Forward, detail and profile use real API (2.8s)
+  ✓  3 e2e/public-kitchen.spec.js:305:1 › FE04 public screens desktop/mobile snapshots and private visibility (5.1s)
+  ✓  4 e2e/public-kitchen.spec.js:337:1 › FE04 native drawer keyboard, outside, focus restoration, resize and reduced motion (1.9s)
+  ✓  5 e2e/public-kitchen.spec.js:392:1 › FE04 controlled transport failures distinguish loading, empty, retry and malformed filters (1.2s)
+
+  5 passed (22.7s)

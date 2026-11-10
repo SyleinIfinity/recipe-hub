@@ -1,0 +1,33 @@
+npm notice run test:e2e
+npm notice run playwright test --workers=1
+[WebServer] (node:742869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:743018) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:743092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/foundation.spec.js:3:1 › React connects to the running API and MongoDB (1.0s)
+  ✓   2 e2e/media.spec.js:7:1 › MED-57/64 Firefox Swagger multipart file and purpose with cookie/CSRF (3.6s)
+  ✓   3 e2e/media.spec.js:121:1 › ML-65/68 Firefox Swagger list/delete, ownership, CSRF and worker completion (12.7s)
+  ✓   4 e2e/openapi.spec.js:6:1 › DOC-17..20/24 Firefox Swagger manual cookie/CSRF flow and permissions (14.6s)
+  ✓   5 e2e/public-kitchen.spec.js:166:1 › FE04 Home six viewports, real public data, artwork, fonts and console (3.8s)
+  ✓   6 e2e/public-kitchen.spec.js:356:1 › FE04 search, filters, paging, Back/Forward, detail and profile use real API (2.0s)
+  ✓   7 e2e/public-kitchen.spec.js:414:1 › FE04 public screens desktop/mobile snapshots and private visibility (3.3s)
+  ✓   8 e2e/public-kitchen.spec.js:446:1 › FE04 native drawer keyboard, outside, focus restoration, resize and reduced motion (1.3s)
+  ✓   9 e2e/public-kitchen.spec.js:501:1 › FE04 controlled transport failures distinguish loading, empty, retry and malformed filters (835ms)
+  ✓  10 e2e/public-kitchen.spec.js:535:1 › FE04VR long authenticated name/title, loading and text-spacing reflow (2.7s)
+  ✓  11 e2e/public-kitchen.spec.js:649:1 › FE05 approved FE04-VR visual baseline (2.3s)
+  ✓  12 e2e/public-kitchen.spec.js:664:1 › FE05 navigation cancels pending GET, respects fragments and browser history (1.0s)
+  ✓  13 e2e/publication.spec.js:6:1 › PUB-83..86 Firefox Swagger publish, guest detail, unpublish and revoked detail (7.8s)
+  ✓  14 e2e/recipe.spec.js:7:1 › RCP-67..70 Firefox Swagger draft create/list/detail/version/media/soft-delete (17.8s)
+  ✓  15 e2e/search-favorites.spec.js:6:1 › QA-03..06 Firefox Swagger search, combined filters, ANY/ALL, paging, favorites and privacy (17.7s)
+  ✓  16 e2e/social.spec.js:6:1 › BE13 Firefox Swagger User reviews/comments/reports and Admin audited moderation (38.0s)
+
+  16 passed (2.2m)

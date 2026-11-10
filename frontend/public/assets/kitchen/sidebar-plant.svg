@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" fill="none">
+<defs><linearGradient id="leaf" x2="1" y2="1"><stop stop-color="#a8b478"/><stop offset=".5" stop-color="#6c8b4c"/><stop offset="1" stop-color="#405b35"/></linearGradient><linearGradient id="pot" x2="1" y2="1"><stop stop-color="#bd8351"/><stop offset="1" stop-color="#74462e"/></linearGradient></defs>
+<ellipse cx="121" cy="285" rx="89" ry="9" fill="#2c1c15" opacity=".2"/>
+<path d="M112 255Q104 170 48 93M114 251Q159 163 204 122M114 248Q144 121 126 35M115 249Q73 186 27 185M116 245Q159 210 224 205" stroke="#738650" stroke-width="7" stroke-linecap="round"/>
+<g fill="url(#leaf)" stroke="#637a45" stroke-width="1.5">
+<path d="M68 131Q-1 134 5 76Q47 72 68 131Z"/><path d="M80 153Q69 88 113 85Q127 132 80 153Z"/>
+<path d="M50 101Q4 66 24 30Q63 47 50 101Z"/><path d="M121 85Q80 57 95 6Q142 16 121 85Z"/>
+<path d="M130 139Q133 63 180 68Q191 116 130 139Z"/><path d="M154 175Q157 112 218 109Q217 158 154 175Z"/>
+<path d="M187 145Q176 84 226 61Q246 110 187 145Z"/><path d="M86 207Q31 219 7 178Q56 156 86 207Z"/>
+<path d="M143 229Q172 176 230 189Q210 237 143 229Z"/><path d="M113 236Q57 248 45 214Q90 194 113 236Z"/>
+</g>
+<g stroke="#b3bc80" stroke-width="1.5" opacity=".65"><path d="M61 123 16 86M85 141 104 98M124 74 106 18M139 124 169 79M164 163 205 121M87 205 19 184M154 223 217 198"/></g>
+<path d="M72 246H165L152 284Q118 296 85 284Z" fill="url(#pot)" stroke="#6c432c" stroke-width="2"/><rect x="67" y="239" width="104" height="16" rx="5" fill="#c3905a"/><path d="M86 260H151" stroke="#d5aa72" opacity=".6"/>
+</svg>

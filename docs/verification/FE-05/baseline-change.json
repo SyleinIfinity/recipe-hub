@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-10",
+  "authorization": "FE-05 Task B, approved FE-04-VR desktop/mobile candidate only",
+  "head": "f8d4cd6135045a43ff1060e392f581bf5e7f2ed3",
+  "branch": "khanh",
+  "threshold": 0.005,
+  "browser": "Firefox / Linux, Playwright installed version",
+  "fixture": "public-kitchen.spec.js: guest; four published recipe titles; real isolated MongoDB recipe-hub-test fixture; randomized IDs not rendered",
+  "snapshots": [
+    {
+      "width": 1672,
+      "old": "e2e/public-kitchen.spec.js-snapshots/kitchen-home-1672-linux.png",
+      "oldSha256": "e2a3c0d0be5ffe84dc57fd5ee31d6fecb3982d99cf1a2fd28314c73645987ebb",
+      "candidate": "docs/screenshots/FE-04-VR/candidates/kitchen-home-1672-candidate-full.png",
+      "candidateSha256": "2e18bc6c6584057bf03058cf413720ff9c04c6f78bdb226894d99ebe7d39e1a3",
+      "legacyActualPixelIdenticalToCandidate": true,
+      "dimensions": [1672, 1004],
+      "approvedViewportMatchesCandidateTop": false,
+      "freshRuntimeDimensions": [1672, 1004],
+      "freshRuntimeExactPixels": true,
+      "newSha256": "2e18bc6c6584057bf03058cf413720ff9c04c6f78bdb226894d99ebe7d39e1a3",
+      "candidateTopVsApprovedViewportDiff": {
+        "bbox": [294, 939, 1074, 941],
+        "changedPixels": 52,
+        "reason": "fullPage vs viewport clipping at bottom glyph edge"
+      },
+      "freshViewportMatchesApprovedExact": true,
+      "oldDimensions": [1672, 1044],
+      "newDimensions": [1672, 1004],
+      "oldNewCommonChangedPixels": 1418425,
+      "oldNewCommonDimensions": [1672, 1004]
+    },
+    {
+      "width": 390,
+      "old": "e2e/public-kitchen.spec.js-snapshots/kitchen-home-390-linux.png",
+      "oldSha256": "daa57929df3834c59747c39343e03accbd7272f97832197d03990f202457b7b0",
+      "candidate": "docs/screenshots/FE-04-VR/candidates/kitchen-home-390-candidate-full.png",
+      "candidateSha256": "ac57e898f1e5740ffe3343bea28a839df19defd925060e109c39f8690e067e99",
+      "legacyActualPixelIdenticalToCandidate": true,
+      "dimensions": [390, 2662],
+      "approvedViewportMatchesCandidateTop": true,
+      "freshRuntimeDimensions": [390, 2662],
+      "freshRuntimeExactPixels": true,
+      "newSha256": "ac57e898f1e5740ffe3343bea28a839df19defd925060e109c39f8690e067e99",
+      "candidateTopVsApprovedViewportDiff": {
+        "bbox": null,
+        "changedPixels": 0,
+        "reason": "identical"
+      },
+      "freshViewportMatchesApprovedExact": true,
+      "oldDimensions": [390, 2832],
+      "newDimensions": [390, 2662],
+      "oldNewCommonChangedPixels": 862085,
+      "oldNewCommonDimensions": [390, 2662]
+    }
+  ],
+  "playwright": "1.65.0"
+}

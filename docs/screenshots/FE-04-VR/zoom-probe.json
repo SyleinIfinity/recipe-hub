@@ -1,0 +1,12 @@
+{
+  "attempt": "Control+Equal six times in headless Firefox",
+  "before": {
+    "width": 1440,
+    "dpr": 1
+  },
+  "after": {
+    "width": 1440,
+    "dpr": 1
+  },
+  "result": "not_verified"
+}

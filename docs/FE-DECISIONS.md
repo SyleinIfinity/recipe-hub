@@ -46,3 +46,71 @@ FE-00 đã được người dùng cho tiếp tục sang FE-01; hồ sơ FE-00 g
 | FE-DEC-016 | Responsive drawer≤1024, grid4/3/3/2/1/1 theo sáu viewport                             | Proposed; chưa runtime review                 |
 
 FE-OPEN-009 trước đây ghi threshold chưa chốt: **được bổ sung bởi đề xuất30 phút ở FE-DEC-013**, không tự đổi trạng thái thành user-confirmed. Asset copyright/layers/font artifacts còn open; registry không phải bằng chứng các file đã được sản xuất. Không chốt CSS tokens ở FE-01.
+
+## FE-02 — Design System specification (2026-11-10)
+
+Người dùng giao FE-02; lịch sử FE-01 giữ nguyên. [Báo cáo FE-02](FE-02-report.md), [tokens](FE-02-Design-Tokens.md), [component contracts](FE-02-Component-Specification.md) là nguồn hiện hành. Không tự bắt đầu FE-03/04.
+
+| ID         | Quyết định                                                                          | Trạng thái                                                             |
+| ---------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| FE-DEC-017 | Primitive→semantic→component, naming --rh-*,120definitions có consumer              | Proposed; chưa CSS runtime                                             |
+| FE-DEC-018 | Text trên peach dùng ink900; borderlight chỉ decorative; success text #286A40       | Proposed mapping;49solidcolor calculations verified,không WCAG toàn UI |
+| FE-DEC-019 | Typography13roles, Be Vietnam Pro body/Dancing Script hero; display line-height1.25 | Proposed; metadata/license verified, glyph not_verified                |
+| FE-DEC-020 | 34semantic contracts,disclosure AccountMenu,nativeDialog policy và async states     | Proposed; browser/feature integration not_verified                     |
+| FE-DEC-021 | Local scene0/1/2/UI3; overlay40/50/toast60 với active-subtree policy                | Proposed; actualpaint/focus not_verified                               |
+
+FE-01 palette là candidates: FE-DEC-018 bổ sung/supersede **vai trò màu** không đủ contrast đã tính, không xóa lịch sử palette. confirmed chỉ các yêu cầu người dùng như FE-DEC-010/no fake/private media; proposal FE01/02 không tự chuyển confirmed do giao Work Order tiếp theo. Font/art files còn blocked; FE-03 đủ đầu vào đặc tả, chưa được thực hiện.
+
+## FE-03 — Screen flows/action registry (2026-11-10)
+
+Người dùng giao FE-03; giữ lịch sử FE00..02 và trạng thái proposal. [Report](FE-03-report.md), [Navigation](FE-03-Navigation-and-User-Flows.md), [Gaps](FE-03-Readiness-and-Gap-Report.md) là phần bổ sung hiện hành. Không triển khai FE-04.
+
+| ID         | Quyết định                                                                                                              | Trạng thái                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| FE-DEC-022 | 43screen/context,280Action IDs,publicread-only foundation vs laterintegration vs hiddenP2                               | Proposed;UI chưaimplemented                                                     |
+| FE-DEC-023 | Safe internal implemented allowlist return;reset/verifyfragmentmemory và explicitconfirm;noautoreplay mutation sauLogin | Proposedimplementation contract;security constraints confirmed                  |
+| FE-DEC-024 | Unknownfavorite:Homeheartẩn;Detail explicitPUT “Lưu yêu thích” command,knownreceipt/row mớiRemove                       | Proposed;supersedes việc cấm mọi Save action khiunknown ởFE02,khôngfalse-toggle |
+| FE-DEC-025 | Draft-only MyRecipes và PATCH/DELETE;publishedownerGET/read-only+unpublish;record response-schema drift                 | Sourceverified static;safeUXproposed;schemafixblocked riêng                     |
+| FE-DEC-026 | Catalogactive-only vàRecipe/Socialnewline rejection ưu tiên hơn genericoldspec                                          | Static source evidence;UXproposal,không Backendchange                           |
+| FE-DEC-027 | FE04A đủspec đểgiao;FE04B highfidelity blockedart/not_verifiedbrowser                                                   | Readinessassessment,không userapproval/permission tựcode                        |
+
+FE-03 không chuyển copy/font/token/threshold proposals thành confirmed. ChênhOwnerRecipeDTO.statusconstdraft so vớisourcepublished đãghiG09;OpenAPI routeparitypass khôngđủ chứngminhresponse schema. Current source cóhạnchế khácreportcũ:không publishedlist hoặcpublishededit/delete trực tiếp;noinactivecataloglisting. Không tựsửaAPI/Mongo/env đểđạtmatching.
+
+## FE-04 — React implementation và browser evidence (2026-11-10)
+
+Người dùng đã giao FE-04 `sylein-write-code`; các trạng thái “chưa code/blocked art” ở FE-01→03 là lịch sử, được cập nhật bằng [báo cáo implementation](FE-04-Implementation-Report.md). Không tự biến proposal thành user-approved visual.
+
+| ID         | Quyết định thực thi                                                                                                    | Trạng thái                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| FE-DEC-028 | React History API router tối thiểu cho sáu route; API client read-only có abort/stale protection, không dependency mới | Implemented/tested                                                   |
+| FE-DEC-029 | Bảy SVG gốc + CSS scene, bốn Google Fonts binary/OFL notices self-host; concept chỉ tham chiếu                         | Runtime assets ready; SVG giản lược painterly, visual pending review |
+| FE-DEC-030 | Chỉ một Explore quick action, hai sidebar destinations; rail account/public recipe, không fake P2/EXP/rating           | Implemented/tested; cập nhật composition FE-DEC-012                  |
+| FE-DEC-031 | Null media dùng fallback 8:5; chỉ nhận API media same-origin được server trả; không URL suy đoán                       | Implemented/tested; live delivery vẫn deferred                       |
+| FE-DEC-032 | Desktop 244/1072/356 và 220/920/300; drawer ≤1024; URL filter và page reset; clear giữ sort/limit                      | Browser measured/tested                                              |
+| FE-DEC-033 | Hai runtime regression baselines desktop/mobile; sáu viewport screenshots và public page artifacts                     | Candidates mới, chưa user-approved; không phải concept pixel-match   |
+
+FE-OPEN-004/005: đã có original vector layers và binary font/license, thay trạng thái thiếu file; chưa coi chất lượng painterly đã nghiệm thu. FE-OPEN-007: browser evidence đã có, user signoff còn pending. FE-OPEN-003/006 và DEC-BE12-001/002 không đổi. Native browser zoom200% vẫn chưa verified; kiểm tra reflow720px không được gọi là chrome zoom pass. Không sửa Backend/env, không stage/commit/push/đổi branch, không bắt đầu FE-05.
+
+## FE-04-VR — Visual refinement (2026-11-10)
+
+Người dùng giao FE-04-VR, không phải FE-05. [Báo cáo](FE-04-VR-report.md), [before/after](FE-04-VR-Visual-Before-After.md). Các quyết định dưới đây là implementation candidates, không tự đánh dấu visual user-approved.
+
+| ID         | Quyết định                                                                                                                                             | Trạng thái                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| FE-DEC-034 | Ba composite painterly gốc qua built-in imagegen, WebP alpha desktop/mobile; đèn/wood/fallback SVG mới. UI vẫn DOM, master không ship/generation input | Implemented/browser-reviewed; user signoff pending       |
+| FE-DEC-035 | Native picture sources chọn responsive; fallback src gắn sau mount để tránh React tải kép. Budget kiểm tra qua bytes/resource entries                  | Tested:324,162B desktop/105,192B mobile; không CWV claim |
+| FE-DEC-036 | Health DEV dùng sr-only, giữ Foundation smoke và production bỏ health request; mobile crop ưu tiên window/pot, tile/card spacing gọn                   | Implemented/tested; không đổi API/route/font/token       |
+| FE-DEC-037 | Giữ nguyên hai legacy snapshots FE-04; tách assertions thành ca visual riêng, candidate/diff VR riêng. Không --update-snapshots                        | 14 functional E2E pass;1 legacy visual fail chờ review   |
+
+368 unit/390 integration pass, native browser zoom200% vẫn not_verified dù reflow/text-spacing đạt. FE-04 screenshots/source được bảo toàn bằng hashes/archive; không overwrite user changes, Backend/env/Git branch/index không đổi. Không tự bắt đầu FE-05.
+
+## FE-05 — App foundation (2026-11-10)
+
+User giao FE-05 và trong Task B xác nhận đã xem/chấp nhận hướng visual FE-04-VR desktop/mobile. Các trạng thái pending ở báo cáo FE-04/VR giữ như lịch sử; phần mới này cập nhật đúng phạm vi hai Home candidates, không phê duyệt mọi giao diện hoặc master pixel-match.
+
+- FE-DEC-038: giữ History API/JavaScript/native platform; registry+safe return+access foundation; không dependency/router rewrite.
+- FE-DEC-039: mở rộng client duy nhất, CSRF memory/session epoch/uncertain mutation outcomes; session owner tại App; Backend vẫn là authority, không auth pages FE-05.
+- FE-DEC-040: root/route render boundaries, revision-tagged private reads; không global cache/store cho mọi dữ liệu.
+- FE-DEC-041: chỉ chốt hai expected Home từ reviewed VR candidates, old baselines/hash/diff giữ riêng, threshold0.005 không đổi; E2E chạy không auto-update. [Evidence](FE-05-Visual-Baseline-Finalization.md).
+
+[FE-05 report](FE-05-report.md) và [test results](FE-05-Test-Results.md) là trạng thái hiện hành. FE-06/07 chỉ đánh giá readiness, không tự triển khai.
