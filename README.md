@@ -182,3 +182,7 @@ GET `/api/v1/me/media`, DELETE `/api/v1/media/images/{assetId}` với session/CS
 ### BE-11 — Publication & public visibility
 
 [API BE-11](docs/BE-11-api.md), [ADR 008](docs/adr/008-recipe-publication-and-media-visibility.md), [report](docs/BE-11-report.md): publish/unpublish với version CAS, public list/detail theo slug và active-author visibility. Owner detail đọc được published; sửa/xóa cần unpublish trước. Media gateway kiểm tra quyền nhưng runtime chưa có binary transport: authorized503, URLs null; controlled fixture tests không phải Cloudinary/CDN live verification. Search/Favorites được bổ sung tại BE-12 theo ghi chú đầu tài liệu.
+
+## FE-DEC-010 — Frontend trực tiếp React/CSS (2026-11-10)
+
+Confirmed: Direct React Visual Design, No Figma. Figma workflow v1.0 **superseded**. FE-00 chỉ audit/docs; FE-01 visual teardown, FE-02 CSS/component specification, FE-03 screen/action flows, FE-04 React visual implementation, FE-05+ hoàn thiện kiến trúc/integration. Review bằng browser screenshot/responsive/Playwright; không tự chuyển bước hoặc code từ FE-00. Chi tiết trong [docs/FE-00-report.md](docs/FE-00-report.md), [decisions](docs/FE-DECISIONS.md).

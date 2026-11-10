@@ -69,3 +69,7 @@ Chỉ gọi external service khi được phép và cần thiết. Timeout hữu
 Admin moderation/report resolution yêu cầu UUID key scoped actor, version và reason. Reuse AuditLog BE-05, durable intent trước target CAS/marker, applied projection rồi clear; report claim + deterministic child audit trước finalization, conflict fence report version, unknown503 và retry/reconcile captured decision. Không giả transaction hoặc success khi audit chưa xác nhận. CLI social-reconcile dry-run default, apply bounded và exit2 nếu uncertain, không provider calls. BE-05 user-status audit debt giữ ngoài phạm vi.
 
 Shared publicRecipePipeline được dùng cho interactions/summary và Search/Favorites; không relation nào cấp quyền private. Admin chỉ xem report context có căn cứ, không current Draft text hoặc blanket image access. DEC-BE12-001/002 giữ nguyên: Cloudinary/binary/live sau Frontend, external timeout không bỏ lỗi local. BE-14 chưa triển khai.
+
+## FE-DEC-010 — Frontend trực tiếp React/CSS (2026-11-10)
+
+Confirmed: Direct React Visual Design, No Figma. Figma workflow v1.0 **superseded**. FE-00 chỉ audit/docs; FE-01 visual teardown, FE-02 CSS/component specification, FE-03 screen/action flows, FE-04 React visual implementation, FE-05+ hoàn thiện kiến trúc/integration. Review bằng browser screenshot/responsive/Playwright; không tự chuyển bước hoặc code từ FE-00. Chi tiết trong [FE-00-report.md](FE-00-report.md), [FE-DECISIONS.md](FE-DECISIONS.md).
