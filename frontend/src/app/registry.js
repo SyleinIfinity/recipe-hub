@@ -7,8 +7,8 @@ export const features = Object.freeze({
   },
   authentication: {
     backend: true,
-    integrated: false,
-    visible: false,
+    integrated: true,
+    visible: true,
     owner: 'FE-07',
   },
   editor: { backend: true, integrated: false, visible: false, owner: 'FE-08' },
@@ -16,7 +16,29 @@ export const features = Object.freeze({
   admin: { backend: true, integrated: false, visible: false, owner: 'FE-10' },
   p2: { backend: false, integrated: false, visible: false, owner: 'FE-11+' },
 });
+export const accountRoutes = [
+  ['login', '/auth/login', 'Đăng nhập', 'guest'],
+  ['register', '/auth/register', 'Đăng ký', 'guest'],
+  ['forgot', '/auth/forgot-password', 'Quên mật khẩu', 'guest'],
+  ['reset', '/auth/reset-password', 'Đặt lại mật khẩu', 'public'],
+  ['verify', '/auth/verify-email', 'Xác minh email', 'public'],
+  ['resend', '/auth/request-email-verification', 'Gửi lại xác minh', 'public'],
+  ['account', '/account', 'Tài khoản của tôi', 'authenticated'],
+  ['editProfile', '/account/profile', 'Chỉnh sửa hồ sơ', 'authenticated'],
+  ['settings', '/account/settings', 'Cài đặt tài khoản', 'authenticated'],
+  ['password', '/account/change-password', 'Đổi mật khẩu', 'authenticated'],
+].map(([id, pattern, title, access]) => ({
+  id,
+  pattern,
+  title,
+  access,
+  screen: 'AccountScreens',
+  feature: 'authentication',
+  implemented: true,
+  owner: 'FE-07',
+}));
 export const routes = Object.freeze([
+  ...accountRoutes,
   {
     id: 'home',
     pattern: '/',

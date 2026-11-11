@@ -1,3 +1,4 @@
+import { accountRoutes } from './registry.js';
 import { createElement as h, useSyncExternalStore } from 'react';
 
 let navigationAction = 'direct';
@@ -78,6 +79,8 @@ export function useLocation() {
   return { pathname: url.pathname, search: url.search, hash: url.hash };
 }
 export function matchRoute(pathname) {
+  const account = accountRoutes.find((route) => route.pattern === pathname);
+  if (account) return { page: account.id };
   if (pathname === '/') return { page: 'home' };
   if (pathname === '/recipes') return { page: 'explore' };
   if (pathname === '/forbidden') return { page: 'forbidden' };
@@ -117,7 +120,11 @@ export function safeReturnPath(value, fallback = '/') {
   if (
     url.origin !== window.location.origin ||
     url.hash ||
-    matchRoute(url.pathname).page === 'notfound'
+    matchRoute(url.pathname).page === 'notfound' ||
+    accountRoutes.some(
+      (route) =>
+        route.pattern === url.pathname && route.access !== 'authenticated',
+    )
   )
     return fallback;
   // Only public, implemented destinations; no credentials or token-bearing queries.

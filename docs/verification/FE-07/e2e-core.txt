@@ -1,0 +1,51 @@
+npm notice run npx
+npm notice run 'playwright' test e2e/account.spec.js --workers=1
+[WebServer] (node:833072) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:833271) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:833307) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout (7.6s)
+(node:833741) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 e2e/account.spec.js:144:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation (5.0s)
+
+
+  1) e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Đã lưu thay đổi tài khoản.', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Đã lưu thay đổi tài khoản.', { exact: true }) with timeout 5000ms
+      - waiting for getByText('Đã lưu thay đổi tài khoản.', { exact: true })
+
+
+       96 |   await expect(
+       97 |     page.getByText('Đã lưu thay đổi tài khoản.', { exact: true }),
+    >  98 |   ).toBeVisible();
+          |     ^
+       99 |   await expect(page.getByLabel('Tên hiển thị', { exact: false })).toHaveValue(
+      100 |     'Bếp mới xác nhận',
+      101 |   );
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/account.spec.js:98:5
+
+    Error Context: test-results/account-ACC-E01-register-r-a169b--password-change-and-logout/error-context.md
+
+    Error Context: test-results/account-ACC-E01-register-r-a169b--password-change-and-logout/error-context.md
+
+  1 failed
+    e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout 
+  1 passed (19.8s)

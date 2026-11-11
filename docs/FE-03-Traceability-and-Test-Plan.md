@@ -684,3 +684,18 @@ Requirement IDs lấy từ01SRS,đốichiếu14RTM,không tựphátminhsuffix. �
 | FE03-X17 | P2/audit/stats/allAdminRecipe routes/configflags                                     | No guessedAPI/controls;futuregates false until verifiedcontract                                 | Gating;planned                           |
 
 Không chạy lại749tests lịch sử trong lượt docs này. Futuretesting dùng script thựcpackage hiệncó vàDBtestriêng;integration/E2E tuần tự vìFE00fixturecollision đãghi. Externalprovider/livebinary chỉ WorkOrderđượcphép,khôngđánhdấupasskhi deferred/timeout. Không có testcaseimplemented hoặc screenshots ởFE03.
+
+## Implementation status bổ sung FE-07 (2026-11-11)
+
+Đây là evidence mới, không biến1012planned IDs thành runtime counts. [FE-07 tests](FE-07-Test-Results.md), [registry/auth routes](FE-07-Authentication-Implementation.md), [scope/issues](FE-07-Open-Issues.md). Canonical `/auth/*` giữ mail-link contract; account paths thực là `/account/*`, supersede planned private settings route paths cho phạm vi đã implemented.
+
+| SRS scope        | Actual screens                | Action family | Evidence                                                                                 |
+| ---------------- | ----------------------------- | ------------- | ---------------------------------------------------------------------------------------- |
+| AUTH-01/02/03/04 | Register/Login/Account/logout | AUTH/NAV      | ACC-E01/E05, ACC-U06..09/U14 + real Backend regression                                   |
+| AUTH-05          | /account/change-password      | AUTH password | ACC-E01, Backend AUTH-16..17                                                             |
+| AUTH-06          | Forgot/Reset                  | AUTH recovery | ACC-E02/E04/E06, real generated mail/token capture, SMTP delivery not_verified           |
+| AUTH-07          | Request verification/Verify   | AUTH verify   | ACC-E02, explicit confirmation, renderer capture, provider delivery not_verified         |
+| USR-02           | /account/profile              | PROFILE       | ACC-E01/U12; avatar deferred_media                                                       |
+| USR-04 partial   | /account/settings             | PROFILE/PREFS | timezone/maxPrepMinutes/recommendationOptIn actual PATCH; advanced selectors/P2 deferred |
+
+Public/profile privacy và FE-06 journeys vẫn là regression; G04/G06/G07/G08/G09/G10/G11/G12/G14 không bị xóa hoặc frontend-hack. No FE-08/09/10 UI tự triển khai.

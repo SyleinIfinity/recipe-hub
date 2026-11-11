@@ -275,8 +275,9 @@ it('keeps error distinct from guest', async () => {
   await screen.findByText('error');
 });
 it('guards and availability fail closed', () => {
+  expect(featureAvailable('authentication')).toBe(true);
   expect(navigationRoutes.map((r) => r.pattern)).toEqual(['/', '/recipes']);
-  for (const f of ['editor', 'admin', 'social', 'p2', 'authentication'])
+  for (const f of ['editor', 'admin', 'social', 'p2'])
     expect(featureAvailable(f)).toBe(false);
   expect(routeAccess('admin', { status: 'unknown' })).toBe('pending');
   expect(routeAccess('authenticated', { status: 'guest' })).toBe(

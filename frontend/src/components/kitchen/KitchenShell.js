@@ -120,15 +120,23 @@ export function AccountDisplay({ auth }) {
       null,
       h('small', null, user ? 'Góc bếp của' : 'Recipe Hub'),
       h(
-        'strong',
-        null,
-        user
-          ? user.displayName
-          : guest
-            ? 'Khách ghé bếp'
-            : auth.status === 'loading'
-              ? 'Đang tải…'
-              : 'Góc bếp cộng đồng',
+        Link,
+        {
+          href: user ? '/account' : '/auth/login',
+          className: 'account-entry',
+          'aria-label': user ? 'Tài khoản của tôi' : 'Đăng nhập',
+        },
+        h(
+          'strong',
+          null,
+          user
+            ? user.displayName
+            : guest
+              ? 'Khách ghé bếp'
+              : auth.status === 'loading'
+                ? 'Đang tải…'
+                : 'Góc bếp cộng đồng',
+        ),
       ),
     ),
   );
@@ -184,8 +192,11 @@ export function KitchenShell({ children, pathname, auth, suggestion }) {
       ),
       h(Brand, { compact: true }),
       h(
-        'span',
+        Link,
         {
+          href: auth.status === 'ready' ? '/account' : '/auth/login',
+          'aria-label':
+            auth.status === 'ready' ? 'Tài khoản của tôi' : 'Đăng nhập',
           className: 'mobile-account',
           title: auth.body?.data?.displayName || 'Khách',
         },

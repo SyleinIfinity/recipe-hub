@@ -1,0 +1,898 @@
+[
+  {
+    "path": "docs/screenshots/FE-07/account-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 103931,
+    "sha256": "e2d53018f35020e889ddb410657fbbe1ac399c7e7cc7fddaed9113911fad0047"
+  },
+  {
+    "path": "docs/screenshots/FE-07/account-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 315815,
+    "sha256": "8a2c8e3f491e6952e5748e1e64010812262407b1f6bb7db24a67c82f72800c44"
+  },
+  {
+    "path": "docs/screenshots/FE-07/account-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 345860,
+    "sha256": "fc2d7906ddab9e8bca05f7d8de216b5f0582128aeef0748fb34e2a916cd96911"
+  },
+  {
+    "path": "docs/screenshots/FE-07/account-360.png",
+    "width": 360,
+    "height": 882,
+    "bytes": 64935,
+    "sha256": "4f56d8018367f9f17cdeaf4dd3cbc0771abfc3bb6db0a7a76246f63bb7c2230d"
+  },
+  {
+    "path": "docs/screenshots/FE-07/account-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 65409,
+    "sha256": "b21d1acf074876c543ad1b7008d597ea8d7e7c8234b03398bdffea9b260a7ec3"
+  },
+  {
+    "path": "docs/screenshots/FE-07/account-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 99697,
+    "sha256": "19f62211542778e5d99515bd193e409c6fd4d47127b1af07f452e79cba324528"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-1024x768.png",
+    "width": 1024,
+    "height": 1880,
+    "bytes": 251233,
+    "sha256": "2ac3241f96e85e08dc477220ca9061874e18f2380910e25cce61aab1d84b9157"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-1440x900.png",
+    "width": 1440,
+    "height": 1422,
+    "bytes": 429948,
+    "sha256": "c24df2d9d80e50a3eb9739f1b83a5a8fc9d96a7a3a0c42eb05026c51efb699ac"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-1672x941.png",
+    "width": 1672,
+    "height": 1422,
+    "bytes": 457096,
+    "sha256": "06cf07767f0796c467dc630aee643ca0b9f5edd66eaf4e4492981d67ad1630c7"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-360x800.png",
+    "width": 360,
+    "height": 1589,
+    "bytes": 144154,
+    "sha256": "27c4752a4159a05799df5226447ae257f23274742b84ddbbe2184881d1ad72d9"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-390x844.png",
+    "width": 390,
+    "height": 1622,
+    "bytes": 153271,
+    "sha256": "074a0187aec4ee8d7c31e8a6eda034302c5bb0e8d214291e8febcd549bbf1969"
+  },
+  {
+    "path": "docs/screenshots/FE-07/detail-768x1024.png",
+    "width": 768,
+    "height": 1880,
+    "bytes": 238122,
+    "sha256": "a15b59af82739ca5c92237da9ee4c8e8daa14495f933f55ba5c88892c329f750"
+  },
+  {
+    "path": "docs/screenshots/FE-07/drawer-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 59110,
+    "sha256": "af0af25bd6882abecfb4a15094f8cdd3d99672edee8a1501ccf51e8316bef676"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-1024x768.png",
+    "width": 1024,
+    "height": 1960,
+    "bytes": 261920,
+    "sha256": "c939ad93fc8c4c9dc2ba7c5b8a8d45abc9e6fdc5ede7c9518f174633364cc666"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-1440x900.png",
+    "width": 1440,
+    "height": 1366,
+    "bytes": 419728,
+    "sha256": "0f9ffcbcd2afe27fd0aebc4ff7cd1df570a99d4b46613a15fd99db160bee143f"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-1672x941.png",
+    "width": 1672,
+    "height": 1314,
+    "bytes": 425690,
+    "sha256": "a8f42f917d2b27797689453a6c54b008d378a4e4e37e0f7e202428edfd760657"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-360x800.png",
+    "width": 360,
+    "height": 2497,
+    "bytes": 210679,
+    "sha256": "a0d382c36e0fee284211863e610fae8958cf5200680872f78e37fc95dd703b4c"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-390x844.png",
+    "width": 390,
+    "height": 2493,
+    "bytes": 226916,
+    "sha256": "5784bccddd02a32ff85d5a06d798e08fd81d63f2211c76a3a8a9d708e447631a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/explore-768x1024.png",
+    "width": 768,
+    "height": 1880,
+    "bytes": 219343,
+    "sha256": "28bbc71141eb6d660f479dd9a80321817ec110270e92350ed031e40af0059ca8"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-1024x768.png",
+    "width": 1024,
+    "height": 792,
+    "bytes": 112129,
+    "sha256": "a71e12f49c3b65b43786cba5ff0014e9d0d16cc8c2aa3e28f3778d016fd3b86c"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-1440x900.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 298990,
+    "sha256": "013ff98f3194c29da84589091c03a75d94e04927b2fd532af2abad5a1f7e5c35"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-1672x941.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 331422,
+    "sha256": "eda769b032f4495da441abbd5d89ce8619274cbcc9059330db59ebfc09290487"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-360x800.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 78121,
+    "sha256": "4e4ffc80222e77d786b0c313c573995efca9c83efb13771eac99be60cf97872a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 85877,
+    "sha256": "3f3c5b833cc1e62c7c9d2312f1064dd003f52135caef4eb53259f8faea31e7f4"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forbidden-768x1024.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 122595,
+    "sha256": "529f1cf2455834324f9c420e14c51226c808b41997f281c3d6f6544adeaf1710"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forced-colors-360.png",
+    "width": 360,
+    "height": 3178,
+    "bytes": 249227,
+    "sha256": "be22151cf999ccde40cf937ae0d89a4ad24dc9a7242576609e57b246f437a6d8"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 81959,
+    "sha256": "6d079a40450c6d9233e09fe16a26a8de1f75227741546978dcbbd3f74ada22ab"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 275120,
+    "sha256": "759343dd4021f2ee3b99d19fea8aab798dd4e5c817d93d36473ce53e5fdc4922"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 304589,
+    "sha256": "6c421bfa2b01bdae70a63b51c46ba289a737984a9603618c6bdb85fc00bf3a26"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 51203,
+    "sha256": "ad4a6b79c71508be01418e3b4e771f35ebc51dfce0dab7cfe55a9431e9b53e51"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 56216,
+    "sha256": "ef4bbb4ba42953f44a11c2a70bf542eba43071e1cddb88d0a0b6c83a308b96e8"
+  },
+  {
+    "path": "docs/screenshots/FE-07/forgot-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 87483,
+    "sha256": "e1c6140d3bcc4e536bec915a9c1c73b628b99df297b6475b7faf43e6000e7542"
+  },
+  {
+    "path": "docs/screenshots/FE-07/heading-1672.png",
+    "width": 540,
+    "height": 73,
+    "bytes": 29680,
+    "sha256": "33dce0db5ada9d449479422441d259648fec6a7e34ca89a2b29b044ad176dd6a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/heading-390.png",
+    "width": 358,
+    "height": 40,
+    "bytes": 17109,
+    "sha256": "8258d567e848d10afec1a2d9812b5fa98de13fdcc7f4fcfe607023f9ffc63695"
+  },
+  {
+    "path": "docs/screenshots/FE-07/heading-backdrop-1672.png",
+    "width": 540,
+    "height": 73,
+    "bytes": 16149,
+    "sha256": "bd12e758bd6c196207df7b93fbdfd71efeff4cbf4f31521c7acd5614fb610a23"
+  },
+  {
+    "path": "docs/screenshots/FE-07/heading-backdrop-390.png",
+    "width": 358,
+    "height": 40,
+    "bytes": 9441,
+    "sha256": "a88a8a58107d2e0e1b55b4975dde9468e6213df9a6994265b3e431cecea3998b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1024x768-full.png",
+    "width": 1024,
+    "height": 1886,
+    "bytes": 818353,
+    "sha256": "ce8ad8a8b34ff8cef9b7ea1d7a4b8af6d838a14e96f7f92df15373ebd9447c91"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1024x768.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 624973,
+    "sha256": "87996f1c79f55f7379962a30b170c5634292b93264f4e5f775e0b4c5c5fd225e"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1440x900-full.png",
+    "width": 1440,
+    "height": 1393,
+    "bytes": 939873,
+    "sha256": "68a5b68059e6767bd2e5436031e39caa1cfbcc8195ef24d6ea498992b2c1f0e4"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1440x900.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 858686,
+    "sha256": "9de9512fcaa979eb1976829a62dccc1049a4e0bd2a0db6a2641d992dc757d45b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1672x941-full.png",
+    "width": 1672,
+    "height": 1004,
+    "bytes": 1031988,
+    "sha256": "2e18bc6c6584057bf03058cf413720ff9c04c6f78bdb226894d99ebe7d39e1a3"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-1672x941.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 1021845,
+    "sha256": "96ecbd45e4c66d07f6b16f09f5ad6eea2595225560bb814ee93894c4ee07cf68"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-360x800-full.png",
+    "width": 360,
+    "height": 2628,
+    "bytes": 411851,
+    "sha256": "26c113b459c64b486f336b9ae1ea85313169f349398ce6da472e852e3f1b3109"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-360x800.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 202384,
+    "sha256": "1a9eccc7b87398bfc581f4bc484c22a6e0cb5db6bb75211de0b72bae14d4e1f9"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-390x844-full.png",
+    "width": 390,
+    "height": 2662,
+    "bytes": 444746,
+    "sha256": "ac57e898f1e5740ffe3343bea28a839df19defd925060e109c39f8690e067e99"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 223039,
+    "sha256": "617e50db54f301e83e834e5535cee27d9336b91bf395dd37702c71da8be82d3a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-768x1024-full.png",
+    "width": 768,
+    "height": 1933,
+    "bytes": 688733,
+    "sha256": "643e45438f4712ade33dd6e99938c2dc2f9a93ef7106a75b3356df0d74ca9c27"
+  },
+  {
+    "path": "docs/screenshots/FE-07/home-768x1024.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 544666,
+    "sha256": "488bddf6da76e2bbe4cb0b16c8ba0918b09370b05c65a0568b73001e3fea0b58"
+  },
+  {
+    "path": "docs/screenshots/FE-07/loading-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 181591,
+    "sha256": "382fec9220edbfe9def2c2e9808c982e066021f6262de5fe45a3cf82bade2ceb"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 81178,
+    "sha256": "271230c2b650c7477a68ccced3a4d9674e857ac252208f5329576b5d98274072"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 275273,
+    "sha256": "061d1dd7c8975da62f11f6da19757dd7b7ac356f889db5b533de47f7d4fdb314"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 304697,
+    "sha256": "a865241889b623e4bfb5479d86f6ecd2671a426f7daac0204b7a733d9b8b41d8"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 48106,
+    "sha256": "a91a97dba1629e9b3f541117867aacbb3e903aaaa9a334230e5cd05e8e17cd6b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 52506,
+    "sha256": "a17954f61dda657bf8242bf779bbf98057a67c21bc76418e6d5f9a5f537886e7"
+  },
+  {
+    "path": "docs/screenshots/FE-07/login-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 82099,
+    "sha256": "abdf54f71c6d4a0f141eccca6b2b74db6c5101ec6e6b5103564677922d47188e"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 114568,
+    "sha256": "48a7b33a241112a49c64f20b076ac75f1df47dcf25db6c1e75162c76d5420bcb"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 403170,
+    "sha256": "445cc6868da95a52bcdf90e294ded37ff3dcebb837343561b428bbd57340a790"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 436443,
+    "sha256": "e2391890f1a178ede905d2f07a79f404171b8f2e4229b852d68cc852e9fbe338"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 80112,
+    "sha256": "9117faf6ff77dfcce1f2873c6328ca301eb5197324db7be1d6bfed700eb0fd80"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 85935,
+    "sha256": "7f3b7283f5206c8ffab82441dc02d8925a5e4ef652421b4bee4aa23113221c74"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-detail-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 147896,
+    "sha256": "ab795a5d164ca75847d20825b1caedd5580aec1764d013a5144e7537b281d1c6"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 70494,
+    "sha256": "0fce27d227ca29dfe18577b547ea54e0eecf81a4edb5ac55a37c2cdcf0647cde"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 328292,
+    "sha256": "48b97e08ac1b6014acd34ca29f854efb64aa12d42de20ee0f5aaa4bc67795317"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 356495,
+    "sha256": "0f08fc87ad8af986d901ac65918313a1ba1cfdc1a67c99fd2da4391693aea983"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 47953,
+    "sha256": "77bcb6c097b21a2eb16f128cdb40acd1122f9dcfe7edbe5daf8ea78e28e53954"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 52366,
+    "sha256": "87ea8c490d93929c4d38d9eba6e958fbb2bbfd201b5f60071e62332ef472b61b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-profile-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 100881,
+    "sha256": "f2b3b10cf610384c24b89d9eebb1df015b7ed44e0c7794c8f1cf52daf86af3bd"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-text-1672x941.png",
+    "width": 1672,
+    "height": 1473,
+    "bytes": 1363610,
+    "sha256": "eb9ce26a32cc7bc6f67c11f719d19e73e2a3659dd7ebf1d3eccd0ddab9030b15"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-text-360x800.png",
+    "width": 360,
+    "height": 3302,
+    "bytes": 536439,
+    "sha256": "a8a7640107a9e8f097a3a370d56cf6f372dbe7af033d27e595529ee9a0e5c364"
+  },
+  {
+    "path": "docs/screenshots/FE-07/long-text-390x844.png",
+    "width": 390,
+    "height": 3206,
+    "bytes": 566617,
+    "sha256": "3d0767ecf687fbcc9f65377ff1dc32cfe15e03b2f8ff8eadc99ca533c1c4051b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/not-found-1440x900.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 298778,
+    "sha256": "5d57bc81408419db5af56c3efa28667723634b040ecc1c0b8879958a2c4f71bc"
+  },
+  {
+    "path": "docs/screenshots/FE-07/not-found-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 87407,
+    "sha256": "f085bb84304c314483a0717098c0d3136e5b3bc066cacd9d355c58275d08e765"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-1024x768.png",
+    "width": 1024,
+    "height": 792,
+    "bytes": 111958,
+    "sha256": "65fc8e4cf04531f46ee67ccde2d3e7cd2dd1fcce31c4ff7c58356726ab763e81"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-1440x900.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 298778,
+    "sha256": "5d57bc81408419db5af56c3efa28667723634b040ecc1c0b8879958a2c4f71bc"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-1672x941.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 331114,
+    "sha256": "47faef3178f5ec18db5168d2b6057e33539557634ce53cee9ea3c31fa01d3a30"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-360x800.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 79556,
+    "sha256": "6633615257d0c57fdce0e140d8327a93810bc3e987e8c89eb605359691191c2f"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 87407,
+    "sha256": "f085bb84304c314483a0717098c0d3136e5b3bc066cacd9d355c58275d08e765"
+  },
+  {
+    "path": "docs/screenshots/FE-07/notfound-768x1024.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 122324,
+    "sha256": "4dea157779d41b6704bd6d19a11fa4ba53d980344139b208e719c4f05b6463a1"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 92131,
+    "sha256": "96fb5755b43405d87da341cc4b58817063a752f232b5c5beb2394d31ce929812"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 301437,
+    "sha256": "c602ed3a97910e00da8db97a3bf1a3d5d4b00ab8554777d2e15f2ca0881fb17f"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 330752,
+    "sha256": "20333e85d25e2cf931e9c6425bef3d0d6842266bf0f64ff9b3e5c2fc7c32fa78"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 54189,
+    "sha256": "2ca5878faf2230d45a2088e2018fe02a16d0017050a74f690b8c133a11fe31d1"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 58895,
+    "sha256": "8f92b12144599bdf2987b9109efab4646d33c5d5ee6432864a8287ad2d426265"
+  },
+  {
+    "path": "docs/screenshots/FE-07/password-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 89159,
+    "sha256": "3a487f42249e0ced26c9c473ee2ac2bfd0b3f6180bfc7e04a42dfa226a88d366"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 86857,
+    "sha256": "a83aea57518ab2e0c6ec3a15d4d7274cb70f2dccc5748e03ed557355a2eaa39b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1024x768.png",
+    "width": 1024,
+    "height": 898,
+    "bytes": 122194,
+    "sha256": "17baa7962e57ec429505444bc3c33467e10e44492ffc7a35c3999f9cdaab4ee6"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 296008,
+    "sha256": "5481aec64e35df61f56b7319a3d0d9891481f4055172777e2da5416eb53c6acb"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1440x900.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 303878,
+    "sha256": "62c94683a86ec3e74f2aa16a0daa4b1fd7bdb517fb5c4e65d4645c81af66d512"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 325155,
+    "sha256": "9fd917b0a54d1a3e744e571eaf9d06f5cbf7188d86560a49ce592ffaae438e38"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-1672x941.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 336213,
+    "sha256": "94977dd0571de2278789e67a8704ab3019ba5681d2df5f2738a07d9f75aa54ae"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 46624,
+    "sha256": "3dba78cad104307a63b9b0424160d0e0e4cb3a6677b657dce2d938ae024a8393"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-360x800.png",
+    "width": 360,
+    "height": 831,
+    "bytes": 83387,
+    "sha256": "ae68fa8e7a9fc7e284633b8a2666d049ba6c2c92f96c90c9707593b2f5da1f5c"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 51494,
+    "sha256": "c3909e0d63f6389540967bbc0696c319c8302016315a7a950c74cf9ce9750b81"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-390x844.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 90029,
+    "sha256": "ec067c3321c6fcd26b5fd0dda48e8d012cc65fcdcd6c82dbbbb5ae617d8119e3"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 83903,
+    "sha256": "ab44e3439e32c72be102b2bfa65f72744e081d9501a830cbfc44099e517f107a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/profile-768x1024.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 123959,
+    "sha256": "f9bacd49e0dd1ea32680593e9873125f42ee7ace4853cca05675cce87fc59233"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reflow-720x450.png",
+    "width": 720,
+    "height": 450,
+    "bytes": 38706,
+    "sha256": "4bbd05d3e91e7200fb326a4b15ff7ee96a9ff4fea51aedc8eed32f0f23e7d591"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-1024.png",
+    "width": 1024,
+    "height": 811,
+    "bytes": 87465,
+    "sha256": "fdeb37321edf94c7cdf49fa6d7f1290f3d7aa1c6efe98dc1a1f39c068ca9f573"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 283347,
+    "sha256": "52b5ade3d3adffcdea9ee3a32c37bb3d04ff812131971390c7cb5c1d6ebea26b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 314500,
+    "sha256": "09b20648f1a10d64e97fee98f6414aa31ffec19896736335216a31c8d0124dd9"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-360.png",
+    "width": 360,
+    "height": 841,
+    "bytes": 46726,
+    "sha256": "7baa00bd8e113f29ac045c8f478e595aa42ff8ca83f29c1529b5ecf60a9f58b7"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 49044,
+    "sha256": "ec1357faa45f01461054aa7abbf3aac02ba485ae942a9023a45ed14a81fbb1dd"
+  },
+  {
+    "path": "docs/screenshots/FE-07/register-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 80488,
+    "sha256": "cd479bad5f76c23c9bf29f1e306a7bf736add776663f5d07f32f6865787cba4e"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 81525,
+    "sha256": "4d823166aff8561e2b7f841b26037406b82d2d13012cfe509114ed9286870d15"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 274673,
+    "sha256": "ca0b8a221856c1efe3fc8c461ad51535f630ea01d87a16b07f80308d87daa248"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 304100,
+    "sha256": "d9db512ff77fb0de505c034ea93615f1498b2aeda63caea49151937b1724c1d1"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 51027,
+    "sha256": "43a9657a7b0a5308d527fa492abda767e4b59ec38330fe820184e8e2bc709a1a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 56028,
+    "sha256": "ed1811df6ac1f8056241b1191d27cef83fafb61aaa80c1e8a0b01e1c71e55c78"
+  },
+  {
+    "path": "docs/screenshots/FE-07/resend-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 87114,
+    "sha256": "38645c690fc571b483c1eec0c43d83c5cc8842aa080321608265017a1927e1c9"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 91462,
+    "sha256": "17f16c1197fd7bbf4598b015032e3156b1077dd288659cba1dd7632c1cdfaa92"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 286755,
+    "sha256": "74428f4f0a50eb2c18124b158977a7f61e381f2bb65e75a9140c097856956d7a"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 316838,
+    "sha256": "bebd41a75f22717f2fb506507337e6bfd4d973de578a556ca71809a7721b9ece"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 55389,
+    "sha256": "07b69308b2c49f99a964c1538e940f2bacd8f177b615490f277296306f43a442"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 60135,
+    "sha256": "e7b3f86eecc78375736d2505d6ee11d8342b1c3639a14e4364cc5502fdccfd54"
+  },
+  {
+    "path": "docs/screenshots/FE-07/reset-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 92541,
+    "sha256": "1a23bcf62917793fb594825ea725d2664fc74e7f4e6f628cc98cff1fecf73d1b"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 96215,
+    "sha256": "89573ca2b640c2ad799cea320a4fd56a92dab8c7f93771d65831f618db488d02"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 305409,
+    "sha256": "5b3ca3528861c01fdd5e2b40c65125ad8ab6e7179588469c22e03058f2fc99c9"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 334710,
+    "sha256": "de3cf12b8cb47846a8ad1902bee58178aa1e68c59e5a005f932a42056ddc78a7"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 57822,
+    "sha256": "67d8a3f684b358fdef923996b7582a278fb93c36ed3ebe6ee24cf62bda2680a7"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 62466,
+    "sha256": "74554ab500ca34a7833fd689360aa4e48a6f50453703cfea4dac833988c454a3"
+  },
+  {
+    "path": "docs/screenshots/FE-07/settings-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 92929,
+    "sha256": "0be071683041dabfbcecf5eea7d3d9b64e59ca54df63a3de7eef2ac5ff6b2a9c"
+  },
+  {
+    "path": "docs/screenshots/FE-07/typography-vi.png",
+    "width": 768,
+    "height": 600,
+    "bytes": 47388,
+    "sha256": "7f9dd0913cd2a2c0fbbfc800af0dd065fc4ee961529f9f5070046fb7c3d774b0"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-1024.png",
+    "width": 1024,
+    "height": 768,
+    "bytes": 91715,
+    "sha256": "b2dc158e6de093b6022253faec75d35d709fbfeb743ee318b931430d69ccd6ce"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-1440.png",
+    "width": 1440,
+    "height": 900,
+    "bytes": 284206,
+    "sha256": "373f9ffa0c9524e5100c8d92d922f864a84af1db4c3ce1ced52f9eff0af9af79"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-1672.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 313511,
+    "sha256": "0ab9cf10b6e85cdc3b744f46fab1018aa3eab966444ecd5b24525192596fd277"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-360.png",
+    "width": 360,
+    "height": 800,
+    "bytes": 61847,
+    "sha256": "2b0daf9d3f89c48bbb4d0085f7b342028945c5d6bb828aacddac941ad0c67f6d"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-390.png",
+    "width": 390,
+    "height": 844,
+    "bytes": 66989,
+    "sha256": "6c76c49c28172e2874dce059cc42bb1577c0dcdd635f4c80e693cf89f26c0111"
+  },
+  {
+    "path": "docs/screenshots/FE-07/verify-768.png",
+    "width": 768,
+    "height": 1024,
+    "bytes": 99880,
+    "sha256": "cffb1d566cd1029b3c1eed9f9c4d6112bcfb5c3a443bd2d5989f15beb88e4bf8"
+  }
+]

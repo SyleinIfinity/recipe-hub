@@ -81,3 +81,13 @@ Root/feature ErrorBoundary giữ recovery khi render lỗi; API errors xử lý 
 Deployment chưa chọn hosting: History API cần SPA fallback về `index.html` cho navigation HTML không phải `/api`/static asset. Giữ reverse proxy `/api` cùng origin và đúng404 của API/assets; không rewrite mọi request thành HTML. Vite development deep links đã test; chưa xác minh production hosting. Không tự thêm config cho một provider chưa được chọn.
 
 464unit/component,390integration và20Firefox E2E là kết quả mới FE-06, logs trong report. Native zoom200%, screen reader, provider binary live và CWV chưa verified; không full WCAG claim. Dừng FE-06, FE-07 chờ Work Order riêng.
+
+## FE-07 — Authentication và tài khoản
+
+[Report](../docs/FE-07-report.md), [routes/contract](../docs/FE-07-Authentication-Contract-Audit.md), [security](../docs/FE-07-Session-and-Security-Verification.md), [tests](../docs/FE-07-Test-Results.md), [issues](../docs/FE-07-Open-Issues.md).
+
+Entry qua account label/mobile account icon: `/auth/login`; auth forms ở `/auth/register`, `/auth/forgot-password`, `/auth/request-email-verification`, `/auth/reset-password`, `/auth/verify-email`. Private routes `/account`, `/account/profile`, `/account/settings`, `/account/change-password`. Guest protected entry dùng safe return; no Admin/Editor UI.
+
+Backend register không auto-login/mail; unverified email vẫn login khi active. Sau transitions, useSession xác minh lại auth/me; password change/reset invalidate mọi session. CSRF/password/token không persist, mutations không tự retry. Reset/verify nhận fragment từ email Backend rồi scrub URL, giữ memory tới consume/leave; reload sau scrub cần mở lại link.202 chỉ accepted, không proof delivery/completed save.
+
+Test auth dùng production factories/isolated Mongo và email-renderer capture DI; không live SMTP. Avatar và session listing chưa có đầy đủ contract/delivery, không fake controls. Advanced settings giữ fields trong Backend, UI chỉ subset đã tích hợp. Browser evidence mới ở `docs/screenshots/FE-07`; Home expected snapshots giữ nguyên.

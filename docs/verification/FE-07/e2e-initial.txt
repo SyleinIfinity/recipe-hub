@@ -1,0 +1,72 @@
+npm notice run npx
+npm notice run 'playwright' test --config source/playwright.config.js source/e2e/account.spec.js --workers=1
+[WebServer] (node:831484) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:831680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:831708) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 source/e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout (1.5s)
+(node:832043) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 source/e2e/account.spec.js:144:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation (1.4s)
+
+
+  1) source/e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout 
+
+    Error: locator.fill: Error: strict mode violation: getByLabel('Xác nhận mật khẩu') resolved to 2 elements:
+        1) <input value="" required="" maxlength="128" type="password" aria-invalid="false" name="confirmPassword" autocomplete="new-password" id="account-confirmPassword"/> aka getByRole('textbox', { name: 'Xác nhận mật khẩu *' })
+        2) <button type="button" aria-pressed="false" class="button button-secondary" aria-label="Hiện xác nhận mật khẩu">Hiện</button> aka getByRole('button', { name: 'Hiện xác nhận mật khẩu' })
+
+    Call log:
+      - waiting for getByLabel('Xác nhận mật khẩu')
+
+
+      31 |   await page
+      32 |     .getByLabel('Xác nhận mật khẩu', { exact: false })
+    > 33 |     .fill(user.password);
+         |      ^
+      34 |   await page
+      35 |     .getByRole('button', { name: 'Tạo tài khoản', exact: true })
+      36 |     .click();
+        at register (/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/account.spec.js:33:6)
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/account.spec.js:72:3
+
+    Error Context: source/test-results/account-ACC-E01-register-r-a169b--password-change-and-logout/error-context.md
+
+    Error Context: source/test-results/account-ACC-E01-register-r-a169b--password-change-and-logout/error-context.md
+
+  2) source/e2e/account.spec.js:144:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation 
+
+    Error: locator.fill: Error: strict mode violation: getByLabel('Xác nhận mật khẩu') resolved to 2 elements:
+        1) <input value="" required="" maxlength="128" type="password" aria-invalid="false" name="confirmPassword" autocomplete="new-password" id="account-confirmPassword"/> aka getByRole('textbox', { name: 'Xác nhận mật khẩu *' })
+        2) <button type="button" aria-pressed="false" class="button button-secondary" aria-label="Hiện xác nhận mật khẩu">Hiện</button> aka getByRole('button', { name: 'Hiện xác nhận mật khẩu' })
+
+    Call log:
+      - waiting for getByLabel('Xác nhận mật khẩu')
+
+
+      31 |   await page
+      32 |     .getByLabel('Xác nhận mật khẩu', { exact: false })
+    > 33 |     .fill(user.password);
+         |      ^
+      34 |   await page
+      35 |     .getByRole('button', { name: 'Tạo tài khoản', exact: true })
+      36 |     .click();
+        at register (/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/account.spec.js:33:6)
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/account.spec.js:149:3
+
+    Error Context: source/test-results/account-ACC-E02-captured-v-9de7c-oken-and-reset-invalidation/error-context.md
+
+    Error Context: source/test-results/account-ACC-E02-captured-v-9de7c-oken-and-reset-invalidation/error-context.md
+
+  2 failed
+    source/e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout 
+    source/e2e/account.spec.js:144:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation 

@@ -1,0 +1,64 @@
+npm notice run test:e2e
+npm notice run playwright test --workers=1
+[WebServer] (node:844336) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:844458) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 25 tests using 1 worker
+
+(node:844552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout (6.2s)
+  ✓   2 e2e/account.spec.js:144:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation (4.2s)
+  ✓   3 e2e/account.spec.js:208:1 › ACC-E03 six viewports for every implemented account screen and authenticated navigation (19.7s)
+  ✓   4 e2e/account.spec.js:319:1 › ACC-E04 real CSRF rejection, session expiry, two identities and token expiration (5.0s)
+  ✓   5 e2e/account.spec.js:400:1 › ACC-E05 invalid credentials, duplicate submit and uncertain logout never replay writes (1.9s)
+  ✓   6 e2e/foundation.spec.js:3:1 › React connects to the running API and MongoDB (477ms)
+  ✓   7 e2e/media.spec.js:7:1 › MED-57/64 Firefox Swagger multipart file and purpose with cookie/CSRF (3.6s)
+  ✓   8 e2e/media.spec.js:121:1 › ML-65/68 Firefox Swagger list/delete, ownership, CSRF and worker completion (15.1s)
+  ✓   9 e2e/openapi.spec.js:6:1 › DOC-17..20/24 Firefox Swagger manual cookie/CSRF flow and permissions (15.0s)
+  ✓  10 e2e/public-kitchen.spec.js:166:1 › FE04 Home six viewports, real public data, artwork, fonts and console (4.0s)
+  ✓  11 e2e/public-kitchen.spec.js:369:1 › FE04 search, filters, paging, Back/Forward, detail and profile use real API (1.8s)
+  ✓  12 e2e/public-kitchen.spec.js:427:1 › FE04 public screens desktop/mobile snapshots and private visibility (3.3s)
+  ✓  13 e2e/public-kitchen.spec.js:459:1 › FE04 native drawer keyboard, outside, focus restoration, resize and reduced motion (1.3s)
+  ✓  14 e2e/public-kitchen.spec.js:514:1 › FE04 controlled transport failures distinguish loading, empty, retry and malformed filters (808ms)
+  ✓  15 e2e/public-kitchen.spec.js:548:1 › FE04VR long authenticated name/title, loading and text-spacing reflow (2.1s)
+  ✓  16 e2e/public-kitchen.spec.js:662:1 › FE05 approved FE04-VR visual baseline (1.4s)
+  ✓  17 e2e/public-kitchen.spec.js:677:1 › FE05 navigation cancels pending GET, respects fragments and browser history (818ms)
+  ✓  18 e2e/public-kitchen.spec.js:715:1 › PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced colors (9.0s)
+  ✓  19 e2e/public-kitchen.spec.js:850:1 › PUB-E02 FE06 real catalog page2 and ingredient result cap (1.3s)
+  ✓  20 e2e/public-kitchen.spec.js:936:1 › PUB-E03 FE06 rapid search, Enter, URL preservation and real retry (5.5s)
+  ✘  21 e2e/public-kitchen.spec.js:1018:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths (2.3s)
+(node:847433) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  22 e2e/publication.spec.js:6:1 › PUB-83..86 Firefox Swagger publish, guest detail, unpublish and revoked detail (13.4s)
+  ✓  23 e2e/recipe.spec.js:7:1 › RCP-67..70 Firefox Swagger draft create/list/detail/version/media/soft-delete (16.7s)
+  ✓  24 e2e/search-favorites.spec.js:6:1 › QA-03..06 Firefox Swagger search, combined filters, ANY/ALL, paging, favorites and privacy (17.2s)
+  ✓  25 e2e/social.spec.js:6:1 › BE13 Firefox Swagger User reviews/comments/reports and Admin audited moderation (34.0s)
+
+
+  1) e2e/public-kitchen.spec.js:1018:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths 
+
+    Error: page.evaluate: Execution context was destroyed, most likely because of a navigation
+
+      1088 |           page.getByRole('heading', { name: title, level: 1 }),
+      1089 |         ).toBeVisible();
+    > 1090 |         const overflow = await page.evaluate(() => ({
+           |                                     ^
+      1091 |           width: innerWidth,
+      1092 |           scrollWidth: document.documentElement.scrollWidth,
+      1093 |           elements: [...document.querySelectorAll('main *')]
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/public-kitchen.spec.js:1090:37
+
+    Error Context: test-results/public-kitchen-PUB-E04-FE0-2af90--Profile-text-at-six-widths/error-context.md
+
+    Error Context: test-results/public-kitchen-PUB-E04-FE0-2af90--Profile-text-at-six-widths/error-context.md
+
+  1 failed
+    e2e/public-kitchen.spec.js:1018:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths 
+  24 passed (3.3m)

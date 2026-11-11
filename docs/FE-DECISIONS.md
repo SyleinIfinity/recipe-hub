@@ -125,3 +125,15 @@ User giao FE-05 và trong Task B xác nhận đã xem/chấp nhận hướng vis
 - FE-DEC-045: screenshots/logs FE-06 riêng; 30audit scopes không tương đương76SRS hoặc1012planned tests. Native zoom/AT/provider/CWV chưa verified; chỉ đo browser/contract hiện hành.
 
 Không tự chuyển FE-07 hoặc commit/push.
+
+## FE-07 — Authentication & Account Management (2026-11-11)
+
+[Report](FE-07-report.md), [contract audit](FE-07-Authentication-Contract-Audit.md), [tests](FE-07-Test-Results.md).
+
+- FE-DEC-046: canonical auth paths `/auth/*` theo FE-03/email renderer; private `/account/*`; no guessed APIs/aliases/placeholder routes.
+- FE-DEC-047: one session owner/client; confirmed auth/me identity, revision isolation, memory CSRF và non-secret BroadcastChannel invalidation; no automatic mutation replay.
+- FE-DEC-048: reset/verify fragment→component memory→replaceState scrub, explicit confirmation; Backend verification optional for login, register no auto-login/mail. Preserve password bytes and real multiline Bio contract.
+- FE-DEC-049: real API/test Mongo auth journeys + existing DI production mail renderer with memory capture transport; SMTP/Gmail delivery remains not_verified, avatar/session-list/advanced P2 settings deferred. No Backend/env/provider config changes.
+- FE-DEC-050: use existing account display/mobile icon as real entry links without Home paint redesign; new form evidence separate, approved Home expected PNG/threshold unchanged.
+
+Dừng FE-07; không tự bắt đầu FE-08/Git mutation.
