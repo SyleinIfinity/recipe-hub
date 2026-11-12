@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Recipe Hub API
-  version: 0.13.0
+  version: 0.13.2
   description: >-
     Live APIs BE-00..13 (private media upload/list/delete). Docs development only. Cookie HttpOnly
     do browser quản lý, không dán session token vào Authorize.
@@ -15,9 +15,11 @@ info:
     Email endpoints có thể gửi thư nếu SMTP bật; chỉ thử khi được phép. 202 không chứng minh
     delivery. Admin được cấp qua quy trình quản trị, không có public API cấp quyền. Recipe draft
     owner CRUD và publish/unpublish/public read đã live; P2 chưa có; media có upload/list/delete;
-    attach/release là internal service. Search/filter/favorites live. Cloudinary live and binary
-    delivery deferred until Frontend integration. Reviews, comments (one reply level), reports and
-    audited moderation live. Mongo standalone durable intents; no Notification/Feed/Cloudinary live.
+    attach/release là internal service. Search/filter/favorites live. Cloudinary authenticated
+    binary delivery uses the same-origin authorization gateway; fake provider remains metadata-only.
+    P1 isolated live synthetic smoke verified; production traffic not certified. Reviews, comments
+    (one reply level), reports and audited moderation live. Mongo standalone durable intents; no
+    Notification/Following Feed/Collections implementation.
 servers:
   - url: /
     description: Cùng origin với backend
@@ -1297,8 +1299,9 @@ paths:
       summary: Upload a private temporary image
       description:
         Requires dynamic mode and authenticated policy. BE-08 local fake provider only; live
-        Cloudinary gated. Exactly one file/purpose. Reuse UUID key for retries with identical
-        bytes/purpose. Pending identity is retained for reconciliation; URL is null.
+        Cloudinary requires validated credentials and authenticated dynamic-folder policy. Exactly
+        one file/purpose. Reuse UUID key for retries with identical bytes/purpose. Pending identity
+        is retained for reconciliation; URL is null.
       security:
         - SessionCookie: []
       parameters:
@@ -1823,7 +1826,9 @@ paths:
             distinct ID on the same recipe.
       responses:
         '200':
-          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
           content:
             application/json:
               schema:
@@ -2031,7 +2036,7 @@ paths:
             pattern: ^[a-fA-F0-9]{24}$
       responses:
         '200':
-          description: Owner-only recipe; private image URLs remain null.
+          description: Owner-only recipe; referenced images use the authorization gateway, not provider URLs.
           content:
             application/json:
               schema:
@@ -2380,7 +2385,9 @@ paths:
               version: 0
       responses:
         '200':
-          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
           content:
             application/json:
               schema:
@@ -2472,7 +2479,9 @@ paths:
               version: 0
       responses:
         '200':
-          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
           content:
             application/json:
               schema:
@@ -2552,7 +2561,9 @@ paths:
             pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
       responses:
         '200':
-          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
           content:
             application/json:
               schema:
@@ -2589,12 +2600,14 @@ paths:
       operationId: getRecipeImage
       tags:
         - Recipes
-      summary: Authorize recipe image delivery (transport unavailable in current runtime)
+      summary: Deliver authorized recipe image bytes
       description:
         Guest allowed only while recipe is public; otherwise active owner only.
-        Hidden/deleted/pending deny all. No raw URLs or redirect; no-store. Current runtime returns
-        503 for authorized requests because provider binary capability is unavailable. 200 contract
-        exercised only with controlled test transport; not live Cloudinary acceptance.
+        Hidden/deleted/pending deny all. Same-origin bounded binary gateway, no raw URLs or
+        redirects. Cloudinary authenticated originals are fetched internally with short-lived
+        server-only signatures. Reauthorizes after buffering; private no-store. Missing
+        capability/network failures return503; invalid upstream binary returns502. Fake provider
+        remains metadata-only and returns503.
       security:
         - {}
         - SessionCookie: []
@@ -2651,6 +2664,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Invalid binary response from trusted storage reader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         '503':
           description: Transition outcome uncertain or secure delivery unavailable
           content:
@@ -2675,7 +2694,9 @@ paths:
         cross-request snapshot.
       responses:
         '200':
-          description: Success. No-store. Image URLs remain null until durable delivery is available.
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
           content:
             application/json:
               schema:
@@ -4031,6 +4052,82 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CommentModerationRequest'
+  /api/v1/users/{userId}/avatar/{assetId}:
+    get:
+      operationId: getUserAvatar
+      tags:
+        - Users
+      summary: Read current avatar of an active user
+      description:
+        Only current attached avatar, not arbitrary media. Active profile avatars are public
+        through this gateway; authenticated Cloudinary originals remain private. Reauthorize after
+        buffering. No-store.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+      security: []
+      responses:
+        '200':
+          description: Bounded image bytes from trusted transport; private, no-store; no redirects or validators
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Active session required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Not found or not visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Invalid binary response from trusted storage reader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Transition outcome uncertain or secure delivery unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
   schemas:
     RegisterRequest:
@@ -4155,7 +4252,17 @@ components:
           description:
             Validator nhận ObjectId nhưng service hiện trả 422 MEDIA_NOT_AVAILABLE cho giá trị khác
             null.
+        mediaVersion:
+          type: integer
+          minimum: 0
+          description: Required when avatarAssetId is present. CAS counter from PrivateUserDTO.
+          maximum: 9007199254740990
       minProperties: 1
+      dependentRequired:
+        avatarAssetId:
+          - mediaVersion
+        mediaVersion:
+          - avatarAssetId
     UpdatePreferencesRequest:
       type: object
       additionalProperties: false
@@ -4245,9 +4352,13 @@ components:
           maxLength: 500
           readOnly: true
         avatarUrl:
-          type: 'null'
-          description: Hiện luôn null; chưa có Media module.
-          readOnly: true
+          type:
+            - string
+            - 'null'
+          pattern: ^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$
+          description:
+            Current avatar gateway. Public only for active users; replaced/suspended references
+            return404.
         createdAt:
           type: string
           format: date-time
@@ -4277,9 +4388,13 @@ components:
           maxLength: 500
           readOnly: true
         avatarUrl:
-          type: 'null'
-          description: Hiện luôn null; chưa có Media module.
-          readOnly: true
+          type:
+            - string
+            - 'null'
+          pattern: ^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$
+          description:
+            Current avatar gateway. Public only for active users; replaced/suspended references
+            return404.
         createdAt:
           type: string
           format: date-time
@@ -4311,6 +4426,14 @@ components:
         preferences:
           $ref: '#/components/schemas/PreferencesDTO'
           readOnly: true
+        avatarAssetId:
+          type:
+            - string
+            - 'null'
+          pattern: ^[a-fA-F0-9]{24}$
+        mediaVersion:
+          type: integer
+          minimum: 0
       required:
         - id
         - displayName
@@ -4322,6 +4445,8 @@ components:
         - role
         - status
         - preferences
+        - avatarAssetId
+        - mediaVersion
     AdminUserDTO:
       type: object
       additionalProperties: false
@@ -4341,9 +4466,13 @@ components:
           maxLength: 500
           readOnly: true
         avatarUrl:
-          type: 'null'
-          description: Hiện luôn null; chưa có Media module.
-          readOnly: true
+          type:
+            - string
+            - 'null'
+          pattern: ^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$
+          description:
+            Current avatar gateway. Public only for active users; replaced/suspended references
+            return404.
         createdAt:
           type: string
           format: date-time
@@ -5142,7 +5271,11 @@ components:
             - 'null'
           pattern: ^[a-fA-F0-9]{24}$
         coverImageUrl:
-          type: 'null'
+          type: [string, 'null']
+          pattern: '^/api/v1/recipes/[a-fA-F0-9]{24}/images/[a-fA-F0-9]{24}$'
+          description:
+            Same-origin authorization gateway; no CDN capability or signed URL. Null when no image
+            reference.
         categoryId:
           type:
             - string
@@ -5284,7 +5417,11 @@ components:
                   - 'null'
                 pattern: ^[a-fA-F0-9]{24}$
               imageUrl:
-                type: 'null'
+                type: [string, 'null']
+                pattern: '^/api/v1/recipes/[a-fA-F0-9]{24}/images/[a-fA-F0-9]{24}$'
+                description:
+                  Same-origin authorization gateway; no CDN capability or signed URL. Null when no image
+                  reference.
             required:
               - stepId
               - order
@@ -5293,7 +5430,8 @@ components:
               - imageAssetId
               - imageUrl
         status:
-          const: draft
+          type: string
+          enum: [draft, published]
         moderationStatus:
           type: string
           enum:
@@ -5373,7 +5511,11 @@ components:
           minimum: 0
           maximum: 2880
         coverImageUrl:
-          type: 'null'
+          type: [string, 'null']
+          pattern: '^/api/v1/recipes/[a-fA-F0-9]{24}/images/[a-fA-F0-9]{24}$'
+          description:
+            Same-origin authorization gateway; no CDN capability or signed URL. Null when no image
+            reference.
         publishedAt:
           type: string
           format: date-time
@@ -5386,6 +5528,11 @@ components:
               pattern: ^[0-9a-f]{24}$
             displayName:
               type: string
+            avatarUrl:
+              type:
+                - string
+                - 'null'
+              pattern: ^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$
           required:
             - id
             - displayName
@@ -5433,7 +5580,11 @@ components:
           minimum: 0
           maximum: 2880
         coverImageUrl:
-          type: 'null'
+          type: [string, 'null']
+          pattern: '^/api/v1/recipes/[a-fA-F0-9]{24}/images/[a-fA-F0-9]{24}$'
+          description:
+            Same-origin authorization gateway; no CDN capability or signed URL. Null when no image
+            reference.
         publishedAt:
           type: string
           format: date-time
@@ -5446,6 +5597,11 @@ components:
               pattern: ^[0-9a-f]{24}$
             displayName:
               type: string
+            avatarUrl:
+              type:
+                - string
+                - 'null'
+              pattern: ^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$
           required:
             - id
             - displayName
@@ -5562,7 +5718,11 @@ components:
                 minimum: 0
                 maximum: 1440
               imageUrl:
-                type: 'null'
+                type: [string, 'null']
+                pattern: '^/api/v1/recipes/[a-fA-F0-9]{24}/images/[a-fA-F0-9]{24}$'
+                description:
+                  Same-origin authorization gateway; no CDN capability or signed URL. Null when no image
+                  reference.
             required:
               - stepId
               - order

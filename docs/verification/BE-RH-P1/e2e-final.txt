@@ -1,0 +1,52 @@
+npm notice run test:e2e
+npm notice run playwright test --workers=1
+[WebServer] (node:125562) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:125709) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 35 tests using 1 worker
+
+(node:125736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/account.spec.js:67:1 › ACC-E01 register, real login/session reload, profile, settings, password change and logout (6.5s)
+  ✓   2 e2e/account.spec.js:147:1 › ACC-E02 captured verification and recovery mail journeys, one-use token and reset invalidation (5.0s)
+  ✓   3 e2e/account.spec.js:211:1 › ACC-E03 six viewports for every implemented account screen and authenticated navigation (22.4s)
+  ✓   4 e2e/account.spec.js:322:1 › ACC-E04 real CSRF rejection, session expiry, two identities and token expiration (6.0s)
+  ✓   5 e2e/account.spec.js:403:1 › ACC-E05 invalid credentials, duplicate submit and uncertain logout never replay writes (2.0s)
+  ✓   6 e2e/account.spec.js:461:1 › ACC-E06 unavailable mail provider never claims email delivery or auto retries (654ms)
+  ✓   7 e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete (5.9s)
+  ✓   8 e2e/editor.spec.js:205:1 › ED-E02 real optimistic409 preserves local values and explicit server review (4.9s)
+  ✓   9 e2e/editor.spec.js:247:1 › ED-E03 owner isolation, real non-owner GET/PATCH denial and guest guard (4.5s)
+  ✓  10 e2e/editor.spec.js:284:1 › ED-E04 dirty navigation and hard reload warning, row focus, single submit and plaintext validation (3.5s)
+  ✓  11 e2e/editor.spec.js:347:1 › ED-E05 uncertain create reuses same frozen intent and confirmed database draft (4.0s)
+  ✓  12 e2e/editor.spec.js:389:1 › ED-E06 real CSRF failure, expired session purges editor, and catalog canonical ID persists (6.6s)
+  ✓  13 e2e/editor.spec.js:445:1 › ED-E07 editor/list/publication responsive six widths and long dynamic lists (15.5s)
+  ✓  14 e2e/editor.spec.js:513:1 › ED-E08 cross-tab logout/login changes identity and discards private dirty editor (4.3s)
+  ✓  15 e2e/editor.spec.js:537:1 › ED-E09 uncertain save reconciles without auto replay; rate-limit and422 feedback (4.2s)
+  ✓  16 e2e/foundation.spec.js:3:1 › React connects to the running API and MongoDB (4.5s)
+  ✓  17 e2e/media.spec.js:7:1 › MED-57/64 Firefox Swagger multipart file and purpose with cookie/CSRF (5.6s)
+  ✓  18 e2e/media.spec.js:121:1 › ML-65/68 Firefox Swagger list/delete, ownership, CSRF and worker completion (9.4s)
+  ✓  19 e2e/openapi.spec.js:6:1 › DOC-17..20/24 Firefox Swagger manual cookie/CSRF flow and permissions (20.1s)
+  ✓  20 e2e/public-kitchen.spec.js:166:1 › FE04 Home six viewports, real public data, artwork, fonts and console (4.1s)
+  ✓  21 e2e/public-kitchen.spec.js:369:1 › FE04 search, filters, paging, Back/Forward, detail and profile use real API (2.2s)
+  ✓  22 e2e/public-kitchen.spec.js:427:1 › FE04 public screens desktop/mobile snapshots and private visibility (3.8s)
+  ✓  23 e2e/public-kitchen.spec.js:459:1 › FE04 native drawer keyboard, outside, focus restoration, resize and reduced motion (1.4s)
+  ✓  24 e2e/public-kitchen.spec.js:514:1 › FE04 controlled transport failures distinguish loading, empty, retry and malformed filters (992ms)
+  ✓  25 e2e/public-kitchen.spec.js:548:1 › FE04VR long authenticated name/title, loading and text-spacing reflow (2.6s)
+  ✓  26 e2e/public-kitchen.spec.js:662:1 › FE05 approved FE04-VR visual baseline (2.3s)
+  ✓  27 e2e/public-kitchen.spec.js:677:1 › FE05 navigation cancels pending GET, respects fragments and browser history (976ms)
+  ✓  28 e2e/public-kitchen.spec.js:715:1 › PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced colors (10.4s)
+  ✓  29 e2e/public-kitchen.spec.js:850:1 › PUB-E02 FE06 real catalog page2 and ingredient result cap (1.5s)
+  ✓  30 e2e/public-kitchen.spec.js:936:1 › PUB-E03 FE06 rapid search, Enter, URL preservation and real retry (4.8s)
+  ✓  31 e2e/public-kitchen.spec.js:1018:1 › PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths (4.6s)
+  ✓  32 e2e/publication.spec.js:6:1 › PUB-83..86 Firefox Swagger publish, guest detail, unpublish and revoked detail (10.9s)
+  ✓  33 e2e/recipe.spec.js:7:1 › RCP-67..70 Firefox Swagger draft create/list/detail/version/media/soft-delete (24.8s)
+  ✓  34 e2e/search-favorites.spec.js:6:1 › QA-03..06 Firefox Swagger search, combined filters, ANY/ALL, paging, favorites and privacy (22.1s)
+  ✓  35 e2e/social.spec.js:6:1 › BE13 Firefox Swagger User reviews/comments/reports and Admin audited moderation (42.7s)
+
+  35 passed (4.7m)

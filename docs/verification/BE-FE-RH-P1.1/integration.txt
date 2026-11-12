@@ -1,0 +1,11 @@
+npm notice run test:integration
+npm notice run vitest run --project integration
+
+ RUN  v5.1.0 /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source
+
+
+ Test Files  13 passed (13)
+      Tests  396 passed (396)
+   Start at  15:54:59
+   Duration  65.28s (tests 86%, import 14%)
+

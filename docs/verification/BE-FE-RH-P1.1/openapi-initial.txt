@@ -1,0 +1,3 @@
+npm notice run openapi:validate
+npm notice run node scripts/validate-openapi.js
+OpenAPI 3.1 valid: 47 paths, 54 operations, 51 schemas; route parity passed (explicit Express mounts).

@@ -132,8 +132,14 @@ export function RecipeDetail({ slug }) {
     h(Link, { href: '/recipes', className: 'back-link' }, '← Khám phá'),
     h('h1', null, r.title),
     h(
-      'p',
+      'div',
       { className: 'detail-author' },
+      r.author?.avatarUrl &&
+        h(
+          'span',
+          { className: 'author-avatar' },
+          h(RecipeImage, { url: r.author.avatarUrl }),
+        ),
       authorHref
         ? h(Link, { href: authorHref }, r.author.displayName)
         : r.author?.displayName,
@@ -253,11 +259,17 @@ export function PublicProfile({ userId }) {
   return h(
     'section',
     { className: 'page-panel public-profile' },
-    h(
-      'span',
-      { className: 'profile-avatar', 'aria-hidden': true },
-      Array.from(user.displayName.trim())[0],
-    ),
+    user.avatarUrl
+      ? h(
+          'div',
+          { className: 'user-avatar' },
+          h(RecipeImage, { url: user.avatarUrl }),
+        )
+      : h(
+          'span',
+          { className: 'profile-avatar', 'aria-hidden': true },
+          Array.from(user.displayName.trim())[0],
+        ),
     h('h1', null, user.displayName),
     user.bio && h('p', null, user.bio),
     user.createdAt &&

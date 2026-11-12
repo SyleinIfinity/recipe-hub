@@ -1,0 +1,16 @@
+npm notice run test:unit
+npm notice run vitest run --project unit --project web
+
+ RUN  v5.1.0 /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source
+
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+
+ Test Files  21 passed (21)
+      Tests  526 passed (526)
+   Start at  14:01:48
+   Duration  4.55s (tests 43%, import 31%, environment 23%, transform 3%, worker 1%)
+

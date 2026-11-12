@@ -1,0 +1,92 @@
+[
+  {
+    "path": "docs/BE-RH-P1-Cloudinary-Verification.md",
+    "bytes": 4019,
+    "sha256": "fe68a43ce628d2e5d14ff9c772995307964d6689e54fe3f082315c1de62d3196"
+  },
+  {
+    "path": "docs/BE-RH-P1-Media-Delivery.md",
+    "bytes": 7361,
+    "sha256": "47683280b347d1078afa9fa334e22e7c9194c21f3b0a1b435f51630af552e258"
+  },
+  {
+    "path": "docs/BE-RH-P1-OpenAPI-Contract.md",
+    "bytes": 2070,
+    "sha256": "ee53527fd605485c6493b60844826f418fd40856580ce9c571935daff8362a73"
+  },
+  {
+    "path": "docs/BE-RH-P1-Open-Issues.md",
+    "bytes": 3642,
+    "sha256": "2071a7d27808e18c6751b54da55c8586761eca67a0e34c971f1c245a476cc9c7"
+  },
+  {
+    "path": "docs/BE-RH-P1-Test-Results.md",
+    "bytes": 6450,
+    "sha256": "b0058da51baacf0e1066103009d2ae2f08d2eaf17ef709cce30717503da8c512"
+  },
+  {
+    "path": "docs/FE-08-report.md",
+    "bytes": 10544,
+    "sha256": "bb529f7a6b08622a2843c745ba1f77c66dbb21fea0ee1411472786ce5346869e"
+  },
+  {
+    "path": "docs/FE-08-Recipe-Editor-Implementation.md",
+    "bytes": 3964,
+    "sha256": "23f1e52e2171b28b59011bb25a92a042e261169b4e9cdf406c66bc5f013341a1"
+  },
+  {
+    "path": "docs/FE-08-Media-Integration-Report.md",
+    "bytes": 3584,
+    "sha256": "1de3ff6670b5eb16acdea542aaad7b9cd20f05e50ef84a3d1962e8654a27abed"
+  },
+  {
+    "path": "docs/FE-08-Recipe-and-Media-Contract-Audit.md",
+    "bytes": 7680,
+    "sha256": "4225ef9394473c9663239e7a16b53569d664455507367c507e8a1644449770a8"
+  },
+  {
+    "path": "docs/FE-08-Publication-Workflow.md",
+    "bytes": 3737,
+    "sha256": "729c5a3351fd5efb85688683a9c3af82a38c69e0250b5ebf4b7be2d15ba0503d"
+  },
+  {
+    "path": "docs/FE-08-Test-Results.md",
+    "bytes": 7682,
+    "sha256": "7844db8e6c76f5ad12dda121f0a064ad1ea4e87dccca731d9917fb3a568a8733"
+  },
+  {
+    "path": "docs/FE-08-Open-Issues.md",
+    "bytes": 3239,
+    "sha256": "5c5f99c2ef38aa2bc9f8e35a9c22e99060a7ff5a7220a8e274749a5a49e88121"
+  },
+  {
+    "path": "docs/FE-07-Authentication-Implementation.md",
+    "bytes": 5107,
+    "sha256": "e40591d1b8c69a4f09fda1601af24d6e5e7e4cf7d3f2a054dcda730d64f0d675"
+  },
+  {
+    "path": "docs/FE-07-Account-Management-Implementation.md",
+    "bytes": 3021,
+    "sha256": "b0900d72da0deddb223f034e7851726534e0f6a3dfd28a9eca764f9e6a777767"
+  },
+  {
+    "path": "docs/FE-07-Session-and-Security-Verification.md",
+    "bytes": 3525,
+    "sha256": "ecb8e1891b08c73a4ff2780b35552e8da6556f659e9652334e415b83833a1c72"
+  },
+  {
+    "path": "docs/BE-09-report.md",
+    "bytes": 25286,
+    "sha256": "a7e01fd7654b6f57faac879dd30419d93b4f62036c5f0ba2e8d7e4740b42d545"
+  },
+  {
+    "path": "docs/BE-10-report.md",
+    "bytes": 25192,
+    "sha256": "e99a45935874b14ff6dc5690ad31b04046b1adb7b648d4f84dddc3aea40555f1"
+  },
+  {
+    "path": "docs/BE-11-report.md",
+    "bytes": 18657,
+    "sha256": "43bd9db474ff3ba544a07827b43e46d7d17ce2154a141346e7c7775d529ae207"
+  }
+]

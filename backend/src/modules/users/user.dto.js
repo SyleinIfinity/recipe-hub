@@ -3,7 +3,9 @@ export function publicUserDto(user) {
     id: String(user._id),
     displayName: user.displayName,
     bio: user.bio,
-    avatarUrl: null,
+    avatarUrl: user.avatarAssetId
+      ? `/api/v1/users/${user._id}/avatar/${user.avatarAssetId}`
+      : null,
     createdAt: user.createdAt,
   };
 }
@@ -11,6 +13,9 @@ export function privateUserDto(user) {
   const p = user.preferences;
   return {
     ...publicUserDto(user),
+    avatarAssetId:
+      user.avatarAssetId == null ? null : String(user.avatarAssetId),
+    mediaVersion: user.mediaVersion ?? 0,
     email: user.email,
     emailVerifiedAt: user.emailVerifiedAt,
     role: user.role,

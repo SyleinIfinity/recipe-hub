@@ -6,7 +6,8 @@ import {
   useState,
 } from 'react';
 import { useLocation, matchRoute, navigationScroll } from './app/router.js';
-import { accountRoutes } from './app/registry.js';
+import { EditorScreen, MyRecipes } from './features/editor/screens.js';
+import { accountRoutes, editorRoutes } from './app/registry.js';
 import { useTokenLink } from './app/token-link.js';
 import { confirmResponse } from './features/account/forms.js';
 import { AuthScreen, AccountScreen } from './features/account/screens.js';
@@ -23,7 +24,9 @@ import { RecipeDetail, PublicProfile, PageError } from './features/recipes.js';
 export function App() {
   const { pathname, search, hash } = useLocation();
   const route = matchRoute(pathname);
-  const accountRoute = accountRoutes.find((r) => r.id === route.page);
+  const accountRoute = [...accountRoutes, ...editorRoutes].find(
+    (r) => r.id === route.page,
+  );
   const tokenLink = useTokenLink(pathname, hash);
   const previousPath = useRef(pathname);
   const session = useSession();
@@ -139,22 +142,30 @@ export function App() {
         'Đang xác minh phiên…',
       );
     else
-      content = privateRoute
-        ? h(AccountScreen, {
-            key: session.revision,
-            kind: route.page,
-            session,
-            logout,
-            logoutPending,
-            announce,
-          })
-        : h(AuthScreen, {
-            kind: route.page,
-            session,
-            tokenLink,
-            search,
-            announce,
-          });
+      content =
+        accountRoute.feature === 'editor'
+          ? h(route.page === 'myRecipes' ? MyRecipes : EditorScreen, {
+              key: pathname + session.revision,
+              recipeId: route.value,
+              session,
+              search,
+            })
+          : privateRoute
+            ? h(AccountScreen, {
+                key: session.revision,
+                kind: route.page,
+                session,
+                logout,
+                logoutPending,
+                announce,
+              })
+            : h(AuthScreen, {
+                kind: route.page,
+                session,
+                tokenLink,
+                search,
+                announce,
+              });
   }
   return h(
     KitchenShell,

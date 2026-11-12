@@ -12,7 +12,9 @@ export function providerError(error, reference) {
     if (!error.reference && reference) error.reference = { ...reference };
     return error;
   }
-  const status = Number(error?.http_code);
+  const diagnostic =
+    error?.error && typeof error.error === 'object' ? error.error : error;
+  const status = Number(diagnostic?.http_code);
   let code = 'STORAGE_UNKNOWN_OUTCOME',
     outcome = 'unknown';
   if (status >= 400 && status < 500 && ![408, 420, 429, 499].includes(status)) {
@@ -31,19 +33,21 @@ export function providerError(error, reference) {
     outcome = 'rejected';
   } else if (
     [408, 499].includes(status) ||
-    ['ETIMEDOUT', 'ESOCKETTIMEDOUT'].includes(error?.code)
+    ['ETIMEDOUT', 'ESOCKETTIMEDOUT'].includes(diagnostic?.code)
   )
     code = 'STORAGE_TIMEOUT';
   else if (status >= 500) code = 'STORAGE_UNAVAILABLE';
   else if (
     ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EPIPE'].includes(
-      error?.code,
+      diagnostic?.code,
     )
   )
     code = 'STORAGE_NETWORK';
   if (
     [400, 413, 420].includes(status) &&
-    /(?:file size|quota|too large|limit exceeded)/i.test(String(error?.message))
+    /(?:file size|quota|too large|limit exceeded)/i.test(
+      String(diagnostic?.message),
+    )
   )
     code = 'STORAGE_QUOTA_EXCEEDED';
   return new StorageError(code, outcome, reference);

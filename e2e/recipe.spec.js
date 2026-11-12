@@ -155,8 +155,15 @@ test('RCP-67..70 Firefox Swagger draft create/list/detail/version/media/soft-del
     );
     expect(created.status()).toBe(201);
     let recipe = (await created.json()).data;
-    expect(recipe.coverImageUrl).toBeNull();
-    expect(recipe.steps[0].imageUrl).toBeNull();
+    expect(recipe.coverImageUrl).toBe(
+      `/api/v1/recipes/${recipe.recipeId}/images/${fixture.cover}`,
+    );
+    expect(recipe.steps[0].imageUrl).toBe(
+      `/api/v1/recipes/${recipe.recipeId}/images/${fixture.step}`,
+    );
+    expect(JSON.stringify(recipe)).not.toMatch(
+      /signature=|cloudinary\.com|api_secret/,
+    );
     expect(
       (await execute('listOwnRecipes', 'GET', '/api/v1/me/recipes')).status(),
     ).toBe(200);

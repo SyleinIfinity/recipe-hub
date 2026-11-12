@@ -1,3 +1,7 @@
+const imageUrl = (recipeId, assetId) =>
+  assetId
+    ? `/api/v1/recipes/${String(recipeId)}/images/${String(assetId)}`
+    : null;
 const id = (v) => (v == null ? null : String(v));
 export function ownerRecipeDTO(r) {
   return {
@@ -6,7 +10,7 @@ export function ownerRecipeDTO(r) {
     slug: r.slug,
     description: r.description,
     coverImageAssetId: id(r.coverImageAssetId),
-    coverImageUrl: null,
+    coverImageUrl: imageUrl(r._id, r.coverImageAssetId),
     categoryId: id(r.categoryId),
     tags: r.tags,
     difficulty: r.difficulty,
@@ -29,7 +33,7 @@ export function ownerRecipeDTO(r) {
       instruction: v.instruction,
       durationMinutes: v.durationMinutes,
       imageAssetId: id(v.imageAssetId),
-      imageUrl: null,
+      imageUrl: imageUrl(r._id, v.imageAssetId),
     })),
     status: r.status,
     moderationStatus: r.moderationStatus,
@@ -48,11 +52,14 @@ export function publicRecipeCardDTO(r) {
     categoryId: id(r.categoryId),
     difficulty: r.difficulty,
     totalMinutes: r.totalMinutes,
-    coverImageUrl: null,
+    coverImageUrl: imageUrl(r._id, r.coverImageAssetId),
     publishedAt: r.publishedAt,
     author: {
       id: String(r.publicAuthor._id),
       displayName: r.publicAuthor.displayName,
+      avatarUrl: r.publicAuthor.avatarAssetId
+        ? `/api/v1/users/${r.publicAuthor._id}/avatar/${r.publicAuthor.avatarAssetId}`
+        : null,
     },
   };
 }
@@ -71,7 +78,7 @@ export function publicRecipeDetailDTO(r) {
       order: s.order,
       instruction: s.instruction,
       durationMinutes: s.durationMinutes,
-      imageUrl: null,
+      imageUrl: s.imageUrl,
     })),
   };
 }

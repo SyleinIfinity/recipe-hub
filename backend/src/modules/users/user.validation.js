@@ -7,11 +7,25 @@ const nonempty = (schema) =>
     'At least one field is required',
   );
 export const profileSchema = nonempty(
-  z.strictObject({
-    displayName: displayName.optional(),
-    bio: z.string().max(500).optional(),
-    avatarAssetId: objectId.nullable().optional(),
-  }),
+  z
+    .strictObject({
+      displayName: displayName.optional(),
+      bio: z.string().max(500).optional(),
+      avatarAssetId: objectId.nullable().optional(),
+      mediaVersion: z
+        .number()
+        .int()
+        .min(0)
+        .max(Number.MAX_SAFE_INTEGER - 1)
+        .optional(),
+    })
+    .refine(
+      (v) =>
+        Object.hasOwn(v, 'avatarAssetId')
+          ? v.mediaVersion !== undefined
+          : v.mediaVersion === undefined,
+      'Avatar update requires mediaVersion',
+    ),
 );
 const ids = z
   .array(objectId)

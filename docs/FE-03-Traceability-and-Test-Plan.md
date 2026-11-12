@@ -699,3 +699,7 @@ Không chạy lại749tests lịch sử trong lượt docs này. Futuretesting d
 | USR-04 partial   | /account/settings             | PROFILE/PREFS | timezone/maxPrepMinutes/recommendationOptIn actual PATCH; advanced selectors/P2 deferred |
 
 Public/profile privacy và FE-06 journeys vẫn là regression; G04/G06/G07/G08/G09/G10/G11/G12/G14 không bị xóa hoặc frontend-hack. No FE-08/09/10 UI tự triển khai.
+
+## FE-08 runtime traceability — 11/11/2026
+
+REC01..03/08: `/my/recipes` (draft-only), `/my/recipes/new`, `/my/recipes/:recipeId/edit`; POST201 UUID key, owner GET/list, full-array PATCH version. ED-U01..18/ED-E01..09 are actual implementation tests, not claims that historical FE03 planned IDs ran. REC04/05/06: explicit publish200→public GET verified→unpublish200→public404. REC07 draft soft delete204 only. REC09 remains blocked_media_delivery; existing references preserved, no upload UI/full Media E2E claim. REC10/11 duplicate/scale remain deferred. G09 runtime enum used with Backend OpenAPI fix outstanding;G10 label/actions enforce actual restrictions. See FE-08-Test-Results.md for final execution evidence and FE-08-report.md for acceptance.

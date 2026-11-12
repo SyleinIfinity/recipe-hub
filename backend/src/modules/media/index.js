@@ -1,3 +1,4 @@
+import { validMediaRoot } from '../../config/cloudinary.js';
 import { createRecipeModel } from '../recipes/recipe.model.js';
 import { createRecipeReferences } from '../recipes/recipe-reference.js';
 import { createMediaLifecycle } from './media-lifecycle.service.js';
@@ -18,10 +19,10 @@ export async function createMedia({
   references,
 }) {
   const enabled =
-    config.MEDIA_PROVIDER === 'fake' &&
+    ['fake', 'cloudinary'].includes(config.MEDIA_PROVIDER) &&
     config.IMAGE_DELIVERY_POLICY === 'authenticated' &&
     (config.CLOUDINARY_FOLDER_MODE || 'dynamic') === 'dynamic' &&
-    config.CLOUDINARY_ASSET_FOLDER === 'recipe-hub';
+    validMediaRoot(config);
   // Preserve disabled Foundation startup without creating a media collection or making remote calls.
   const MediaAsset = enabled ? createMediaAssetModel(connection) : null;
   if (enabled) await MediaAsset.createIndexes();
@@ -48,8 +49,25 @@ export async function createMedia({
     config,
     logger,
   });
+  const reader = storage?.readImage
+    ? {
+        read: (asset, options) =>
+          storage.readImage(
+            {
+              publicId: asset.cloudinary.publicId,
+              resourceType: asset.cloudinary.resourceType,
+              deliveryType: asset.cloudinary.deliveryType,
+              version: asset.cloudinary.version,
+            },
+            asset.format,
+            options,
+          ),
+      }
+    : undefined;
+  identity.users.setMedia({ lifecycle, reader, MediaAsset });
   return {
     cleanup,
+    reader,
     lifecycle,
     MediaAsset,
     service,

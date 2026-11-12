@@ -1,0 +1,10 @@
+{
+  "status": "cleanup_incomplete",
+  "testOwnedAssets": 1,
+  "remaining": [
+    {
+      "assetId": "6af42a162340faced25ea84f",
+      "status": "namespace_mismatch"
+    }
+  ]
+}

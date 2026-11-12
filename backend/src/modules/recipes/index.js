@@ -43,6 +43,7 @@ export async function createRecipes({ connection, identity, catalog, media }) {
     User: identity.models.User,
     MediaAsset: media.MediaAsset,
     publication,
+    transport: media.reader,
   });
   const optionalAuth = async (req, _res, next) => {
     if (req.cookies[identity.security.sessionCookie])

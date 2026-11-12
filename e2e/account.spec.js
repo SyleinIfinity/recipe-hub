@@ -15,7 +15,7 @@ const credentials = () => {
 };
 test.beforeAll(async () => {
   harness = await createAccountHarness();
-  await mkdir('docs/screenshots/FE-07', { recursive: true });
+  await mkdir('docs/screenshots/BE-FE-RH-P1.1', { recursive: true });
 });
 test.afterAll(async () => {
   if (harness) {
@@ -278,7 +278,7 @@ test('ACC-E03 six viewports for every implemented account screen and authenticat
       );
       expect(overflow).toBe(false);
       await page.screenshot({
-        path: `docs/screenshots/FE-07/${name}-${width}.png`,
+        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}.png`,
         fullPage: true,
         animations: 'disabled',
       });
@@ -306,7 +306,7 @@ test('ACC-E03 six viewports for every implemented account screen and authenticat
       expect(overflow).toBe(false);
       // Screenshots contain only synthetic test-account data; passwords are empty.
       await page.screenshot({
-        path: `docs/screenshots/FE-07/${name}-${width}.png`,
+        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}.png`,
         fullPage: true,
         animations: 'disabled',
       });
@@ -314,7 +314,7 @@ test('ACC-E03 six viewports for every implemented account screen and authenticat
     }
   }
   await writeFile(
-    'docs/screenshots/FE-07/responsive.json',
+    'docs/screenshots/BE-FE-RH-P1.1/responsive.json',
     JSON.stringify(report, null, 2) + '\n',
   );
 });

@@ -5,6 +5,7 @@ import { v2 as cloudinary } from 'cloudinary';
 export function mockCloudinary({ faults = [] } = {}) {
   const queue = [...faults],
     assets = new Map(),
+    buffers = new Map(),
     calls = [];
   function fault(operation) {
     const n = queue.findIndex((f) => f.operation === operation);
@@ -12,15 +13,26 @@ export function mockCloudinary({ faults = [] } = {}) {
   }
   return {
     calls,
+    buffers,
     sdk: {
+      utils: cloudinary.utils,
+      api: {
+        async resource(publicId, options) {
+          const metadata = assets.get(`${options.type}/${publicId}`);
+          if (!metadata) throw { http_code: 404 };
+          return metadata;
+        },
+      },
       uploader: {
         upload_stream(options, callback) {
           calls.push({ operation: 'upload', options });
           const failure = fault('upload');
           let bytes = 0;
+          const chunks = [];
           const stream = new Writable({
             write(chunk, _encoding, done) {
               bytes += chunk.length;
+              chunks.push(Buffer.from(chunk));
               if (failure?.kind === 'stream_error')
                 done(new Error('private stream diagnostics'));
               else done();
@@ -54,6 +66,7 @@ export function mockCloudinary({ faults = [] } = {}) {
                 ignored_secret: 'private raw data',
               };
               assets.set(key, result);
+              buffers.set(key, Buffer.concat(chunks));
               if (failure?.kind === 'commit_timeout') return;
               queueMicrotask(() =>
                 callback(
@@ -70,6 +83,7 @@ export function mockCloudinary({ faults = [] } = {}) {
         destroy(publicId, options, callback) {
           calls.push({ operation: 'destroy', publicId, options });
           const failure = fault('destroy');
+          buffers.delete(`${options.type}/${publicId}`);
           if (failure?.kind === 'timeout') return;
           queueMicrotask(() => {
             if (failure?.kind === 'error') callback(failure.error);

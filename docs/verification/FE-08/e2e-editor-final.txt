@@ -1,0 +1,59 @@
+npm notice run test:e2e
+npm notice run playwright test e2e/editor.spec.js --workers=1
+[WebServer] (node:45884) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:45994) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 1 worker
+
+(node:46058) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete (4.7s)
+(node:46446) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 e2e/editor.spec.js:201:1 › ED-E02 real optimistic409 preserves local values and explicit server review (3.8s)
+  ✓  3 e2e/editor.spec.js:243:1 › ED-E03 owner isolation, real non-owner GET/PATCH denial and guest guard (3.7s)
+  ✓  4 e2e/editor.spec.js:280:1 › ED-E04 dirty navigation and hard reload warning, row focus, single submit and plaintext validation (3.0s)
+  ✓  5 e2e/editor.spec.js:337:1 › ED-E05 uncertain create reuses same frozen intent and confirmed database draft (1.7s)
+  ✓  6 e2e/editor.spec.js:379:1 › ED-E06 real CSRF failure, expired session purges editor, and catalog canonical ID persists (3.5s)
+  ✓  7 e2e/editor.spec.js:435:1 › ED-E07 editor/list/publication responsive six widths and long dynamic lists (12.8s)
+  ✓  8 e2e/editor.spec.js:503:1 › ED-E08 cross-tab logout/login changes identity and discards private dirty editor (4.3s)
+  ✓  9 e2e/editor.spec.js:527:1 › ED-E09 uncertain save reconciles without auto replay; rate-limit and422 feedback (3.6s)
+
+
+  1) e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Canh rau của tôi', exact: true })
+    Expected: visible
+    Error: strict mode violation: getByRole('heading', { name: 'Canh rau của tôi', exact: true }) resolved to 2 elements:
+        1) <h1>Canh rau của tôi</h1> aka locator('h1')
+        2) <h3>…</h3> aka getByRole('complementary', { name: 'Góc bếp' }).getByRole('heading', { name: 'Canh rau của tôi' })
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Canh rau của tôi', exact: true }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Canh rau của tôi', exact: true })
+
+
+      169 |   await expect(
+      170 |     publicPage.getByRole('heading', { name: 'Canh rau của tôi', exact: true }),
+    > 171 |   ).toBeVisible();
+          |     ^
+      172 |   await action(page, 'Ngừng xuất bản');
+      173 |   await expect(
+      174 |     page.getByText('Đã ngừng xuất bản.', { exact: true }),
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/editor.spec.js:171:5
+
+    Error Context: test-results/editor-ED-E01-real-create--fba7d-ish-public-unpublish-delete/error-context.md
+
+    Error Context: test-results/editor-ED-E01-real-create--fba7d-ish-public-unpublish-delete/error-context.md
+
+  1 failed
+    e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete 
+  8 passed (47.7s)

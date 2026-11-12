@@ -15,7 +15,7 @@ export function publicRecipePipeline(User, filter = {}) {
         foreignField: '_id',
         pipeline: [
           { $match: { status: 'active' } },
-          { $project: { _id: 1, displayName: 1 } },
+          { $project: { _id: 1, displayName: 1, avatarAssetId: 1 } },
         ],
         as: 'publicAuthor',
       },

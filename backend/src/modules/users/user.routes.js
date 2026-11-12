@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { objectId } from '../auth/auth.validation.js';
 import { Router } from 'express';
 import { validate } from '../../middleware/validate.js';
 import { authorize } from '../../middleware/authenticate.js';
@@ -14,6 +16,11 @@ export function userRoutes(controller, authenticate) {
     '/users/:userId',
     validate(userParams, 'params'),
     controller.publicProfile,
+  );
+  router.get(
+    '/users/:userId/avatar/:assetId',
+    validate(z.strictObject({ userId: objectId, assetId: objectId }), 'params'),
+    controller.avatar,
   );
   router.patch(
     '/me/profile',

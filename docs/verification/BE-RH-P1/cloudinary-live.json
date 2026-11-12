@@ -1,0 +1,22 @@
+{
+  "configuration": {
+    "MEDIA_PROVIDER": "present",
+    "CLOUDINARY_CLOUD_NAME": "present",
+    "CLOUDINARY_API_KEY": "present",
+    "CLOUDINARY_API_SECRET": "present",
+    "CLOUDINARY_FOLDER_MODE": "present",
+    "CLOUDINARY_ASSET_FOLDER": "present",
+    "IMAGE_DELIVERY_POLICY": "present"
+  },
+  "validation": "verified",
+  "connection": "verified",
+  "folderMode": "verified_dynamic",
+  "smoke": {
+    "status": "verified",
+    "authenticatedUpload": true,
+    "serverSideBinaryRead": true,
+    "bytesMatch": true,
+    "bytes": 95
+  },
+  "cleanup": "verified"
+}

@@ -64,7 +64,7 @@ export async function startServer(
   }
   if (
     config.MEDIA_CLEANUP_ENABLED &&
-    config.MEDIA_PROVIDER === 'fake' &&
+    ['fake', 'cloudinary'].includes(config.MEDIA_PROVIDER) &&
     config.IMAGE_DELIVERY_POLICY === 'authenticated' &&
     config.NODE_ENV !== 'production'
   ) {

@@ -9,7 +9,7 @@ import {
   hashToken,
 } from '../backend/src/modules/auth/session.service.js';
 import { recipeSearchFields } from '../backend/src/modules/recipes/search.normalization.js';
-const artifact = 'docs/screenshots/FE-07';
+const artifact = 'docs/screenshots/BE-FE-RH-P1.1';
 let db, authorId, categoryId, ingredientIds, rows, prefix;
 test.describe.configure({ mode: 'default' });
 test.beforeAll(async () => {
@@ -766,7 +766,7 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
       expect(m.fonts).toBe(true);
       evidence.push({ name, width, height, ...m });
       await page.screenshot({
-        path: `docs/screenshots/FE-07/${name}-${width}x${height}.png`,
+        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}x${height}.png`,
         fullPage: true,
         animations: 'disabled',
       });
@@ -810,7 +810,7 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
   expect(parseFloat(forced.focusWidth)).toBeGreaterThanOrEqual(3);
   await noOverflow(page);
   await page.screenshot({
-    path: 'docs/screenshots/FE-07/forced-colors-360.png',
+    path: 'docs/screenshots/BE-FE-RH-P1.1/forced-colors-360.png',
     fullPage: true,
   });
   await page.emulateMedia({
@@ -827,7 +827,7 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
     ratio: devicePixelRatio,
   }));
   await writeFile(
-    'docs/screenshots/FE-07/responsive-a11y.json',
+    'docs/screenshots/BE-FE-RH-P1.1/responsive-a11y.json',
     JSON.stringify(
       {
         evidence,
@@ -1100,12 +1100,12 @@ test('PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths', a
             })),
         }));
         await writeFile(
-          `docs/screenshots/FE-07/long-layout-${name}-${width}.json`,
+          `docs/screenshots/BE-FE-RH-P1.1/long-layout-${name}-${width}.json`,
           JSON.stringify(overflow, null, 2) + '\n',
         );
         await noOverflow(page);
         await page.screenshot({
-          path: `docs/screenshots/FE-07/long-${name}-${width}.png`,
+          path: `docs/screenshots/BE-FE-RH-P1.1/long-${name}-${width}.png`,
           fullPage: false,
           animations: 'disabled',
         });

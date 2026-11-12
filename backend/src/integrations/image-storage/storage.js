@@ -28,6 +28,23 @@ export function createStorage(config, provider, transport) {
     }
   }
   return Object.freeze({
+    async readImage(input, format, { signal, maxBytes } = {}) {
+      const reference = validateReference(input, config);
+      if (
+        config.IMAGE_DELIVERY_POLICY !== 'authenticated' ||
+        reference.deliveryType !== 'authenticated' ||
+        !transport.read
+      )
+        throw new StorageError('STORAGE_PRIVATE_DELIVERY_UNAVAILABLE');
+      return execute(reference, (internalSignal) =>
+        transport.read(reference, format, {
+          signal: signal
+            ? AbortSignal.any([signal, internalSignal])
+            : internalSignal,
+          maxBytes,
+        }),
+      );
+    },
     async uploadImage(input) {
       const prepared = prepareUpload(input, config);
       const raw = await execute(prepared.reference, (signal) =>

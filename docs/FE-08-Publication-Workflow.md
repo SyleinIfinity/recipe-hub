@@ -1,0 +1,18 @@
+# FE-08 — Publication workflow
+
+| Current      | Action                       | Preconditions                                            | API                                    | Result/actions                                                                   |
+| ------------ | ---------------------------- | -------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| draft,normal | save                         | valid draft + version                                    | PATCH /recipes/:id                     | draft,newversion/edit/delete/publish                                             |
+| draft,normal | publish                      | saved; complete text/catalog;stable media if any;version | PATCH /recipes/:id/publish {version}   | published,newversion/read-only/unpublish/public link after GET proves visibility |
+| published    | unpublish (explicit confirm) | owner/version                                            | PATCH /recipes/:id/unpublish {version} | draft,newversion/edit/delete; public GET404                                      |
+| draft,hidden | save/delete                  | owner/version policy                                     | PATCH or DELETE                        | cannot publish to bypass moderation                                              |
+| draft        | delete (explicit confirm)    | owner/serverCAS                                          | DELETE /recipes/:id, no body           | 204 soft deleted/list                                                            |
+| published    | edit/delete                  | not allowed                                              | no attempted PATCH/delete              | explicit unpublish first                                                         |
+
+Enum thật chỉ draft/published; hidden là moderationStatus riêng, deletedAt là tombstone không status do client tự chế. Backend checks active actor, authorId, complete creation, no deletedAt, CAS version; publish requires moderation normal, active catalog and stable attached media references. Cover image không bắt buộc, nên text-only publication là luồng hợp lệ, không bypass media prerequisite.
+
+Local publication validation: title3..150,description10..2000,category/difficulty/servings/prep/cook present, ingredients≥1 có quantity (zero valid) hoặc quantityText, steps≥1 instruction≥5. Backend authoritative catalog/media/version và generated step IDs. Save trước publish; không tự save/unpublish trong background. Confirmed200 status published mới announce server confirms. Public GET /recipes/:slug phải trả recipeId đúng mới render “Xem công thức công khai”; GET lỗi/visibility chưa có thì không link giả. Owner route ID giữ lại sau publish; published không nằm draft list. Reload owner published vẫn read-only và kiểm tra public visibility lại.
+
+409 version/state giữ data, review/refetch explicit;422 requirements hiển thị field errors;503 transition uncertain không tự retry. Unpublish removes public detail/search according to Backend visibility, no Cloudinary public toggle ở client. Images remain authenticated provider policy.
+
+G09: runtime owner GET/publish trả published trong khi OpenAPI OwnerRecipeDTO.status const draft. FE nhận đúng runtime enum; OpenAPI validation script chỉ static parity không giải quyết response drift. **blocked_backend schema/doc fix riêng**, không sửa Backend trong FE08. G10 là limitation có chủ đích đã ghi nhận, không claim full owner listing. [Browser evidence](FE-08-Test-Results.md).

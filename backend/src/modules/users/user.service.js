@@ -1,5 +1,7 @@
+import { authorizedReader } from '../media/authorized-reader.js';
 import { AppError, unauthenticated } from '../../shared/errors.js';
 export function createUserService({ User, AuditLog, logger }) {
+  let media;
   const actorFilter = (actor) => ({
     _id: actor.user._id,
     status: 'active',
@@ -14,6 +16,37 @@ export function createUserService({ User, AuditLog, logger }) {
     return user;
   }
   return {
+    setMedia(value) {
+      media = value;
+    },
+    async readAvatar(userId, assetId) {
+      const authorize = async () => {
+        const user = await User.findOne({
+          _id: userId,
+          status: 'active',
+          avatarAssetId: assetId,
+        });
+        const asset =
+          user &&
+          media?.MediaAsset &&
+          (await media.MediaAsset.findOne({
+            _id: assetId,
+            ownerId: userId,
+            purpose: 'avatar',
+            status: 'attached',
+            uploadOutcome: 'confirmed',
+            attachmentIntent: null,
+            deleteRequestedAt: null,
+            'attachedTo.kind': 'user_avatar',
+            'attachedTo.resourceId': userId,
+            'cloudinary.deliveryType': 'authenticated',
+          }));
+        if (!asset)
+          throw new AppError(404, 'MEDIA_NOT_FOUND', 'Image not found');
+        return asset;
+      };
+      return authorizedReader(authorize, media?.reader)();
+    },
     async getPublicProfile(userId) {
       const user = await User.findOne({ _id: userId, status: 'active' });
       if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
@@ -21,13 +54,43 @@ export function createUserService({ User, AuditLog, logger }) {
     },
     getCurrentProfile: (actor) => actor.user,
     async updateProfile(actor, input) {
-      if (input.avatarAssetId != null)
-        throw new AppError(
-          422,
-          'MEDIA_NOT_AVAILABLE',
-          'Avatar attachment requires the media module',
-        );
-      return updateSelf(actor, { $set: input });
+      const { mediaVersion, ...fields } = input;
+      if (!Object.hasOwn(input, 'avatarAssetId'))
+        return updateSelf(actor, { $set: fields });
+      if (!media)
+        throw new AppError(503, 'MEDIA_NOT_AVAILABLE', 'Media unavailable');
+      const old = await User.findOne(actorFilter(actor));
+      if (!old) throw unauthenticated();
+      if ((old.mediaVersion ?? 0) !== mediaVersion)
+        throw new AppError(409, 'VERSION_CONFLICT', 'Avatar changed');
+      const target = { kind: 'user_avatar', resourceId: String(old._id) };
+      const before = old.avatarAssetId
+        ? [{ assetId: String(old.avatarAssetId), target }]
+        : [];
+      const after = fields.avatarAssetId
+        ? [{ assetId: fields.avatarAssetId, target }]
+        : [];
+      return media.lifecycle.applyReferences(actor, {
+        before,
+        after,
+        expectedVersion: mediaVersion,
+        commit: () =>
+          User.findOneAndUpdate(
+            {
+              ...actorFilter(actor),
+              ...(mediaVersion === 0
+                ? {
+                    $or: [
+                      { mediaVersion: 0 },
+                      { mediaVersion: { $exists: false } },
+                    ],
+                  }
+                : { mediaVersion }),
+            },
+            { $set: fields, $inc: { mediaVersion: 1 } },
+            { returnDocument: 'after', runValidators: true },
+          ),
+      });
     },
     async updatePreferences(actor, input) {
       const fields = {};

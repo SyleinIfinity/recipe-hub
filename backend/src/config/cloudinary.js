@@ -51,3 +51,13 @@ export function parseStorageConfig(input) {
   if (!result.success) throw new Error('Invalid image storage configuration');
   return Object.freeze(result.data);
 }
+
+export function validMediaRoot(config) {
+  return (
+    config.CLOUDINARY_ASSET_FOLDER === 'recipe-hub' ||
+    (config.NODE_ENV === 'test' &&
+      /^recipe-hub\/_verification\/[a-f0-9-]{36}$/i.test(
+        config.CLOUDINARY_ASSET_FOLDER,
+      ))
+  );
+}

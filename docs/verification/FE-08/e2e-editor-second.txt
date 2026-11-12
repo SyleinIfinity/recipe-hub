@@ -1,0 +1,80 @@
+npm notice run test:e2e
+npm notice run playwright test e2e/editor.spec.js --workers=1
+[WebServer] (node:40950) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:41120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 1 worker
+
+(node:41157) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete (9.9s)
+(node:41978) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 e2e/editor.spec.js:198:1 › ED-E02 real optimistic409 preserves local values and explicit server review (4.3s)
+  ✓  3 e2e/editor.spec.js:240:1 › ED-E03 owner isolation, real non-owner GET/PATCH denial and guest guard (3.5s)
+  ✓  4 e2e/editor.spec.js:277:1 › ED-E04 dirty navigation and hard reload warning, row focus, single submit and plaintext validation (2.8s)
+  ✓  5 e2e/editor.spec.js:334:1 › ED-E05 uncertain create reuses same frozen intent and confirmed database draft (1.7s)
+  ✓  6 e2e/editor.spec.js:376:1 › ED-E06 real CSRF failure, expired session purges editor, and catalog canonical ID persists (2.8s)
+  ✘  7 e2e/editor.spec.js:432:1 › ED-E07 editor/list/publication responsive six widths and long dynamic lists (12.5s)
+(node:43067) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  8 e2e/editor.spec.js:500:1 › ED-E08 cross-tab logout/login changes identity and discards private dirty editor (4.5s)
+  ✓  9 e2e/editor.spec.js:524:1 › ED-E09 uncertain save reconciles without auto replay; rate-limit and422 feedback (3.5s)
+
+
+  1) e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Không tìm thấy công thức.')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Không tìm thấy công thức.') with timeout 5000ms
+      - waiting for getByText('Không tìm thấy công thức.')
+
+
+      177 |   await expect(
+      178 |     publicPage.getByText('Không tìm thấy công thức.', { exact: false }),
+    > 179 |   ).toBeVisible();
+          |     ^
+      180 |   await guest.close();
+      181 |   await page
+      182 |     .getByRole('button', { name: 'Xóa nguyên liệu 1', exact: true })
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/editor.spec.js:179:5
+
+    Error Context: test-results/editor-ED-E01-real-create--fba7d-ish-public-unpublish-delete/error-context.md
+
+    Error Context: test-results/editor-ED-E01-real-create--fba7d-ish-public-unpublish-delete/error-context.md
+
+  2) e2e/editor.spec.js:432:1 › ED-E07 editor/list/publication responsive six widths and long dynamic lists 
+
+    Error: route.fulfill: Fetch response has been disposed
+
+       at support/account-harness.js:87
+
+      85 |         url.port = String(server.address().port);
+      86 |         const response = await route.fetch({ url: url.href });
+    > 87 |         await route.fulfill({ response });
+         |                     ^
+      88 |       });
+      89 |     },
+      90 |     async cleanup(email) {
+        at /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/support/account-harness.js:87:21
+
+    Error Context: test-results/editor-ED-E07-editor-list--978ff-dths-and-long-dynamic-lists/error-context.md
+
+    Error Context: test-results/editor-ED-E07-editor-list--978ff-dths-and-long-dynamic-lists/error-context.md
+
+  2 failed
+    e2e/editor.spec.js:112:1 › ED-E01 real create/edit ingredients/steps ordering, persistence, publish/public/unpublish/delete 
+    e2e/editor.spec.js:432:1 › ED-E07 editor/list/publication responsive six widths and long dynamic lists 
+  7 passed (57.3s)

@@ -1,3 +1,4 @@
+import { createBinaryReader } from './binary-reader.js';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { Agent } from 'node:https';
@@ -5,7 +6,7 @@ import { parseStorageConfig } from '../../config/cloudinary.js';
 import { createStorage } from './storage.js';
 import { StorageError } from './storage.error.js';
 
-export async function createCloudinaryStorage(input, { sdk } = {}) {
+export async function createCloudinaryStorage(input, { sdk, fetchImpl } = {}) {
   let config;
   try {
     config = parseStorageConfig(input);
@@ -112,7 +113,40 @@ export async function createCloudinaryStorage(input, { sdk } = {}) {
       }
     });
   }
+  const read = createBinaryReader({
+    cloudName: config.CLOUDINARY_CLOUD_NAME,
+    fetchImpl,
+    makeUrl: (ref, format) =>
+      sdk.utils.private_download_url(ref.publicId, format, {
+        ...credentials,
+        resource_type: 'image',
+        type: 'authenticated',
+        secure: true,
+        upload_prefix: 'https://api.cloudinary.com',
+        attachment: false,
+        expires_at: Math.floor(Date.now() / 1000) + 60,
+      }),
+  });
   return createStorage(config, 'cloudinary', {
+    read,
+    async inspect(reference) {
+      try {
+        return {
+          metadata: await sdk.api.resource(reference.publicId, {
+            ...credentials,
+            resource_type: 'image',
+            type: 'authenticated',
+            secure: true,
+            upload_prefix: 'https://api.cloudinary.com',
+            timeout: config.IMAGE_STORAGE_TIMEOUT_MS,
+          }),
+        };
+      } catch (error) {
+        if ((error?.http_code ?? error?.error?.http_code) === 404)
+          return { outcome: 'absent' };
+        throw error;
+      }
+    },
     upload: (source, options, signal) =>
       call('upload', source, options, signal),
     destroy: (reference, signal) =>

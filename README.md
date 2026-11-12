@@ -186,3 +186,7 @@ GET `/api/v1/me/media`, DELETE `/api/v1/media/images/{assetId}` với session/CS
 ## FE-DEC-010 — Frontend trực tiếp React/CSS (2026-11-10)
 
 Confirmed: Direct React Visual Design, No Figma. Figma workflow v1.0 **superseded**. FE-00 chỉ audit/docs; FE-01 visual teardown, FE-02 CSS/component specification, FE-03 screen/action flows, FE-04 React visual implementation, FE-05+ hoàn thiện kiến trúc/integration. Review bằng browser screenshot/responsive/Playwright; không tự chuyển bước hoặc code từ FE-00. Chi tiết trong [docs/FE-00-report.md](docs/FE-00-report.md), [decisions](docs/FE-DECISIONS.md).
+
+## BE-FE-RH-P1.1 — Media workflow
+
+Cloudinary authenticated storage qua same-origin Recipe/Avatar gateways, Editor cover/step upload/attachment/replace/remove và Profile avatar CAS đã tích hợp. OpenAPI0.13.2:47paths/54operations/51schemas. Không đổi private draft policy hoặc folder mode. [Report](docs/BE-FE-RH-P1.1-report.md), [runtime/live isolation](docs/BE-FE-RH-P1.1-Cloudinary-Runtime.md), [test evidence](docs/BE-FE-RH-P1.1-Test-Results.md). Controlled live tests opt-in riêng và cleanup chỉ tài nguyên synthetic thuộc test; không chạy production cleanup hoặc SMTP live.

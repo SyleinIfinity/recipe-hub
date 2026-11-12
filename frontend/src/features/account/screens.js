@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { MediaPicker } from '../media/MediaPicker.js';
+import { RecipeImage } from '../../components/ui/primitives.js';
 import { createElement as h } from 'react';
 import { Link, navigate, safeReturnPath } from '../../app/router.js';
 import { accountRoutes } from '../../app/registry.js';
@@ -199,7 +202,10 @@ export function AuthScreen({ kind, session, tokenLink, search, announce }) {
                   ),
                 h(
                   Button,
-                  { type: 'submit', disabled: form.disabled },
+                  {
+                    type: 'submit',
+                    disabled: form.disabled,
+                  },
                   config.submit,
                 ),
               ),
@@ -249,6 +255,9 @@ export function AccountScreen({
 }) {
   const user = session.body.data,
     form = useSubmission();
+  const [avatarUnresolved, setAvatarUnresolved] = useState(false);
+  const [avatar, setAvatar] = useState(undefined);
+  const [mediaPending, setMediaPending] = useState(0);
   const overview = kind === 'account';
   return h(
     'section',
@@ -286,6 +295,12 @@ export function AccountScreen({
           'div',
           { className: 'account-overview' },
           h('h2', null, user.displayName),
+          user.avatarUrl &&
+            h(
+              'div',
+              { className: 'user-avatar' },
+              h(RecipeImage, { url: user.avatarUrl }),
+            ),
           h(
             'dl',
             null,
@@ -303,6 +318,11 @@ export function AccountScreen({
               null,
               user.status === 'active' ? 'Đang hoạt động' : 'Không khả dụng',
             ),
+          ),
+          h(
+            Link,
+            { href: '/my/recipes', className: 'text-link' },
+            'Bản nháp của tôi',
           ),
           user.bio && h('p', { className: 'account-bio' }, user.bio),
           !user.emailVerifiedAt &&
@@ -334,6 +354,12 @@ export function AccountScreen({
                   body = {
                     displayName: values.displayName.trim(),
                     bio: values.bio,
+                    ...(avatar !== undefined
+                      ? {
+                          avatarAssetId: avatar,
+                          mediaVersion: user.mediaVersion,
+                        }
+                      : {}),
                   };
                 } else if (kind === 'password') {
                   endpoint = '/auth/change-password';
@@ -385,10 +411,29 @@ export function AccountScreen({
           form.feedback,
           h(
             'fieldset',
-            { disabled: form.status === 'pending' },
+            { disabled: form.status === 'pending' || mediaPending > 0 },
             h('legend', { className: 'sr-only' }, 'Thông tin tài khoản'),
             kind === 'editProfile'
               ? [
+                  h(MediaPicker, {
+                    key: 'avatar',
+                    label: 'Ảnh đại diện',
+                    purpose: 'avatar',
+                    assetId: avatar === undefined ? user.avatarAssetId : avatar,
+                    url: user.avatarUrl,
+                    onChange: (id) => {
+                      setAvatar(id);
+                      form.markDirty();
+                      announce('');
+                    },
+                    onUnresolved: (value) => {
+                      setAvatarUnresolved(value);
+                      if (value) form.markDirty();
+                    },
+                    onBusy: (delta) =>
+                      setMediaPending((n) => Math.max(0, n + delta)),
+                    disabled: form.disabled,
+                  }),
                   h(Field, {
                     key: 'displayName',
                     name: 'displayName',
@@ -462,7 +507,7 @@ export function AccountScreen({
                   ],
             h(
               Button,
-              { type: 'submit', disabled: form.disabled },
+              { type: 'submit', disabled: form.disabled || avatarUnresolved },
               kind === 'password' ? 'Đổi mật khẩu' : 'Lưu thay đổi',
             ),
           ),

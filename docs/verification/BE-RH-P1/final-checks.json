@@ -1,0 +1,24 @@
+{
+  "branch": "khanh",
+  "indexEmpty": true,
+  "frontendSourceAssetsHomeExpectedUnchanged": true,
+  "priorFE08ArtifactsUnchanged": true,
+  "phase2And3Implemented": false,
+  "G08Backend": "verified_done",
+  "G09": "verified_done",
+  "cloudinaryLiveSmoke": "verified_done",
+  "avatar": "blocked",
+  "productionApplication": "not_verified",
+  "unit": {
+    "passed": 550,
+    "failed": 0
+  },
+  "integration": {
+    "passed": 393,
+    "failed": 0
+  },
+  "firefox": {
+    "passed": 35,
+    "failed": 0
+  }
+}

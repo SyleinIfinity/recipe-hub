@@ -137,3 +137,12 @@ Không tự chuyển FE-07 hoặc commit/push.
 - FE-DEC-050: use existing account display/mobile icon as real entry links without Home paint redesign; new form evidence separate, approved Home expected PNG/threshold unchanged.
 
 Dừng FE-07; không tự bắt đầu FE-08/Git mutation.
+
+## FE-08 — Recipe authoring decisions (11/11/2026)
+
+- FE-DEC-051: Activate only `/my/recipes`, `/my/recipes/new`, `/my/recipes/:recipeId/edit`; Account entry; keep Home/main nav appearance.
+- FE-DEC-052: G10 owner list is drafts only. Published owner GET is read-only; explicit unpublish before edit/delete. No public scan or full published listing claim.
+- FE-DEC-053: Use actual runtime OwnerRecipeDTO draft/published; G09 OpenAPI const draft drift remains blocked_backend, no Backend schema edit.
+- FE-DEC-054: Explicit full-array save, version CAS, local stable UUID keys separate from server step IDs; no autosave. Dirty guard, preserved409 edits, GET review and explicit discard; uncertain create frozen UUID/payload memory-only, no auto replay.
+- FE-DEC-055: G08 binary delivery absent/URLs null; defer upload controls/full Media E2E, preserve authenticated/private assets and canonical refs, neutral fallback. Text-only publication valid without cover.
+- FE-DEC-056: Recipe validators reject newline/tab/Cc/Cf/markup; keep raw input and show errors, do not reuse multiline Bio rule. No package/env/Backend/approved snapshot changes.

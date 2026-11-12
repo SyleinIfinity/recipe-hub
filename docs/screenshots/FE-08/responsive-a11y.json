@@ -1,0 +1,292 @@
+{
+  "evidence": [
+    {
+      "name": "explore",
+      "width": 1672,
+      "height": 941,
+      "scrollWidth": 1672,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 1672,
+      "height": 941,
+      "scrollWidth": 1672,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 1672,
+      "height": 941,
+      "scrollWidth": 1672,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 1672,
+      "height": 941,
+      "scrollWidth": 1672,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 1672,
+      "height": 941,
+      "scrollWidth": 1672,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "explore",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "explore",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "explore",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "explore",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "explore",
+      "width": 360,
+      "height": 800,
+      "scrollWidth": 360,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "detail",
+      "width": 360,
+      "height": 800,
+      "scrollWidth": 360,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "profile",
+      "width": 360,
+      "height": 800,
+      "scrollWidth": 360,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "notfound",
+      "width": 360,
+      "height": 800,
+      "scrollWidth": 360,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    },
+    {
+      "name": "forbidden",
+      "width": 360,
+      "height": 800,
+      "scrollWidth": 360,
+      "fonts": true,
+      "duplicateIds": [],
+      "unlabeled": []
+    }
+  ],
+  "forced": {
+    "active": true,
+    "reduced": true,
+    "focusOutline": "solid",
+    "focusWidth": "3px",
+    "mainFocusOutline": "none"
+  },
+  "nativeZoom": {
+    "before": {
+      "width": 360,
+      "ratio": 1
+    },
+    "after": {
+      "width": 360,
+      "ratio": 1
+    },
+    "status": "not_verified"
+  }
+}

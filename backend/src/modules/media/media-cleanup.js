@@ -40,7 +40,7 @@ export function createMediaCleanup({
   }
   async function inspect(asset) {
     if (
-      asset.provider !== 'fake' ||
+      asset.provider !== config.MEDIA_PROVIDER ||
       asset.cloudinary.deliveryType !== 'authenticated'
     )
       return { outcome: 'unknown' };
@@ -172,7 +172,7 @@ export function createMediaCleanup({
       throw new Error('Invalid batch limit');
     const date = now();
     const query = {
-      provider: 'fake',
+      provider: config.MEDIA_PROVIDER,
       $and: [
         { $or: [{ leaseUntil: null }, { leaseUntil: { $lte: date } }] },
         { $or: [{ nextAttemptAt: null }, { nextAttemptAt: { $lte: date } }] },

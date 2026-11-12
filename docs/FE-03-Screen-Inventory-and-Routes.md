@@ -66,3 +66,7 @@ UIroutes là proposals FE03, khác RESTpaths. Embedded hash/dialog screen không
 Home→Explore→Detail→Profile đủ route công khai cho visual foundation có realAPI. Guestlogin/Create chỉ render khi Auth/Editor destination được triển khai đầy đủ; không “coming soon” page hoặc disabledbutton giả. Userworkspace entry từAccount, childscreens qua localnav; MyRecipes→Create/Edit; Detailowner→ownerGET cho unpublish; Favorites từaccount/DetailSavecommand. Socialsections trongDetail; Reportdialog từtarget; AdminReports entry từroleadmin menu; Admincatalog/user trongAdminnav. Các screenblocked/planned ghi đầy đủ trong bảng nhưng ẩn khỏi navigationlive.
 
 Shell/Account/nav là reusablecontrols chứ không thêm screenảo vào inventory. Chức năng không UI: CSRF/session GET và section loaders có system_action registry; health3ops phục vụ vận hành, không nút sản phẩm.
+
+## FE-08 implementation routes — 11/11/2026
+
+Actual implemented routes (prior tables remain proposed historical spec): `/my/recipes` owner drafts list; `/my/recipes/new` create; `/my/recipes/:recipeId/edit` editor/read-only published management. Access authenticated at App, ownership enforced by Backend owner GET/write, no trusted client ownerId. Entry Account → Bản nháp của tôi. Public/account/auth routes unchanged. No media management/upload route mounted because delivery blocked. Runtime registry source frontend/src/app/registry.js; contract/limits/results at FE-08-report.md.

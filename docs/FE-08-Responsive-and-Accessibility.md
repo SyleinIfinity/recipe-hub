@@ -1,0 +1,13 @@
+# FE-08 — Responsive và accessibility
+
+Warm cream/parchment, wood/brown controls, Be Vietnam Pro của Kitchen hiện hành; CSS `.editor-*` scope, không đổi art/fonts/assets/Home positioning. Desktop form nhiều section; mobile một cột, min-width0, inputs fullwidth và controls wrap. Không sidebar/dashboard mới. Tái sử dụng button≥44px/design tokens; row controls text accessible thay drag/drop.
+
+Six viewports1672×941,1440×900,1024×768,768×1024,390×844,360×800. Browser ED-E07 chụp owner list/create/editor với8ingredients/8steps, Unicode tên dài/instruction1500+, kiểm tra document.scrollWidth≤innerWidth. Artifact: [metrics](screenshots/FE-08/editor-responsive.json), ví dụ [desktop](screenshots/FE-08/editor-1440.png), [mobile](screenshots/FE-08/editor-360.png). Đây là18screen/viewport combinations, không phải18unique tests. Full old public/auth responsive artifacts cũng xuất FE08 để giữ nguyên FE07.
+
+Semantic form/fieldsets/legends/labels, named add/remove/reorder, inline errors aria-invalid/describedby + summary, input focus first-invalid; Add focus new row, Remove next/previous/Add button, reorder focus moved row. Status role announces dirty/save/add/remove. Pending/uncertain/conflict disable writes; loading/error không fake empty/saved. Publication/delete confirm inline section, focus heading và explicit confirm/cancel; không claim modal trap cho nonmodal UI. Native dirty confirm + beforeunload; no warning after saved.
+
+Accessibility evidence: unit dynamic rows/keys/validation; Firefox ED-E04 focus/native dialogs/dirty/single submit; old public drawer/keyboard/reduced-motion/forced-colors and Home snapshots giữ assertions. Visual review ảnh được ghi sau run. Không tự chứng nhận full WCAG/real screen-reader, native zoom200%, mobile hardware virtual keyboard occlusion, Chromium/WebKit. Palette kế thừa đã review, không đo lại mọi contrast pair/OS assistive tech. Kitchen Home hai approved snapshot SHA không thay, threshold giữ nguyên.
+
+Performance: controlled dynamic local state, stable row keys, one explicit write per submit lock,250ms catalog debounce, abort cleanup và context revision. Long-list browser probe8+8; validation bound40+30 có unit; chưa có profiling40+30/heap/leak/CWV benchmark, không claim tối ưu tuyệt đối. No blob/objectURL allocations khi upload UI deferred; bundle actual trong [Test Results](FE-08-Test-Results.md).
+
+Đã xem trực tiếp ảnh create-360 và create-1440: bố cục/labels/controls giữ Kitchen palette, form không tràn, mobile một cột và desktop time grid. Long Editor screenshots/overflow metrics do Firefox tạo; không suy ảnh screenshot thành screen-reader chứng nhận.

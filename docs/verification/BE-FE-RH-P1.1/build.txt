@@ -1,0 +1,15 @@
+npm notice run build
+npm notice run npm run build --workspaces
+npm notice run build
+npm notice run node ../scripts/check-backend.js
+npm notice run vite build
+vite v8.3.6 building client environment for production...
+transforming...
+✓ 32 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.39 kB │ gzip:  0.26 kB
+dist/assets/index-al75zUXT.css   28.84 kB │ gzip:  6.82 kB
+dist/assets/index-QiPqTX6P.js   302.37 kB │ gzip: 92.64 kB
+
+✓ built in 273ms

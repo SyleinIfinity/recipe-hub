@@ -91,3 +91,15 @@ Entry qua account label/mobile account icon: `/auth/login`; auth forms ở `/aut
 Backend register không auto-login/mail; unverified email vẫn login khi active. Sau transitions, useSession xác minh lại auth/me; password change/reset invalidate mọi session. CSRF/password/token không persist, mutations không tự retry. Reset/verify nhận fragment từ email Backend rồi scrub URL, giữ memory tới consume/leave; reload sau scrub cần mở lại link.202 chỉ accepted, không proof delivery/completed save.
 
 Test auth dùng production factories/isolated Mongo và email-renderer capture DI; không live SMTP. Avatar và session listing chưa có đầy đủ contract/delivery, không fake controls. Advanced settings giữ fields trong Backend, UI chỉ subset đã tích hợp. Browser evidence mới ở `docs/screenshots/FE-07`; Home expected snapshots giữ nguyên.
+
+## FE-08 — Recipe authoring
+
+Account → Bản nháp của tôi (`/my/recipes`), create (`/my/recipes/new`), owner editor (`/my/recipes/:recipeId/edit`). Backend list/edit/delete draft-only; owner published read-only with explicit unpublish. Real API/version/idempotency/CSRF, ingredient/step rows and explicit save, dirty navigation warning, conflict/uncertain recovery. No client persistent private drafts or auto write retries.
+
+Image delivery remains blocked: no upload UI/Cloudinary URL construction; neutral fallback. G09 OpenAPI owner status mismatch remains documented, no Backend change. See [FE-08 report](../docs/FE-08-report.md), [contracts](../docs/FE-08-Recipe-and-Media-Contract-Audit.md), [tests](../docs/FE-08-Test-Results.md). Test artifacts under docs/screenshots/FE-08 and docs/verification/FE-08; approved Home snapshots untouched. Do not infer full media/provider acceptance from text authoring tests.
+
+## P1.1 — Media end-to-end
+
+Recipe Draft Editor có picker cover/step, preview local, upload temporary và Save attachment; reorder giữ ảnh, explicit null để gỡ. Edit Profile có avatar picker, mediaVersion CAS, public current-avatar gateway; Account/Public Profile/author rendering. API client/session/CSRF hiện hành được tái sử dụng; không upload trực tiếp từ browser sang Cloudinary.
+
+Images lỗi có fallback/retry. File chưa upload hoặc outcome unknown không được coi saved; unknown upload chỉ explicit same-key check. Không immediate provider deletion khi replace/remove; lifecycle/reference grace giữ nguyên. [P1.1 report](../docs/BE-FE-RH-P1.1-report.md) và [tests](../docs/BE-FE-RH-P1.1-Test-Results.md) phân biệt SDK-stub CI và controlled actual Cloudinary Firefox journey. Không P2/P3 navigation.

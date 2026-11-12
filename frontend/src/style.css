@@ -1433,3 +1433,160 @@ summary {
 .account-notice button {
   margin: 8px;
 }
+
+/* FE-08: scoped authoring surfaces; public Kitchen art remains unchanged. */
+.editor-page {
+  overflow-wrap: anywhere;
+}
+.editor-page input,
+.editor-page select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #9c734f;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fffaf0;
+  color: #49311f;
+  font: inherit;
+}
+.editor-page fieldset {
+  min-width: 0;
+  border: 1px solid #c7a779;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 18px 0;
+}
+.editor-page legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.editor-field {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.editor-field label {
+  font-weight: 600;
+}
+.editor-field small {
+  color: #67482f;
+}
+.editor-page [aria-invalid='true'] {
+  border: 2px solid #a33220;
+}
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 14px;
+}
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0;
+}
+.editor-row {
+  background: #fff7e7;
+}
+.editor-review,
+.editor-confirm {
+  padding: 18px;
+  margin: 18px 0;
+  background: #fff2d6;
+  border: 2px solid #906035;
+  border-radius: 14px;
+}
+.editor-review pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 350px;
+  overflow: auto;
+}
+.editor-media {
+  margin: 24px 0;
+}
+.editor-media .image-fallback {
+  max-width: 260px;
+}
+.owner-list {
+  list-style: none;
+  padding: 0;
+}
+.owner-list li {
+  border-bottom: 1px solid #c7a779;
+  padding: 18px 0;
+}
+.editor-page :disabled {
+  cursor: default;
+}
+@media (max-width: 600px) {
+  .editor-page fieldset {
+    padding: 12px;
+  }
+  .editor-actions .button {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+.media-picker {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #c7a779;
+  border-radius: 14px;
+  background: #fff7e7;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.media-picker img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+}
+.media-picker figure {
+  margin: 12px 0;
+}
+.media-picker input[type='file'] {
+  max-width: 100%;
+  min-height: 44px;
+}
+.media-picker .button {
+  margin: 8px 8px 0 0;
+  white-space: normal;
+}
+.media-picker label {
+  display: grid;
+  gap: 8px;
+}
+.user-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.user-avatar .recipe-image {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+}
+.author-avatar {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.author-avatar .recipe-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}

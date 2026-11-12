@@ -215,5 +215,11 @@ export function RecipeImage({ url }) {
         height: 300,
         onError: () => setFailedUrl(url),
       })
-    : h(ImageFallback);
+    : h(
+        'div',
+        null,
+        h(ImageFallback),
+        safe &&
+          h(Button, { onClick: () => setFailedUrl(null) }, 'Thử tải lại ảnh'),
+      );
 }

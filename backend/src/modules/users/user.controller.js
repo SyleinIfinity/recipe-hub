@@ -1,6 +1,18 @@
 import { publicUserDto, privateUserDto, adminUserDto } from './user.dto.js';
 export function createUserController(users) {
   return {
+    async avatar(req, res) {
+      const result = await users.readAvatar(
+        req.validated.params.userId,
+        req.validated.params.assetId,
+      );
+      res.set({
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Type': result.contentType,
+      });
+      res.status(200).end(result.buffer);
+    },
     async publicProfile(req, res) {
       res.json({
         success: true,

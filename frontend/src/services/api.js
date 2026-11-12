@@ -50,6 +50,7 @@ export async function requestApi(
     body,
     timeoutMs = 8000,
     contextSensitive = false,
+    idempotencyKey,
   } = {},
 ) {
   method = method.toUpperCase();
@@ -72,6 +73,15 @@ export async function requestApi(
   const mutation = !safeMethods.has(method);
   const epoch = securityEpoch;
   const headers = { Accept: 'application/json' };
+  if (idempotencyKey !== undefined) {
+    if (
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(
+        idempotencyKey,
+      )
+    )
+      throw new ApiError(0, 'INVALID_IDEMPOTENCY_KEY');
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
   if (mutation) headers['X-CSRF-Token'] = await getCsrfToken();
   if (epoch !== securityEpoch) throw new ApiError(0, 'CONTEXT_CHANGED');
   if (body !== undefined && !(body instanceof FormData))
@@ -104,6 +114,11 @@ export async function requestApi(
         : { body: body instanceof FormData ? body : JSON.stringify(body) }),
     });
     context.responseStatus = response.status;
+    if (response.status === 205)
+      throw new ApiError(205, 'INVALID_RESPONSE', {
+        ...context,
+        mutationOutcomeUncertain: mutation,
+      });
     context.accepted = response.status === 202;
     if ((mutation || contextSensitive) && epoch !== securityEpoch)
       throw new ApiError(response.status, 'CONTEXT_CHANGED', {

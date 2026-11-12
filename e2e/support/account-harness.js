@@ -9,7 +9,10 @@ import { createApp } from '../../backend/src/app.js';
 import { createEmailProvider } from '../../backend/src/integrations/email-provider.js';
 
 // Test-process-only composition using the production DI seams. No mailbox HTTP endpoint.
-export async function createAccountHarness() {
+export async function createAccountHarness({
+  configOverrides = {},
+  storage,
+} = {}) {
   const config = parseEnv({
     NODE_ENV: 'test',
     DB_NAME: 'recipe-hub-test',
@@ -24,6 +27,7 @@ export async function createAccountHarness() {
     APP_ORIGINS: 'http://127.0.0.1:5175',
     AUTH_RATE_LIMIT: '1000',
     CSRF_RATE_LIMIT: '1000',
+    ...configOverrides,
   });
   const logger = createLogger('silent'),
     db = createDatabase(config),
@@ -55,6 +59,7 @@ export async function createAccountHarness() {
     identity,
     config,
     logger,
+    storage,
   });
   const recipes = await createRecipes({
     connection: db.connection,
@@ -76,6 +81,10 @@ export async function createAccountHarness() {
   });
   return {
     db,
+    catalog,
+    media,
+    recipes,
+    config,
     port: server.address().port,
     identity,
     mail,
@@ -83,8 +92,13 @@ export async function createAccountHarness() {
       await page.route('**/api/v1/**', async (route) => {
         const url = new URL(route.request().url());
         url.port = String(server.address().port);
-        const response = await route.fetch({ url: url.href });
-        await route.fulfill({ response });
+        try {
+          const response = await route.fetch({ url: url.href });
+          await route.fulfill({ response });
+        } catch {
+          // A navigation/unmount can dispose an in-flight test proxy response.
+          await route.abort('failed').catch(() => {});
+        }
       });
     },
     async cleanup(email) {

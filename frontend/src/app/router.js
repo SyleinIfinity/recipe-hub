@@ -2,6 +2,16 @@ import { accountRoutes } from './registry.js';
 import { createElement as h, useSyncExternalStore } from 'react';
 
 let navigationAction = 'direct';
+let leaveGuard;
+let acceptedLocation;
+export function guardNavigation(check) {
+  leaveGuard = check;
+  acceptedLocation = window.location.href;
+  return () => {
+    if (leaveGuard === check) leaveGuard = undefined;
+  };
+}
+
 const scrollPositions = new Map();
 export function rememberScroll() {
   scrollPositions.set(
@@ -18,7 +28,9 @@ const changed = () => window.dispatchEvent(new Event('popstate'));
 export function navigate(href, { replace = false } = {}) {
   const url = new URL(href, window.location.href);
   if (url.origin !== window.location.origin) return;
+  if (leaveGuard && !leaveGuard()) return;
   rememberScroll();
+  acceptedLocation = url.href;
   navigationAction = 'push';
   window.history[replace ? 'replaceState' : 'pushState'](
     null,
@@ -59,7 +71,14 @@ export function Link({ href, children, onClick, ...props }) {
 }
 const subscribe = (callback) => {
   const pop = (event) => {
-    if (event instanceof PopStateEvent) navigationAction = 'pop';
+    if (event instanceof PopStateEvent) {
+      if (leaveGuard && !leaveGuard()) {
+        window.history.pushState(null, '', acceptedLocation);
+        return;
+      }
+      acceptedLocation = window.location.href;
+      navigationAction = 'pop';
+    }
     callback();
   };
   window.addEventListener('popstate', pop);
@@ -81,6 +100,10 @@ export function useLocation() {
 export function matchRoute(pathname) {
   const account = accountRoutes.find((route) => route.pattern === pathname);
   if (account) return { page: account.id };
+  if (pathname === '/my/recipes') return { page: 'myRecipes' };
+  if (pathname === '/my/recipes/new') return { page: 'newRecipe' };
+  const editor = /^\/my\/recipes\/([a-fA-F0-9]{24})\/edit$/.exec(pathname);
+  if (editor) return { page: 'editRecipe', value: editor[1] };
   if (pathname === '/') return { page: 'home' };
   if (pathname === '/recipes') return { page: 'explore' };
   if (pathname === '/forbidden') return { page: 'forbidden' };

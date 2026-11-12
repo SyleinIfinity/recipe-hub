@@ -63,6 +63,7 @@ it('validates profile boundaries, protected fields and input types', () => {
       displayName: 'x'.repeat(80),
       bio: 'x'.repeat(500),
       avatarAssetId: null,
+      mediaVersion: 0,
     }).success,
   ).toBe(true);
   expect(

@@ -470,7 +470,12 @@ it('DOC-09..16 success responses for every live operation conform to schemas', a
     if (method === 'get') contract(method, pattern, await admin.get(path));
     else await write(admin, method, path, undefined, pattern);
   }
-  expect(covered.size).toBe(53);
+  contract(
+    'get',
+    '/api/v1/users/{userId}/avatar/{assetId}',
+    await request(app).get(`/api/v1/users/${userId}/avatar/${rid}`),
+  );
+  expect(covered.size).toBe(54);
 });
 it('DOC-16/19/20 actual CSRF, permission, expiry and validation error contracts', async () => {
   const guest = request.agent(app);

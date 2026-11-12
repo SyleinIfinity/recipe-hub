@@ -1,3 +1,4 @@
+import { validMediaRoot } from '../../config/cloudinary.js';
 import { z } from 'zod';
 import { AppError } from '../../shared/errors.js';
 import {
@@ -35,10 +36,15 @@ const resultSchema = z.object({
 export function createMediaService({ MediaAsset, storage, config }) {
   function assertEnabled() {
     if (
-      config.MEDIA_PROVIDER !== 'fake' ||
+      !['fake', 'cloudinary'].includes(config.MEDIA_PROVIDER) ||
+      (config.MEDIA_PROVIDER === 'cloudinary' &&
+        (!config.CLOUDINARY_CLOUD_NAME ||
+          !config.CLOUDINARY_API_KEY ||
+          !config.CLOUDINARY_API_SECRET ||
+          config.CLOUDINARY_FOLDER_MODE !== 'dynamic')) ||
       config.IMAGE_DELIVERY_POLICY !== 'authenticated' ||
       (config.CLOUDINARY_FOLDER_MODE || 'dynamic') !== 'dynamic' ||
-      config.CLOUDINARY_ASSET_FOLDER !== 'recipe-hub'
+      !validMediaRoot(config)
     )
       throw new AppError(
         503,
@@ -77,7 +83,7 @@ export function createMediaService({ MediaAsset, storage, config }) {
             resourceType: 'image',
             deliveryType: 'authenticated',
           },
-          assetFolder: `recipe-hub/${folder[purpose]}`,
+          assetFolder: `${config.CLOUDINARY_ASSET_FOLDER}/${folder[purpose]}`,
           format: image.format,
           width: image.width,
           height: image.height,

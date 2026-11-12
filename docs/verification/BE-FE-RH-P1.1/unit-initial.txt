@@ -1,0 +1,66 @@
+npm notice run test:unit
+npm notice run vitest run --project unit --project web
+
+ RUN  v5.1.0 /run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source
+
+ ❯ |unit| backend/tests/unit/openapi.test.js (11 tests | 1 failed) 1647ms
+   × DOC-01..04/09/10/13/14/21/22 validates OAS and actual route-factory inventory offline 458ms
+ ❯ |unit| backend/tests/unit/auth.test.js (13 tests | 1 failed) 2433ms
+   × validates profile boundaries, protected fields and input types 23ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| backend/tests/unit/auth.test.js > validates profile boundaries, protected fields and input types
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ backend/tests/unit/auth.test.js:67:5
+     65|       avatarAssetId: null,
+     66|     }).success,
+     67|   ).toBe(true);
+       |     ^
+     68|   expect(
+     69|     loginSchema.safeParse({ email: { $ne: null }, password: 'anything'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| backend/tests/unit/openapi.test.js > DOC-01..04/09/10/13/14/21/22 validates OAS and actual route-factory inventory offline
+AssertionError: expected { paths: 47, operations: 54, …(1) } to deeply equal { paths: 46, operations: 53, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "operations": 53,
+-   "paths": 46,
++   "operations": 54,
++   "paths": 47,
+    "schemas": 51,
+  }
+
+ ❯ backend/tests/unit/openapi.test.js:31:40
+     29| const validates = schemaValidator(spec);
+     30| it('DOC-01..04/09/10/13/14/21/22 validates OAS and actual route-factor…
+     31|   expect(await validateContract(spec)).toEqual({
+       |                                        ^
+     32|     paths: 46,
+     33|     operations: 53,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 21 passed (23)
+      Tests  2 failed | 548 passed (550)
+   Start at  15:37:10
+   Duration  5.52s (tests 46%, import 30%, environment 20%, transform 3%, worker 1%)
+

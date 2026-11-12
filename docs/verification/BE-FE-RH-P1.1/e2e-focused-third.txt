@@ -1,0 +1,47 @@
+npm notice run test:e2e
+npm notice run playwright test e2e/media-workflow.spec.js --workers=1
+[WebServer] (node:175878) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:176057) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:176108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 3:45:34 PM [vite] (client) [console.error] AuthScreen@http://127.0.0.1:5175/src/features/account/screens.js:207:21
+[WebServer] react_stack_bottom_frame@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:14330:12
+[WebServer] renderWithHooks@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:4588:37
+[WebServer] updateFunctionComponent@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:5963:16
+[WebServer] beginWork@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:6579:20
+[WebServer] runWithFiberInDEV@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:1132:123
+[WebServer] performUnitOfWork@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:9336:92
+[WebServer] workLoopSync@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:9232:54
+[WebServer] renderRootSync@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:9216:6
+[WebServer] performWorkOnRoot@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:8903:27
+[WebServer] performWorkOnRootViaSchedulerTask@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:10022:21
+[WebServer] performWorkUntilDeadline@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:34:46
+[WebServer] EventHandlerNonNull*require_scheduler_development</<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:139:4
+[WebServer] require_scheduler_development<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:242:4
+[WebServer] __commonJSMin/<@http://127.0.0.1:5175/node_modules/.vite/deps/react-CtSWVglQ.js?v=8579c855:2:49
+[WebServer] require_scheduler<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:246:19
+[WebServer] __commonJSMin/<@http://127.0.0.1:5175/node_modules/.vite/deps/react-CtSWVglQ.js?v=8579c855:2:49
+[WebServer] require_react_dom_client_development</<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:13055:19
+[WebServer] require_react_dom_client_development<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:16030:4
+[WebServer] __commonJSMin/<@http://127.0.0.1:5175/node_modules/.vite/deps/react-CtSWVglQ.js?v=8579c855:2:49
+[WebServer] require_client<@http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:16034:19
+[WebServer] __commonJSMin/<@http://127.0.0.1:5175/node_modules/.vite/deps/react-CtSWVglQ.js?v=8579c855:2:49
+[WebServer] @http://127.0.0.1:5175/node_modules/.vite/deps/react-dom_client.js?v=8579c855:16036:16
+[WebServer] 
+[WebServer] 
+[WebServer] The above error occurred in the <AuthScreen> component.
+[WebServer] 
+[WebServer] React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+[WebServer] 
+  ✓  1 e2e/media-workflow.spec.js:277:1 › MEDIA-E01..08 cover/step/avatar upload, persistence, replace/remove, ownership and publication (28.3s)
+
+  1 passed (34.2s)

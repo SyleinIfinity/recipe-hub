@@ -1,0 +1,44 @@
+npm notice run test:e2e
+npm notice run playwright test e2e/media-workflow.spec.js --workers=1
+[WebServer] (node:172902) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run dev:web
+[WebServer] npm notice run npm run dev -w frontend -- --port 5175 --strictPort
+[WebServer] npm notice run dev
+[WebServer] npm notice run vite --host 127.0.0.1 --port 5175 --strictPort
+[WebServer] (node:173065) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:173104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e/media-workflow.spec.js:276:1 › MEDIA-E01..08 cover/step/avatar upload, persistence, replace/remove, ownership and publication (8.8s)
+
+
+  1) e2e/media-workflow.spec.js:276:1 › MEDIA-E01..08 cover/step/avatar upload, persistence, replace/remove, ownership and publication 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      86 |   await expect
+      87 |     .poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0))
+    > 88 |     .toBe(true);
+         |      ^
+      89 |   return img.getAttribute('src');
+      90 | }
+      91 | async function save(page) {
+        at image (/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/media-workflow.spec.js:88:6)
+        at mainJourney (/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/e2e/media-workflow.spec.js:135:17)
+
+    Error Context: test-results/media-workflow-MEDIA-E01-0-9ad8a-e-ownership-and-publication/error-context.md
+
+    Error Context: test-results/media-workflow-MEDIA-E01-0-9ad8a-e-ownership-and-publication/error-context.md
+
+  1 failed
+    e2e/media-workflow.spec.js:276:1 › MEDIA-E01..08 cover/step/avatar upload, persistence, replace/remove, ownership and publication 

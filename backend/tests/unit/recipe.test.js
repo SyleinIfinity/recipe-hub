@@ -121,7 +121,9 @@ it('RCP-28/52 DTO whitelists and never uses provider URL', () => {
     cloudinary: { publicId: 'secret' },
   });
   expect(dto.coverImageUrl).toBeNull();
-  expect(dto.steps[0].imageUrl).toBeNull();
+  expect(dto.steps[0].imageUrl).toBe(
+    '/api/v1/recipes/' + 'a'.repeat(24) + '/images/' + 'b'.repeat(24),
+  );
   expect(JSON.stringify(dto)).not.toMatch(
     /secret|creationKey|attachmentIntent|cloudinary/,
   );
