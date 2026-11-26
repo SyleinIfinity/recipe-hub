@@ -22,7 +22,12 @@ export const accountRoutes = [
   ['forgot', '/auth/forgot-password', 'Quên mật khẩu', 'guest'],
   ['reset', '/auth/reset-password', 'Đặt lại mật khẩu', 'public'],
   ['verify', '/auth/verify-email', 'Xác minh email', 'public'],
-  ['resend', '/auth/request-email-verification', 'Gửi lại xác minh', 'public'],
+  [
+    'resend',
+    '/auth/request-email-verification',
+    'Gửi lại email xác minh',
+    'public',
+  ],
   ['account', '/account', 'Tài khoản của tôi', 'authenticated'],
   ['editProfile', '/account/profile', 'Chỉnh sửa hồ sơ', 'authenticated'],
   ['settings', '/account/settings', 'Cài đặt tài khoản', 'authenticated'],

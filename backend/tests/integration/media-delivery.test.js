@@ -207,6 +207,12 @@ it('P1-I01 composed Cloudinary adapter upload/attach/private binary/publish/sche
     'get',
   );
   expect((await request(app).get(path)).status).toBe(200);
+  const cards = await request(app)
+    .get('/api/v1/recipes')
+    .query({ category: String(category._id) });
+  expect(
+    cards.body.data.find((card) => card.recipeId === r.recipeId)?.coverImageUrl,
+  ).toBe(path);
   const unpublish = await a.client
     .patch('/api/v1/recipes/' + r.recipeId + '/unpublish')
     .set('X-CSRF-Token', a.csrf)

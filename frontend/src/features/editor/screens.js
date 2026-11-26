@@ -7,7 +7,12 @@ import {
   recipeHref,
   ApiError,
 } from '../../services/api.js';
-import { Button, ErrorState } from '../../components/ui/primitives.js';
+import {
+  Button,
+  ErrorState,
+  Icon,
+  RecipeImage,
+} from '../../components/ui/primitives.js';
 import { useCategoryOptions } from '../category-options.js';
 import {
   emptyRecipe,
@@ -37,100 +42,128 @@ export function MyRecipes({ session, search }) {
   );
   const rows = result.body?.data,
     meta = result.body?.meta;
+  const create = h(
+    Link,
+    { href: '/my/recipes/new', className: 'button' },
+    h(Icon, { name: 'plus', size: 17 }),
+    'Tạo công thức',
+  );
   return h(
     'section',
-    { className: 'page-panel editor-page' },
-    h('h1', null, 'Bản nháp của tôi'),
+    { className: 'drafts-page' },
     h(
-      'p',
-      null,
-      'Danh sách này chỉ gồm bản nháp. Công thức đã xuất bản được quản lý qua đường dẫn đã nhận khi xuất bản.',
+      'header',
+      { className: 'drafts-heading' },
+      h(
+        'div',
+        null,
+        h('h1', null, 'Bản nháp của tôi'),
+        Number.isFinite(meta?.total) && h('p', null, meta.total + ' bản nháp'),
+      ),
+      (!meta || meta.total > 0) && create,
     ),
-    h(Link, { href: '/my/recipes/new', className: 'button' }, 'Tạo công thức'),
-    h(Link, { href: '/account', className: 'text-link' }, 'Tài khoản'),
     !valid
       ? h('p', { role: 'alert' }, 'Trang không hợp lệ.')
       : result.status === 'loading'
         ? h('p', { role: 'status' }, 'Đang tải bản nháp…')
-        : result.status === 'error'
+        : result.status === 'error' || !Array.isArray(rows) || !meta
           ? h(ErrorState, {
               error: result.error,
               onRetry: () => setReload((n) => n + 1),
             })
-          : Array.isArray(rows) && meta
-            ? h(
-                'div',
-                null,
-                !rows.length
-                  ? h('p', null, 'Chưa có bản nháp ở trang này.')
-                  : h(
-                      'ul',
-                      { className: 'owner-list' },
-                      rows.map((r) =>
+          : h(
+              'div',
+              null,
+              rows.length
+                ? h(
+                    'ul',
+                    { className: 'owner-list' },
+                    rows.map((r) =>
+                      h(
+                        'li',
+                        { key: r.recipeId },
                         h(
-                          'li',
-                          { key: r.recipeId },
+                          'div',
+                          { className: 'draft-thumb' },
+                          r.coverImageUrl
+                            ? h(RecipeImage, { url: r.coverImageUrl })
+                            : h(Icon, { name: 'book', size: 24 }),
+                        ),
+                        h(
+                          'div',
+                          { className: 'draft-name' },
+                          h('h2', null, r.title || 'Bản nháp chưa có tên'),
                           h(
-                            'h2',
+                            'span',
                             null,
-                            h(
-                              Link,
-                              { href: editHref(r.recipeId) },
-                              r.title || 'Bản nháp chưa có tên',
-                            ),
-                          ),
-                          h(
-                            'p',
-                            null,
-                            'Bản nháp · ',
                             r.moderationStatus === 'hidden'
-                              ? 'Đang bị ẩn · '
-                              : '',
+                              ? 'Bản nháp · Đang bị ẩn'
+                              : 'Bản nháp',
+                          ),
+                        ),
+                        h(
+                          'time',
+                          { dateTime: r.updatedAt },
+                          'Cập nhật ' +
                             new Date(r.updatedAt).toLocaleDateString('vi-VN'),
-                          ),
-                          h(
-                            Link,
-                            {
-                              href: editHref(r.recipeId),
-                              className: 'text-link',
-                            },
-                            'Mở bản nháp',
-                          ),
+                        ),
+                        h(
+                          Link,
+                          {
+                            href: editHref(r.recipeId),
+                            className: 'text-link',
+                            'aria-label':
+                              'Chỉnh sửa ' +
+                              (r.title || 'bản nháp chưa có tên'),
+                          },
+                          h(Icon, { name: 'edit', size: 16 }),
+                          'Chỉnh sửa',
                         ),
                       ),
                     ),
+                  )
+                : h(
+                    'div',
+                    { className: 'empty-state' },
+                    h(Icon, { name: 'book', size: 34 }),
+                    h(
+                      'h2',
+                      null,
+                      meta.total
+                        ? 'Chưa có bản nháp ở trang này.'
+                        : 'Bạn chưa có bản nháp.',
+                    ),
+                    !meta.total && create,
+                  ),
+              (page > 1 || page * 20 < meta.total) &&
                 h(
                   'nav',
                   {
                     'aria-label': 'Phân trang bản nháp',
-                    className: 'editor-actions',
+                    className: 'pagination',
                   },
                   page > 1 &&
                     h(
                       Link,
                       {
                         href: '/my/recipes?page=' + (page - 1),
-                        className: 'button',
+                        className: 'button button-secondary',
                       },
                       'Trang trước',
                     ),
-                  h('span', null, `Trang ${page} · ${meta.total} bản nháp`),
+                  h('span', null, 'Trang ' + page),
                   page * 20 < meta.total &&
                     page < 1000 &&
                     h(
                       Link,
                       {
                         href: '/my/recipes?page=' + (page + 1),
-                        className: 'button',
+                        className: 'button button-secondary',
                       },
                       'Trang sau',
                     ),
                 ),
-              )
-            : h(ErrorState, {
-                title: 'Phản hồi danh sách không hợp lệ',
-                onRetry: () => setReload((n) => n + 1),
-              }),
+            ),
   );
 }
 export function EditorScreen({ recipeId, session }) {
@@ -346,6 +379,11 @@ function RecipeEditor({ initial }) {
     setState('error');
     queueMicrotask(() => {
       const first = form.current?.querySelector('[aria-invalid="true"]');
+      let disclosure = first?.closest('details');
+      while (disclosure) {
+        disclosure.open = true;
+        disclosure = disclosure.parentElement?.closest('details');
+      }
       (first || document.getElementById('editor-errors'))?.focus();
     });
   }
@@ -469,7 +507,7 @@ function RecipeEditor({ initial }) {
       const details = Object.fromEntries(
         (error.details || []).map((d) => [
           d.field,
-          'Máy chủ từ chối giá trị này (' + d.code + ').',
+          'Giá trị chưa hợp lệ. Hãy kiểm tra trường này.',
         ]),
       );
       if (Object.keys(details).length) focusErrors(details);
@@ -498,7 +536,7 @@ function RecipeEditor({ initial }) {
   function input(
     field,
     label,
-    { type = 'text', maxLength, options, id, help, ...props } = {},
+    { type = 'text', maxLength, options, id, help, multiline, ...props } = {},
   ) {
     const value = field.split('.').reduce((v, k) => v?.[k], values) ?? '';
     const parts = field.split('.'),
@@ -524,7 +562,14 @@ function RecipeEditor({ initial }) {
     return h(
       'div',
       { className: 'editor-field', key: field },
-      h('label', { htmlFor: control.id }, label),
+      h(
+        'label',
+        { htmlFor: control.id },
+        row && parts.length === 3 ? label.replace(/\s+\d+$/, '') : label,
+        row &&
+          parts.length === 3 &&
+          h('span', { className: 'sr-only' }, ' ' + (index + 1)),
+      ),
       options
         ? h(
             'select',
@@ -533,7 +578,9 @@ function RecipeEditor({ initial }) {
               h('option', { key: value, value }, text),
             ),
           )
-        : h('input', { ...control, type, maxLength }),
+        : multiline
+          ? h('textarea', { ...control, rows: 3, maxLength })
+          : h('input', { ...control, type, maxLength }),
       help && h('small', { id: 'help-' + field }, help),
       errors[field] &&
         h(
@@ -547,7 +594,7 @@ function RecipeEditor({ initial }) {
     if (!editable) return null;
     return h(
       'div',
-      { className: 'editor-actions' },
+      { className: 'row-actions' },
       h(
         Button,
         {
@@ -582,23 +629,90 @@ function RecipeEditor({ initial }) {
     h(
       Link,
       { href: '/my/recipes', className: 'text-link' },
-      '← Bản nháp của tôi',
+      h(Icon, { name: 'back', size: 17 }),
+      'Bản nháp của tôi',
     ),
-    h('h1', null, server ? 'Quản lý công thức' : 'Tạo công thức'),
-    server &&
-      h(
-        'p',
-        null,
-        `${server.status === 'draft' ? 'Bản nháp' : 'Đã xuất bản'} · Phiên bản ${server.version}${server.moderationStatus === 'hidden' ? ' · Đang bị ẩn' : ''}`,
-      ),
     h(
-      'p',
-      { role: 'status', 'aria-live': 'polite' },
-      state === 'saving'
-        ? 'Đang gửi yêu cầu…'
-        : state === 'dirty'
-          ? 'Có thay đổi chưa lưu.'
-          : announcement,
+      'header',
+      { className: 'editor-heading' },
+      h('h1', null, server ? 'Quản lý công thức' : 'Tạo công thức'),
+      server &&
+        h(
+          'p',
+          null,
+          (server.status === 'draft' ? 'Bản nháp' : 'Đã xuất bản') +
+            ' · Phiên bản ' +
+            server.version +
+            (server.moderationStatus === 'hidden' ? ' · Đang bị ẩn' : ''),
+        ),
+    ),
+    h(
+      'div',
+      { className: 'editor-bar' },
+      h(
+        'nav',
+        { 'aria-label': 'Các phần công thức' },
+        [
+          ['info', 'Thông tin'],
+          ['cover', 'Ảnh bìa'],
+          ['ingredients', 'Nguyên liệu'],
+          ['steps', 'Cách làm'],
+        ].map(([id, label]) =>
+          h(
+            'a',
+            {
+              key: id,
+              href: '#section-' + id,
+              onClick: (e) => {
+                if (
+                  e.button === 0 &&
+                  !e.ctrlKey &&
+                  !e.metaKey &&
+                  !e.shiftKey &&
+                  !e.altKey
+                ) {
+                  e.preventDefault();
+                  document.getElementById('section-' + id)?.focus();
+                  document
+                    .getElementById('section-' + id)
+                    ?.scrollIntoView({ block: 'start' });
+                }
+              },
+            },
+            label,
+          ),
+        ),
+      ),
+      h(
+        'div',
+        { className: 'editor-save' },
+        h(
+          'span',
+          { role: 'status', 'aria-live': 'polite' },
+          state === 'saving'
+            ? 'Đang gửi yêu cầu…'
+            : dirty.current
+              ? 'Có thay đổi chưa lưu.'
+              : announcement,
+        ),
+        state === 'dirty' &&
+          announcement &&
+          h('span', { className: 'sr-only', role: 'status' }, announcement),
+        editable &&
+          h(
+            Button,
+            {
+              type: 'submit',
+              form: 'recipe-editor',
+              disabled: blocked || unresolvedMedia,
+            },
+            state === 'saving'
+              ? 'Đang lưu…'
+              : server
+                ? 'Lưu bản nháp'
+                : 'Tạo bản nháp',
+          ),
+      ),
     ),
     failure &&
       h(
@@ -616,7 +730,17 @@ function RecipeEditor({ initial }) {
           'ul',
           null,
           Object.entries(errors).map(([f, m]) =>
-            h('li', { key: f }, f + ': ' + m),
+            h(
+              'li',
+              { key: f },
+              (form.current?.elements.namedItem(f)?.labels?.[0]?.textContent ||
+                { ingredients: 'Nguyên liệu', steps: 'Cách làm', tags: 'Nhãn' }[
+                  f
+                ] ||
+                'Công thức') +
+                ' — ' +
+                m,
+            ),
           ),
         ),
       ),
@@ -632,7 +756,7 @@ function RecipeEditor({ initial }) {
               h(
                 'p',
                 null,
-                'Ý định tạo và khóa chống trùng được giữ trong bộ nhớ. Có thể xem danh sách hoặc chủ động kiểm tra lại cùng yêu cầu; không tự tạo ý định mới.',
+                'Chưa rõ bản nháp đã được tạo chưa. Kiểm tra lại lần tạo này để tránh tạo trùng.',
               ),
               h(
                 Button,
@@ -649,12 +773,12 @@ function RecipeEditor({ initial }) {
         h(
           'p',
           null,
-          `${review.title || 'Chưa có tên'} · ${review.status} · Phiên bản ${review.version}`,
+          `${review.title || 'Chưa có tên'} · ${review.status === 'draft' ? 'Bản nháp' : 'Đã xuất bản'} · Phiên bản ${review.version}`,
         ),
         h(
           'p',
           null,
-          'Thay đổi cục bộ vẫn được giữ bên dưới; chọn nạp lại sẽ bỏ chúng.',
+          'Phần bạn đang viết vẫn ở bên dưới. Nếu dùng bản đã lưu, các thay đổi đó sẽ được thay thế.',
         ),
         h(
           'details',
@@ -681,6 +805,7 @@ function RecipeEditor({ initial }) {
       'form',
       {
         ref: form,
+        id: 'recipe-editor',
         noValidate: true,
         'aria-label': 'Biên tập công thức',
         onSubmit: (e) => {
@@ -691,194 +816,264 @@ function RecipeEditor({ initial }) {
       h(
         'fieldset',
         { disabled: !editable || blocked },
-        h('legend', null, 'Thông tin công thức'),
+        h('legend', { className: 'sr-only' }, 'Biên tập công thức'),
         h(
-          'p',
-          null,
-          'Nháp được phép thiếu dữ liệu. Các trường văn bản chỉ nhận một dòng; không tự xóa ký tự bạn nhập.',
-        ),
-        input('title', 'Tên công thức', { maxLength: 151 }),
-        input('description', 'Mô tả', { maxLength: 2001 }),
-        input('categoryId', 'Danh mục', {
-          options: [
-            ['', 'Chưa chọn'],
-            ...(values.categoryId &&
-            !categories.options.some((c) => c.id === values.categoryId)
-              ? [[values.categoryId, 'Danh mục hiện tại (chưa tra được tên)']]
-              : []),
-            ...categories.options.map((c) => [c.id, c.name]),
-          ],
-        }),
-        categories.controls,
-        input('difficulty', 'Độ khó', {
-          options: [
-            ['', 'Chưa chọn'],
-            ['easy', 'Dễ'],
-            ['medium', 'Vừa'],
-            ['hard', 'Khó'],
-          ],
-        }),
-        h(
-          'div',
-          { className: 'editor-grid' },
-          input('prepMinutes', 'Chuẩn bị (phút)', {
-            type: 'number',
-            min: 0,
-            max: 1440,
+          'section',
+          { className: 'editor-section', id: 'section-info', tabIndex: -1 },
+          h('h2', null, 'Thông tin công thức'),
+          h('p', null, 'Bạn có thể lưu bản nháp và bổ sung thông tin sau.'),
+          input('title', 'Tên công thức', { maxLength: 151 }),
+          input('description', 'Mô tả', {
+            maxLength: 2001,
+            multiline: true,
+            help: 'Viết một đoạn, tối đa 2.000 ký tự.',
           }),
-          input('cookMinutes', 'Nấu (phút)', {
-            type: 'number',
-            min: 0,
-            max: 1440,
-          }),
-          input('servings', 'Khẩu phần', { type: 'number', min: 1, max: 100 }),
-        ),
-        h(
-          'div',
-          { className: 'editor-field' },
           h(
-            'label',
-            { htmlFor: 'recipe-tags' },
-            'Nhãn (mỗi nhãn cách bằng dấu phẩy)',
-          ),
-          h('input', {
-            id: 'recipe-tags',
-            value: values.tags.join(','),
-            onChange: (e) =>
-              change(
-                'tags',
-                e.target.value === '' ? [] : e.target.value.split(','),
-              ),
-            'aria-invalid': !!errors.tags,
-            'aria-describedby': errors.tags ? 'tags-error' : undefined,
-          }),
-          errors.tags && h('p', { id: 'tags-error' }, errors.tags),
-        ),
-        h('h2', null, 'Nguyên liệu'),
-        h(
-          'p',
-          null,
-          'Có thể nhập tên tự do hoặc chọn nguyên liệu chuẩn còn hoạt động. Tối đa 40 dòng.',
-        ),
-        h('label', { htmlFor: 'ingredient-search' }, 'Tìm nguyên liệu chuẩn'),
-        h('input', {
-          id: 'ingredient-search',
-          value: term,
-          maxLength: 101,
-          onChange: (e) => setTerm(e.target.value),
-        }),
-        catalog.status === 'loading' &&
-          h('p', { role: 'status' }, 'Đang tìm nguyên liệu…'),
-        catalog.status === 'error' &&
-          h(
-            'p',
-            { role: 'alert' },
-            'Chưa tìm được nguyên liệu chuẩn. Bạn vẫn có thể nhập tên tự do.',
-          ),
-        values.ingredients.map((r, i) =>
-          h(
-            'fieldset',
-            { key: r.key, className: 'editor-row' },
-            h('legend', null, `Nguyên liệu ${i + 1}`),
-            input(`ingredients.${i}.name`, 'Tên nguyên liệu ' + (i + 1), {
-              id: `ingredients-${r.key}`,
-              maxLength: 101,
+            'div',
+            { className: 'editor-grid two-fields' },
+            input('categoryId', 'Danh mục', {
+              options: [
+                ['', 'Chưa chọn'],
+                ...(values.categoryId &&
+                !categories.options.some((c) => c.id === values.categoryId)
+                  ? [
+                      [
+                        values.categoryId,
+                        'Danh mục hiện tại (chưa tra được tên)',
+                      ],
+                    ]
+                  : []),
+                ...categories.options.map((c) => [c.id, c.name]),
+              ],
             }),
-            input(
-              `ingredients.${i}.ingredientId`,
-              'Nguyên liệu chuẩn ' + (i + 1),
-              {
-                options: [
-                  ['', 'Nhập tên tự do'],
-                  ...(r.ingredientId &&
-                  !catalog.body?.data?.some((c) => c.id === r.ingredientId)
-                    ? [[r.ingredientId, 'Nguyên liệu hiện tại']]
-                    : []),
-                  ...(catalog.body?.data || []).map((c) => [c.id, c.name]),
-                ],
-              },
-            ),
-            h(
-              'div',
-              { className: 'editor-grid' },
-              input(`ingredients.${i}.quantity`, 'Định lượng ' + (i + 1), {
-                type: 'number',
-                min: 0,
-                max: 1e9,
-                step: 'any',
-              }),
-              input(`ingredients.${i}.unit`, 'Đơn vị ' + (i + 1), {
-                maxLength: 33,
-              }),
-            ),
-            input(`ingredients.${i}.quantityText`, 'Mô tả lượng ' + (i + 1), {
-              maxLength: 101,
+            input('difficulty', 'Độ khó', {
+              options: [
+                ['', 'Chưa chọn'],
+                ['easy', 'Dễ'],
+                ['medium', 'Vừa'],
+                ['hard', 'Khó'],
+              ],
             }),
-            input(`ingredients.${i}.note`, 'Ghi chú nguyên liệu ' + (i + 1), {
-              maxLength: 501,
-            }),
-            rowControls('ingredients', r, i),
           ),
-        ),
-        editable &&
+          categories.controls,
           h(
-            Button,
-            {
-              id: 'add-ingredients',
-              disabled: values.ingredients.length >= 40,
-              onClick: () => add('ingredients'),
-            },
-            'Thêm nguyên liệu',
-          ),
-        h('h2', null, 'Các bước nấu'),
-        values.steps.map((r, i) =>
-          h(
-            'fieldset',
-            { key: r.key, className: 'editor-row' },
-            h('legend', null, `Bước ${i + 1}`),
-            input(`steps.${i}.instruction`, 'Hướng dẫn bước ' + (i + 1), {
-              id: `steps-${r.key}`,
-              maxLength: 2001,
-              help: 'Tối đa 2000 ký tự trên một dòng; xuất bản cần ít nhất 5 ký tự.',
-            }),
-            input(`steps.${i}.durationMinutes`, 'Thời gian bước ' + (i + 1), {
+            'div',
+            { className: 'editor-grid' },
+            input('prepMinutes', 'Chuẩn bị (phút)', {
               type: 'number',
               min: 0,
               max: 1440,
             }),
-            h(MediaPicker, {
-              label: 'Ảnh bước ' + (i + 1),
-              purpose: 'recipe_step',
-              assetId: r.imageAssetId,
-              url: r.imageUrl,
-              disabled: blocked || !editable,
-              onBusy: mediaBusy,
-              onUnresolved: (value) => selectMedia(r.key, value),
-              onChange: (id) => changeRow('steps', r.key, 'imageAssetId', id),
+            input('cookMinutes', 'Nấu (phút)', {
+              type: 'number',
+              min: 0,
+              max: 1440,
             }),
-            rowControls('steps', r, i),
+            input('servings', 'Khẩu phần', {
+              type: 'number',
+              min: 1,
+              max: 100,
+            }),
           ),
-        ),
-        editable &&
-          h(
-            Button,
-            {
-              id: 'add-steps',
-              disabled: values.steps.length >= 30,
-              onClick: () => add('steps'),
-            },
-            'Thêm bước nấu',
-          ),
-        editable &&
           h(
             'div',
-            { className: 'editor-actions' },
+            { className: 'editor-field' },
             h(
-              Button,
-              { type: 'submit', disabled: unresolvedMedia },
-              server ? 'Lưu bản nháp' : 'Tạo bản nháp',
+              'label',
+              { htmlFor: 'recipe-tags' },
+              'Nhãn (mỗi nhãn cách bằng dấu phẩy)',
+            ),
+            h('input', {
+              id: 'recipe-tags',
+              value: values.tags.join(','),
+              onChange: (e) =>
+                change(
+                  'tags',
+                  e.target.value === '' ? [] : e.target.value.split(','),
+                ),
+              'aria-invalid': !!errors.tags,
+              'aria-describedby': errors.tags ? 'tags-error' : undefined,
+            }),
+            errors.tags && h('p', { id: 'tags-error' }, errors.tags),
+          ),
+        ),
+        h(
+          'section',
+          {
+            id: 'section-cover',
+            className: 'editor-section cover-section',
+            tabIndex: -1,
+          },
+          h(MediaPicker, {
+            label: 'Ảnh bìa',
+            purpose: 'recipe_cover',
+            assetId: values.coverImageAssetId,
+            url: values.coverImageUrl,
+            disabled: blocked || !editable,
+            onBusy: mediaBusy,
+            onUnresolved: (value) => selectMedia('cover', value),
+            onChange: (id) => change('coverImageAssetId', id),
+          }),
+        ),
+        h(
+          'section',
+          {
+            id: 'section-ingredients',
+            className: 'editor-section',
+            tabIndex: -1,
+          },
+          h('h2', null, 'Nguyên liệu'),
+          h('p', null, 'Nhập tên nguyên liệu hoặc tìm trong danh mục.'),
+          h('label', { htmlFor: 'ingredient-search' }, 'Tìm nguyên liệu chuẩn'),
+          h('input', {
+            id: 'ingredient-search',
+            value: term,
+            maxLength: 101,
+            onChange: (e) => setTerm(e.target.value),
+          }),
+          catalog.status === 'loading' &&
+            h('p', { role: 'status' }, 'Đang tìm nguyên liệu…'),
+          catalog.status === 'error' &&
+            h(
+              'p',
+              { role: 'alert' },
+              'Chưa tìm được nguyên liệu chuẩn. Bạn vẫn có thể nhập tên tự do.',
+            ),
+          values.ingredients.map((r, i) =>
+            h(
+              'fieldset',
+              { key: r.key, className: 'editor-row' },
+              h('legend', null, `Nguyên liệu ${i + 1}`),
+              h(
+                'div',
+                { className: 'ingredient-main' },
+                input(`ingredients.${i}.name`, 'Tên nguyên liệu ' + (i + 1), {
+                  id: `ingredients-${r.key}`,
+                  maxLength: 101,
+                }),
+                h(
+                  'div',
+                  { className: 'editor-grid' },
+                  input(`ingredients.${i}.quantity`, 'Định lượng ' + (i + 1), {
+                    type: 'number',
+                    min: 0,
+                    max: 1e9,
+                    step: 'any',
+                  }),
+                  input(`ingredients.${i}.unit`, 'Đơn vị ' + (i + 1), {
+                    maxLength: 33,
+                  }),
+                ),
+              ),
+              h(
+                'details',
+                {
+                  className: 'row-details',
+                  open: term ? true : undefined,
+                },
+                h('summary', null, 'Nguyên liệu chuẩn, mô tả lượng và ghi chú'),
+                input(
+                  `ingredients.${i}.ingredientId`,
+                  'Nguyên liệu chuẩn ' + (i + 1),
+                  {
+                    options: [
+                      ['', 'Nhập tên tự do'],
+                      ...(r.ingredientId &&
+                      !catalog.body?.data?.some((c) => c.id === r.ingredientId)
+                        ? [[r.ingredientId, 'Nguyên liệu hiện tại']]
+                        : []),
+                      ...(catalog.body?.data || []).map((c) => [c.id, c.name]),
+                    ],
+                  },
+                ),
+                input(
+                  `ingredients.${i}.quantityText`,
+                  'Mô tả lượng ' + (i + 1),
+                  {
+                    maxLength: 101,
+                  },
+                ),
+                input(
+                  `ingredients.${i}.note`,
+                  'Ghi chú nguyên liệu ' + (i + 1),
+                  {
+                    maxLength: 501,
+                  },
+                ),
+              ),
+              rowControls('ingredients', r, i),
             ),
           ),
+          editable &&
+            h(
+              Button,
+              {
+                id: 'add-ingredients',
+                className: 'button-secondary',
+                disabled: values.ingredients.length >= 40,
+                onClick: () => add('ingredients'),
+              },
+              'Thêm nguyên liệu',
+            ),
+        ),
+        h(
+          'section',
+          { id: 'section-steps', className: 'editor-section', tabIndex: -1 },
+          h('h2', null, 'Cách làm'),
+          values.steps.map((r, i) =>
+            h(
+              'fieldset',
+              { key: r.key, className: 'editor-row' },
+              h('legend', null, `Bước ${i + 1}`),
+              input(`steps.${i}.instruction`, 'Hướng dẫn bước ' + (i + 1), {
+                id: `steps-${r.key}`,
+                maxLength: 2001,
+                multiline: true,
+                help: 'Viết một đoạn cho mỗi bước. Tách hướng dẫn mới bằng nút Thêm bước nấu.',
+              }),
+              h(
+                'details',
+                {
+                  className: 'row-details',
+                  open: r.imageAssetId || r.durationMinutes ? true : undefined,
+                },
+                h('summary', null, 'Thời gian và ảnh bước ' + (i + 1)),
+                input(
+                  `steps.${i}.durationMinutes`,
+                  'Thời gian bước ' + (i + 1),
+                  {
+                    type: 'number',
+                    min: 0,
+                    max: 1440,
+                  },
+                ),
+                h(MediaPicker, {
+                  label: 'Ảnh bước ' + (i + 1),
+                  purpose: 'recipe_step',
+                  assetId: r.imageAssetId,
+                  url: r.imageUrl,
+                  disabled: blocked || !editable,
+                  onBusy: mediaBusy,
+                  onUnresolved: (value) => selectMedia(r.key, value),
+                  onChange: (id) =>
+                    changeRow('steps', r.key, 'imageAssetId', id),
+                }),
+              ),
+              rowControls('steps', r, i),
+            ),
+          ),
+          editable &&
+            h(
+              Button,
+              {
+                id: 'add-steps',
+                className: 'button-secondary',
+                disabled: values.steps.length >= 30,
+                onClick: () => add('steps'),
+              },
+              'Thêm bước nấu',
+            ),
+        ),
       ),
     ),
     !editable &&
@@ -887,16 +1082,6 @@ function RecipeEditor({ initial }) {
         null,
         'Công thức đã xuất bản: ngừng xuất bản trước khi chỉnh sửa hoặc xóa.',
       ),
-    h(MediaPicker, {
-      label: 'Ảnh bìa',
-      purpose: 'recipe_cover',
-      assetId: values.coverImageAssetId,
-      url: values.coverImageUrl,
-      disabled: blocked || !editable,
-      onBusy: mediaBusy,
-      onUnresolved: (value) => selectMedia('cover', value),
-      onChange: (id) => change('coverImageAssetId', id),
-    }),
     server &&
       h(
         'div',
@@ -947,7 +1132,7 @@ function RecipeEditor({ initial }) {
           'p',
           null,
           confirmation === 'delete'
-            ? 'Công thức sẽ bị xóa mềm trên máy chủ. Thay đổi chưa lưu sẽ bị bỏ.'
+            ? 'Bản nháp sẽ rời danh sách của bạn. Các thay đổi chưa lưu sẽ bị bỏ.'
             : confirmation === 'publish'
               ? 'Máy chủ sẽ kiểm tra dữ liệu trước khi công khai.'
               : 'Công thức sẽ rời trang công khai và trở lại bản nháp.',

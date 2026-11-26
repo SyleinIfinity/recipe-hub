@@ -19,9 +19,6 @@ export function RecipeCard({ recipe }) {
     h(
       'div',
       { className: 'recipe-card-body' },
-      recipe.difficulty &&
-        difficulties[recipe.difficulty] &&
-        h('span', { className: 'difficulty' }, difficulties[recipe.difficulty]),
       h('h3', null, href ? h(Link, { href }, recipe.title) : recipe.title),
       h(
         'div',
@@ -32,6 +29,13 @@ export function RecipeCard({ recipe }) {
             null,
             h(Icon, { name: 'clock', size: 17 }),
             `${recipe.totalMinutes} phút`,
+          ),
+        difficulties[recipe.difficulty] &&
+          h(
+            'span',
+            { className: 'difficulty' },
+            h(Icon, { name: 'leaf', size: 16 }),
+            difficulties[recipe.difficulty],
           ),
       ),
       recipe.author?.displayName &&
@@ -128,28 +132,42 @@ export function RecipeDetail({ slug }) {
   const authorHref = profileHref(r.author);
   return h(
     'article',
-    { className: 'page-panel recipe-detail' },
-    h(Link, { href: '/recipes', className: 'back-link' }, '← Khám phá'),
-    h('h1', null, r.title),
+    {
+      className:
+        'page-panel recipe-detail' + (r.coverImageUrl ? ' has-cover' : ''),
+    },
     h(
-      'div',
-      { className: 'detail-author' },
-      r.author?.avatarUrl &&
-        h(
-          'span',
-          { className: 'author-avatar' },
-          h(RecipeImage, { url: r.author.avatarUrl }),
-        ),
-      authorHref
-        ? h(Link, { href: authorHref }, r.author.displayName)
-        : r.author?.displayName,
+      Link,
+      { href: '/recipes', className: 'back-link' },
+      h(Icon, { name: 'back', size: 17 }),
+      'Khám phá',
     ),
     h(
       'div',
-      { className: 'detail-cover' },
-      h(RecipeImage, { url: r.coverImageUrl }),
+      { className: 'detail-heading' },
+      h('h1', null, r.title),
+      h(
+        'div',
+        { className: 'detail-author' },
+        r.author?.avatarUrl &&
+          h(
+            'span',
+            { className: 'author-avatar' },
+            h(RecipeImage, { url: r.author.avatarUrl }),
+          ),
+        authorHref
+          ? h(Link, { href: authorHref }, r.author.displayName)
+          : r.author?.displayName,
+      ),
+      r.description &&
+        h('p', { className: 'recipe-description' }, r.description),
     ),
-    h('p', { className: 'recipe-description' }, r.description),
+    r.coverImageUrl &&
+      h(
+        'div',
+        { className: 'detail-cover' },
+        h(RecipeImage, { url: r.coverImageUrl }),
+      ),
     h(
       'dl',
       { className: 'detail-facts' },
@@ -259,30 +277,49 @@ export function PublicProfile({ userId }) {
   return h(
     'section',
     { className: 'page-panel public-profile' },
-    user.avatarUrl
-      ? h(
-          'div',
-          { className: 'user-avatar' },
-          h(RecipeImage, { url: user.avatarUrl }),
-        )
-      : h(
-          'span',
-          { className: 'profile-avatar', 'aria-hidden': true },
-          Array.from(user.displayName.trim())[0],
-        ),
-    h('h1', null, user.displayName),
-    user.bio && h('p', null, user.bio),
-    user.createdAt &&
-      Number.isFinite(Date.parse(user.createdAt)) &&
+    h(
+      'div',
+      { className: 'public-identity' },
+      user.avatarUrl
+        ? h(
+            'div',
+            { className: 'user-avatar' },
+            h(RecipeImage, { url: user.avatarUrl }),
+          )
+        : h(
+            'span',
+            { className: 'profile-avatar', 'aria-hidden': true },
+            Array.from(user.displayName.trim())[0],
+          ),
       h(
-        'p',
-        { className: 'muted' },
-        'Tham gia từ ' +
-          new Intl.DateTimeFormat('vi-VN', {
-            month: 'long',
-            year: 'numeric',
-          }).format(new Date(user.createdAt)),
+        'div',
+        null,
+        h('h1', null, user.displayName),
+        user.createdAt &&
+          Number.isFinite(Date.parse(user.createdAt)) &&
+          h(
+            'p',
+            { className: 'muted' },
+            'Tham gia từ ' +
+              new Intl.DateTimeFormat('vi-VN', {
+                month: 'long',
+                year: 'numeric',
+              }).format(new Date(user.createdAt)),
+          ),
       ),
-    h(Link, { href: '/recipes', className: 'button' }, 'Khám phá công thức'),
+    ),
+    user.bio &&
+      h(
+        'section',
+        { className: 'profile-bio' },
+        h('h2', null, 'Giới thiệu'),
+        h('p', null, user.bio),
+      ),
+    h(
+      Link,
+      { href: '/recipes', className: 'text-link' },
+      'Khám phá công thức',
+      h(Icon, { name: 'forward', size: 17 }),
+    ),
   );
 }

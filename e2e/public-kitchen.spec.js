@@ -201,10 +201,11 @@ test('FE04 Home six viewports, real public data, artwork, fonts and console', as
     ).toBe('true');
     const m = await page.evaluate(() => ({
       width: innerWidth,
-      sidebar: document.querySelector('.wood-sidebar').getBoundingClientRect()
-        .width,
+      header: document.querySelector('.site-header').getBoundingClientRect()
+        .height,
       main: document.querySelector('main').getBoundingClientRect().width,
-      rail: document.querySelector('.right-rail').getBoundingClientRect().width,
+      recipes: document.querySelector('.recipe-section').getBoundingClientRect()
+        .width,
       font: document.fonts.check(
         '16px "Be Vietnam Pro"',
         'Đặng Thị Hồng Ắằễộự',
@@ -397,11 +398,18 @@ test('FE04 search, filters, paging, Back/Forward, detail and profile use real AP
   await page
     .getByRole('checkbox', { name: 'Cà rốt FE04', exact: true })
     .check();
+  await expect(page).not.toHaveURL(/ingredientMatch=/);
+  await page.getByRole('button', { name: 'Áp dụng bộ lọc' }).click();
   await expect(page).toHaveURL(/ingredientMatch=any/);
   await page
     .getByRole('checkbox', { name: 'Đậu hũ FE04', exact: true })
     .check();
   await page.getByLabel('Cách khớp').selectOption('all');
+  await page.getByRole('button', { name: 'Áp dụng bộ lọc' }).click();
+  await expect(page).toHaveURL(/ingredientMatch=all/);
+  await expect(
+    page.getByRole('button', { name: 'Bỏ Đậu hũ FE04', exact: true }),
+  ).toBeVisible();
   await expect(page.locator('.explore .recipe-card')).toHaveCount(2);
   await page
     .locator('.explore .recipe-card')

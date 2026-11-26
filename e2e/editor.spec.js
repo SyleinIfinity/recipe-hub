@@ -119,6 +119,10 @@ test('ED-E01 real create/edit ingredients/steps ordering, persistence, publish/p
     .getByRole('button', { name: 'Thêm nguyên liệu', exact: true })
     .click();
   await page.getByLabel('Tên nguyên liệu 2', { exact: true }).fill('Muối');
+  await page
+    .getByRole('group', { name: 'Nguyên liệu 2', exact: true })
+    .getByText('Nguyên liệu chuẩn, mô tả lượng và ghi chú', { exact: true })
+    .click();
   await page.getByLabel('Mô tả lượng 2', { exact: true }).fill('Vừa đủ');
   await page
     .getByRole('button', { name: 'Đưa nguyên liệu 2 lên', exact: true })
@@ -297,7 +301,7 @@ test('ED-E04 dirty navigation and hard reload warning, row focus, single submit 
   await page.getByLabel('Tên công thức', { exact: true }).fill('Tên hợp lệ');
   page.once('dialog', (d) => d.dismiss());
   await page
-    .getByRole('link', { name: '← Bản nháp của tôi', exact: true })
+    .getByRole('link', { name: 'Bản nháp của tôi', exact: true })
     .click();
   await expect(page).toHaveURL(/\/edit$/);
   page.once('dialog', (d) => d.dismiss());
@@ -323,6 +327,12 @@ test('ED-E04 dirty navigation and hard reload warning, row focus, single submit 
   await page
     .getByLabel('Hướng dẫn bước 1', { exact: true })
     .fill('Nấu theo hướng dẫn');
+  const description = page.getByLabel('Mô tả', { exact: true });
+  await description.fill('Dòng đầu\nDòng sau');
+  await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+  await expect(description).toHaveAttribute('aria-invalid', 'true');
+  await expect(description).toHaveValue('Dòng đầu\nDòng sau');
+  await description.fill('Mô tả hợp lệ trên một dòng.');
   let writes = 0;
   await page.route('**/api/v1/recipes/*', async (route) => {
     if (route.request().method() === 'PATCH') {
@@ -486,7 +496,10 @@ test('ED-E07 editor/list/publication responsive six widths and long dynamic list
         ).toBeVisible();
       if (name === 'draft-list')
         await expect(
-          page.getByRole('link', { name: 'Canh rau của tôi', exact: true }),
+          page.getByRole('link', {
+            name: 'Chỉnh sửa Canh rau của tôi',
+            exact: true,
+          }),
         ).toBeVisible();
       const metrics = await page.evaluate(() => ({
         scroll: document.documentElement.scrollWidth,
@@ -530,7 +543,7 @@ test('ED-E08 cross-tab logout/login changes identity and discards private dirty 
   ).toHaveCount(0);
   await page.goto('/my/recipes');
   await expect(
-    page.getByText('Chưa có bản nháp ở trang này.', { exact: true }),
+    page.getByText('Bạn chưa có bản nháp.', { exact: true }),
   ).toBeVisible();
   await other.close();
 });

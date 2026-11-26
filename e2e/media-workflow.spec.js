@@ -66,6 +66,11 @@ async function account(page) {
 const picker = (page, name) => page.getByRole('region', { name, exact: true });
 async function pick(page, name, bytes = png) {
   const region = picker(page, name);
+  const step = name.match(/^Ảnh bước (\d+)$/);
+  if (step && !(await region.isVisible()))
+    await page
+      .getByText('Thời gian và ảnh bước ' + step[1], { exact: true })
+      .click();
   await region
     .getByLabel('Chọn ' + name.toLowerCase(), { exact: true })
     .setInputFiles({
@@ -399,7 +404,7 @@ test('MEDIA-E09..11 invalid files, provider errors, selected-only guard, respons
   await account(tab);
   await page.goto('/my/recipes');
   await expect(
-    page.getByText('Chưa có bản nháp ở trang này.', { exact: true }),
+    page.getByText('Bạn chưa có bản nháp.', { exact: true }),
   ).toBeVisible();
   await tab.close();
 });
@@ -442,7 +447,7 @@ test('MEDIA-E13 uncertain upload reuses same key and409 attachment preserves can
     .click();
   await expect(
     region.getByRole('button', {
-      name: 'Kiểm tra lại cùng upload',
+      name: 'Kiểm tra lần tải ảnh này',
       exact: true,
     }),
   ).toBeVisible();
@@ -452,7 +457,7 @@ test('MEDIA-E13 uncertain upload reuses same key and409 attachment preserves can
   ).toBeDisabled();
   expect(await status(page, canonical)).toBe(200);
   await region
-    .getByRole('button', { name: 'Kiểm tra lại cùng upload', exact: true })
+    .getByRole('button', { name: 'Kiểm tra lần tải ảnh này', exact: true })
     .click();
   await expect(
     region.getByText('Ảnh đã tải lên dạng tạm.', { exact: false }),

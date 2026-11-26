@@ -2,6 +2,18 @@ import { createElement as h, useEffect, useState } from 'react';
 import { Link } from '../../app/router.js';
 
 const icons = {
+  eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
+  eyeOff:
+    'm3 3 18 18M10 5.2A12 12 0 0 1 12 5c6.4 0 10 7 10 7a20 20 0 0 1-3.2 4M6.3 6.7A22 22 0 0 0 2 12s3.6 7 10 7c2 0 3.8-.7 5.2-1.5',
+  back: 'M20 12H4m7-7-7 7 7 7',
+  forward: 'M4 12h16m-7-7 7 7-7 7',
+  plus: 'M12 4v16M4 12h16',
+  edit: 'm15 5 4 4M3 21l4.5-1 13-13-3.5-3.5-13 13L3 21Z',
+  settings:
+    'M4 8h9m4 0h3M4 16h3m4 0h9M17 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0M11 16a2 2 0 1 1-4 0 2 2 0 0 1 4 0',
+  lock: 'M5 10h14v11H5zM8 10V7a4 4 0 0 1 8 0v3',
+  logout: 'M10 4H4v16h6m-1-8h12m-5-5 5 5-5 5',
+  image: 'M3 4h18v16H3zM3 17l5-5 4 4 3-3 6 6M16 8h.01',
   home: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
   book: 'M12 5v16M12 5C8 2 4 3 2 4v15c4-2 7-1 10 2 3-3 6-4 10-2V4c-4-2-7-1-10 1',
@@ -52,8 +64,16 @@ export function CardSurface({ children, className = '', ...props }) {
     children,
   );
 }
-export function SearchForm({ initialQuery = '', onSearch, id = 'search' }) {
-  const [query, setQuery] = useState(initialQuery);
+export function SearchForm({
+  initialQuery = '',
+  value,
+  onQueryChange,
+  onSearch,
+  id = 'search',
+}) {
+  const [localQuery, setLocalQuery] = useState(initialQuery);
+  const query = value ?? localQuery;
+  const setQuery = onQueryChange || setLocalQuery;
   const [error, setError] = useState('');
   return h(
     'form',
@@ -178,18 +198,24 @@ export function ErrorState({
       h(Button, { onClick: onRetry, disabled: remaining > 0 }, 'Thử lại'),
   );
 }
-export function ImageFallback({ className = '' }) {
+export function ImageFallback({ className = '', failed = false }) {
   return h(
     'div',
-    { className: 'image-fallback ' + className },
-    h('img', {
-      src: '/assets/kitchen/recipe-fallback-vr.svg',
-      alt: '',
-      width: 320,
-      height: 200,
-      loading: 'lazy',
-    }),
-    h('span', null, 'Chưa hiển thị được ảnh'),
+    {
+      className:
+        (failed ? 'image-fallback failed ' : 'image-fallback absent ') +
+        className,
+    },
+    failed
+      ? h('img', {
+          src: '/assets/kitchen/recipe-fallback-vr.svg',
+          alt: '',
+          width: 320,
+          height: 200,
+          loading: 'lazy',
+        })
+      : h(Icon, { name: 'pot', size: 26 }),
+    h('span', null, failed ? 'Không tải được ảnh' : 'Chưa có ảnh'),
   );
 }
 export function RecipeImage({ url }) {
@@ -217,9 +243,16 @@ export function RecipeImage({ url }) {
       })
     : h(
         'div',
-        null,
-        h(ImageFallback),
+        { className: 'recipe-image-state' },
+        h(ImageFallback, { failed: Boolean(url) }),
         safe &&
-          h(Button, { onClick: () => setFailedUrl(null) }, 'Thử tải lại ảnh'),
+          h(
+            Button,
+            {
+              className: 'image-retry button-secondary',
+              onClick: () => setFailedUrl(null),
+            },
+            'Thử tải lại ảnh',
+          ),
       );
 }

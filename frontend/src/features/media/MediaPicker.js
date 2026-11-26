@@ -1,6 +1,6 @@
 import { createElement as h, useEffect, useRef, useState } from 'react';
 import { requestApi, ApiError } from '../../services/api.js';
-import { Button, RecipeImage } from '../../components/ui/primitives.js';
+import { Button, Icon, RecipeImage } from '../../components/ui/primitives.js';
 export async function validateMediaFile(file, purpose) {
   const limit = (purpose === 'avatar' ? 2 : 5) * 1024 * 1024;
   if (!file || file.size === 0 || file.size > limit)
@@ -18,7 +18,9 @@ export async function validateMediaFile(file, purpose) {
           ? 'image/webp'
           : null;
   if (!type || file.type !== type)
-    throw new Error('Chỉ nhận JPEG, PNG hoặc WebP có nội dung khớp MIME.');
+    throw new Error(
+      'Chỉ nhận JPEG, PNG hoặc WebP. Hãy chọn tệp ảnh đúng định dạng.',
+    );
 }
 export function MediaPicker({
   label,
@@ -64,6 +66,10 @@ export function MediaPicker({
       setFile(null);
       setPreview(null);
       setState('ready');
+      setMessage('');
+    } else if (!url && !assetId) {
+      setState((current) => (current === 'removed' ? 'ready' : current));
+      setMessage('');
     }
   }, [assetId, url]);
   async function upload() {
@@ -108,7 +114,7 @@ export function MediaPicker({
       unresolved.current(false);
       intent.current = null;
       setState('temporary');
-      setMessage('Ảnh đã tải lên dạng tạm. Cần lưu biểu mẫu để gắn ảnh.');
+      setMessage('Ảnh đã tải lên dạng tạm. Lưu thay đổi để dùng ảnh này.');
     } catch (error) {
       if (!active.current) return;
       setState(
@@ -118,7 +124,7 @@ export function MediaPicker({
       );
       setMessage(
         error.mutationOutcomeUncertain
-          ? 'Chưa xác định được upload. Không tạo yêu cầu mới; chỉ kiểm tra lại cùng khóa.'
+          ? 'Chưa rõ ảnh đã tải lên chưa. Bạn có thể kiểm tra lại lần tải này.'
           : error.code === 'CSRF_INVALID'
             ? 'Phiên bảo vệ thay đổi. Tải lại trang trước khi tiếp tục.'
             : error.status === 413
@@ -126,7 +132,7 @@ export function MediaPicker({
               : error.status === 415 || error.status === 422
                 ? 'Ảnh không hợp lệ hoặc bị hỏng.'
                 : error.status === 409
-                  ? 'Upload cần đối chiếu trạng thái media; không gửi tự động.'
+                  ? 'Lần tải ảnh này cần được kiểm tra lại.'
                   : 'Chưa tải được ảnh. Kiểm tra kết nối hoặc dịch vụ ảnh.',
       );
       if (!error.mutationOutcomeUncertain && error.status !== 409)
@@ -138,115 +144,146 @@ export function MediaPicker({
   }
   return h(
     'section',
-    { className: 'media-picker', 'aria-label': label },
+    { className: 'media-picker media-' + purpose, 'aria-label': label },
     h('h3', null, label),
-    url &&
+    h(
+      'div',
+      { className: 'media-layout' },
       h(
         'div',
-        null,
+        { className: 'media-thumb' },
+        file && preview
+          ? h('img', {
+              src: preview,
+              alt: 'Xem trước cục bộ: ' + label,
+              onError: () =>
+                setMessage(
+                  'Không đọc được ảnh xem trước. Hãy chọn một ảnh khác.',
+                ),
+            })
+          : url && state !== 'removed'
+            ? h(RecipeImage, { key: url, url })
+            : h(Icon, {
+                name: purpose === 'avatar' ? 'user' : 'image',
+                size: 30,
+              }),
+      ),
+      h(
+        'div',
+        { className: 'media-controls' },
+        h(
+          'div',
+          { className: 'media-actions' },
+          h(
+            'label',
+            { className: 'file-choice' },
+            h(Icon, { name: 'image', size: 16 }),
+            'Chọn ' + label.toLowerCase(),
+            h('input', {
+              type: 'file',
+              accept: 'image/jpeg,image/png,image/webp',
+              disabled: disabled || lock.current || uncertain,
+              onChange: async (e) => {
+                const next = e.target.files?.[0];
+                if (!next) return;
+                try {
+                  await validateMediaFile(next, purpose);
+                  if (active.current) {
+                    intent.current = null;
+                    unresolved.current(true);
+                    setFile(next);
+                    setState('selected');
+                    setMessage('Ảnh xem trước cục bộ, chưa tải lên hoặc lưu.');
+                  }
+                } catch (error) {
+                  if (active.current) {
+                    setMessage(error.message);
+                    setState('error');
+                  }
+                }
+                e.target.value = '';
+              },
+            }),
+          ),
+          file &&
+            state !== 'temporary' &&
+            h(
+              Button,
+              {
+                className: 'button-secondary',
+                disabled: disabled || lock.current,
+                onClick: upload,
+              },
+              uncertain
+                ? 'Kiểm tra lần tải ảnh này'
+                : 'Tải ' + label.toLowerCase(),
+            ),
+          file &&
+            !uncertain &&
+            state !== 'uploading' &&
+            h(
+              Button,
+              {
+                className: 'quiet-button',
+                disabled,
+                onClick: () => {
+                  onChange(url?.match(/\/([a-f0-9]{24})$/i)?.[1] || null);
+                  unresolved.current(false);
+                  setFile(null);
+                  setPreview(null);
+                  setState('ready');
+                  setMessage('Đã bỏ lựa chọn ảnh.');
+                },
+              },
+              'Bỏ lựa chọn ' + label.toLowerCase(),
+            ),
+          assetId &&
+            !uncertain &&
+            h(
+              Button,
+              {
+                className: 'quiet-button',
+                disabled: disabled || lock.current,
+                onClick: () => {
+                  onChange(null);
+                  unresolved.current(false);
+                  setFile(null);
+                  setPreview(null);
+                  setState('removed');
+                  setMessage('Đã chọn gỡ ảnh. Lưu thay đổi để xác nhận.');
+                },
+              },
+              'Gỡ ' + label.toLowerCase(),
+            ),
+        ),
+        h(
+          'small',
+          null,
+          'JPEG, PNG, WebP · Tối đa ' + (purpose === 'avatar' ? 2 : 5) + ' MiB',
+        ),
         h(
           'p',
-          null,
-          attached
-            ? 'Ảnh đã gắn trên máy chủ'
-            : 'Ảnh đang lưu trên máy chủ (chưa xác nhận thay đổi)',
+          {
+            role: 'status',
+            className: state === 'error' ? 'form-error' : 'media-status',
+          },
+          state === 'uploading'
+            ? 'Đang tải ảnh…'
+            : state === 'ready' && attached
+              ? 'Ảnh đã gắn trên máy chủ'
+              : state === 'ready' && !url && !message
+                ? 'Chưa có ảnh đã lưu.'
+                : message,
         ),
-        h(RecipeImage, { key: url, url }),
       ),
-    !url && h('p', null, 'Chưa có ảnh đã lưu.'),
-    h(
-      'label',
-      null,
-      'Chọn ' + label.toLowerCase(),
-      h('input', {
-        type: 'file',
-        accept: 'image/jpeg,image/png,image/webp',
-        disabled: disabled || lock.current || uncertain,
-        onChange: async (e) => {
-          const next = e.target.files?.[0];
-          if (!next) return;
-          try {
-            await validateMediaFile(next, purpose);
-            if (active.current) {
-              intent.current = null;
-              unresolved.current(true);
-              setFile(next);
-              setState('selected');
-              setMessage('Ảnh xem trước cục bộ, chưa tải lên hoặc lưu.');
-            }
-          } catch (error) {
-            if (active.current) {
-              setMessage(error.message);
-              setState('error');
-            }
-          }
-          e.target.value = '';
-        },
-      }),
     ),
     file &&
-      preview &&
+      url &&
       h(
-        'figure',
-        null,
-        h('img', {
-          src: preview,
-          alt: 'Xem trước cục bộ: ' + label,
-          onError: () =>
-            setMessage(
-              'Không đọc được ảnh xem trước. Backend sẽ kiểm tra ảnh trước khi lưu.',
-            ),
-        }),
-        h('figcaption', null, 'Xem trước cục bộ — không phải ảnh đã lưu.'),
-      ),
-    h(
-      'p',
-      { role: 'status' },
-      state === 'uploading'
-        ? 'Đang tải ảnh…'
-        : attached && state !== 'selected'
-          ? 'Ảnh đã được gắn; tải lại trang vẫn giữ ảnh.'
-          : message,
-    ),
-    file &&
-      h(
-        Button,
-        { disabled: disabled || lock.current, onClick: upload },
-        uncertain ? 'Kiểm tra lại cùng upload' : 'Tải ' + label.toLowerCase(),
-      ),
-    file &&
-      !uncertain &&
-      state !== 'uploading' &&
-      h(
-        Button,
-        {
-          disabled,
-          onClick: () => {
-            onChange(url?.match(/\/([a-f0-9]{24})$/i)?.[1] || null);
-            unresolved.current(false);
-            setFile(null);
-            setPreview(null);
-            setState('ready');
-            setMessage('Đã bỏ lựa chọn cục bộ; chưa xóa ảnh trên máy chủ.');
-          },
-        },
-        'Bỏ lựa chọn ' + label.toLowerCase(),
-      ),
-    assetId &&
-      !uncertain &&
-      h(
-        Button,
-        {
-          disabled: disabled || lock.current,
-          onClick: () => {
-            onChange(null);
-            setFile(null);
-            setPreview(null);
-            setState('removed');
-            setMessage('Đã chọn gỡ ảnh. Cần lưu biểu mẫu để xác nhận.');
-          },
-        },
-        'Gỡ ' + label.toLowerCase(),
+        'details',
+        { className: 'previous-image' },
+        h('summary', null, 'Ảnh đang lưu trên máy chủ'),
+        h(RecipeImage, { url }),
       ),
   );
 }

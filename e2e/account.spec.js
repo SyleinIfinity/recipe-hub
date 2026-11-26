@@ -26,7 +26,7 @@ test.afterAll(async () => {
 async function register(page, user) {
   await page.goto('/auth/register');
   await page.getByLabel('Tên hiển thị', { exact: false }).fill(user.name);
-  await page.getByLabel('Email', { exact: false }).first().fill(user.email);
+  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill(user.password);
   await page
     .getByLabel('Xác nhận mật khẩu *', { exact: true })
@@ -40,7 +40,7 @@ async function register(page, user) {
 }
 async function login(page, user, returnTo = '/account') {
   await page.goto('/auth/login?' + new URLSearchParams({ returnTo }));
-  await page.getByLabel('Email', { exact: false }).first().fill(user.email);
+  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL(
@@ -151,7 +151,7 @@ test('ACC-E02 captured verification and recovery mail journeys, one-use token an
   const user = credentials();
   await register(page, user);
   await page.goto('/auth/request-email-verification');
-  await page.getByLabel('Email', { exact: false }).first().fill(user.email);
+  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
   await page
     .getByRole('button', { name: 'Yêu cầu xác minh email', exact: true })
     .click();
@@ -170,7 +170,7 @@ test('ACC-E02 captured verification and recovery mail journeys, one-use token an
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto('/auth/forgot-password');
-  await page.getByLabel('Email', { exact: false }).first().fill(user.email);
+  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
   await page
     .getByRole('button', { name: 'Yêu cầu đặt lại mật khẩu', exact: true })
     .click();
@@ -211,6 +211,8 @@ test('ACC-E02 captured verification and recovery mail journeys, one-use token an
 test('ACC-E03 six viewports for every implemented account screen and authenticated navigation', async ({
   page,
 }) => {
+  // This scenario renders and captures ten account screens at six viewport sizes.
+  test.setTimeout(120000);
   await harness.route(page);
   const user = credentials();
   user.name = 'Đ'.repeat(80);
@@ -408,6 +410,22 @@ test('ACC-E05 invalid credentials, duplicate submit and uncertain logout never r
   await register(page, user);
   await page.goto('/auth/login');
   await page.getByLabel('Email *', { exact: true }).fill(user.email);
+  const password = page.getByLabel('Mật khẩu *', { exact: true });
+  const toggle = page.getByRole('button', {
+    name: 'Hiện mật khẩu',
+    exact: true,
+  });
+  await password.focus();
+  await page.keyboard.press('Tab');
+  await expect(toggle).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(password).toHaveAttribute('type', 'text');
+  await page.keyboard.press('Space');
+  await expect(password).toHaveAttribute('type', 'password');
+  await page.keyboard.press('Tab');
+  await expect(
+    page.getByRole('link', { name: 'Quên mật khẩu?' }),
+  ).toBeFocused();
   await page.getByLabel('Mật khẩu *', { exact: true }).fill('incorrect');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Thông tin xác thực');
@@ -434,7 +452,7 @@ test('ACC-E05 invalid credentials, duplicate submit and uncertain logout never r
     });
   await pending;
   await expect(
-    page.getByRole('button', { name: 'Đăng nhập', exact: true }),
+    page.getByRole('button', { name: 'Đang gửi…', exact: true }),
   ).toBeDisabled();
   expect(count).toBe(1);
   release();

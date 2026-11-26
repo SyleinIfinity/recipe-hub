@@ -16,8 +16,8 @@ import { navigate, safeReturnPath } from './app/router.js';
 import { ErrorState, Button } from './components/ui/primitives.js';
 import { useSession } from './app/session.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
-import { KitchenShell } from './components/kitchen/KitchenShell.js';
-import { Home, ActualSuggestion, useHomeRecipes } from './features/home.js';
+import { KitchenShell, AuthShell } from './components/kitchen/KitchenShell.js';
+import { Home, useHomeRecipes } from './features/home.js';
 import { Explore } from './features/search.js';
 import { RecipeDetail, PublicProfile, PageError } from './features/recipes.js';
 
@@ -78,7 +78,7 @@ export function App() {
         { replace: true },
       );
   }, [pathname, search, accountRoute, session.status]);
-  const home = useHomeRecipes();
+  const home = useHomeRecipes(route.page === 'home');
   useEffect(() => {
     document.title = `${accountRoute?.title || { home: 'Góc bếp', explore: 'Khám phá', detail: 'Công thức', profile: 'Hồ sơ', forbidden: 'Không có quyền', notfound: 'Không tìm thấy' }[route.page]} · Recipe Hub`;
     if (previousPath.current !== pathname)
@@ -168,11 +168,10 @@ export function App() {
               });
   }
   return h(
-    KitchenShell,
+    pathname.startsWith('/auth/') ? AuthShell : KitchenShell,
     {
       pathname,
       auth,
-      suggestion: h(ActualSuggestion, { result: home.result }),
     },
     h(
       Fragment,
@@ -193,7 +192,7 @@ export function App() {
         {
           key:
             pathname +
-            search +
+            (route.page === 'explore' ? '' : search) +
             (accountRoute?.access === 'authenticated' ? session.revision : ''),
         },
         content,

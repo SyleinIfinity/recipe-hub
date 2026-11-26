@@ -85,7 +85,7 @@ it('cards use DTO routes, retain zero minutes and never synthesize rating', () =
       .getByRole('link', { name: card.author.displayName })
       .getAttribute('href'),
   ).toBe('/users/' + userId);
-  expect(screen.getByText('Chưa hiển thị được ảnh')).toBeTruthy();
+  expect(screen.getByText('Chưa có ảnh')).toBeTruthy();
   expect(screen.queryByText(/rating|★/)).toBeNull();
 });
 it('unsafe image URLs fall back and authorized image failure is recoverable', () => {
@@ -97,7 +97,7 @@ it('unsafe image URLs fall back and authorized image failure is recoverable', ()
   );
   rerender(h(RecipeImage, { url: '/api/v1/media/example/content' }));
   fireEvent.error(container.querySelector('img'));
-  expect(screen.getByText('Chưa hiển thị được ảnh')).toBeTruthy();
+  expect(screen.getByText('Không tải được ảnh')).toBeTruthy();
 });
 it('empty and error remain distinct and retry is explicit', () => {
   const retry = vi.fn();
@@ -198,13 +198,17 @@ function mockAPI(overrides = {}) {
 it('Home shows real public data and guest state; search writes URL', async () => {
   mockAPI();
   render(h(App));
-  await screen.findByText('Khách ghé bếp');
+  expect(
+    (await screen.findByRole('link', { name: 'Đăng nhập' })).getAttribute(
+      'href',
+    ),
+  ).toBe('/auth/login');
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
     'Hôm nay nấu món gì?',
   );
   expect(
     (await screen.findAllByRole('link', { name: card.title })).length,
-  ).toBe(2);
+  ).toBe(1);
   fireEvent.change(screen.getByRole('searchbox'), {
     target: { value: 'canh rau' },
   });

@@ -1,10 +1,11 @@
 import { ApiError } from '../../services/api.js';
 import { createElement as h, useEffect, useRef, useState } from 'react';
-import { Button } from '../../components/ui/primitives.js';
+import { Button, Icon } from '../../components/ui/primitives.js';
 export function Field({
   name,
   label,
   password = false,
+  labelEnd,
   error,
   help,
   value,
@@ -14,8 +15,17 @@ export function Field({
   const id = 'account-' + name;
   return h(
     'div',
-    { className: 'account-field' },
-    h('label', { htmlFor: id }, label, props.required && ' *'),
+    { className: labelEnd ? 'account-field with-support' : 'account-field' },
+    h(
+      'div',
+      { className: 'field-label' },
+      h(
+        'label',
+        { htmlFor: id },
+        label,
+        props.required && h('span', { className: 'field-required' }, ' *'),
+      ),
+    ),
     h(
       'div',
       { className: password ? 'password-field' : undefined },
@@ -24,6 +34,7 @@ export function Field({
         multiline: undefined,
         id,
         name,
+        'data-password': password || undefined,
         type: props.multiline
           ? undefined
           : password
@@ -43,14 +54,15 @@ export function Field({
         h(
           Button,
           {
-            className: 'button-secondary',
+            className: 'password-toggle',
             'aria-label': `${visible ? 'Ẩn' : 'Hiện'} ${label.toLowerCase()}`,
             'aria-pressed': visible,
             onClick: () => setVisible((v) => !v),
           },
-          visible ? 'Ẩn' : 'Hiện',
+          h(Icon, { name: visible ? 'eyeOff' : 'eye', size: 20 }),
         ),
     ),
+    labelEnd && h('span', { className: 'field-support' }, labelEnd),
     help && h('small', { id: id + '-help' }, help),
     error && h('p', { className: 'form-error', id: id + '-error' }, error),
   );
@@ -193,7 +205,7 @@ export function useSubmission() {
           document.getElementById('account-' + Object.keys(fields)[0])?.focus();
         if (error.mutationOutcomeUncertain)
           form
-            .querySelectorAll('input[type=password]')
+            .querySelectorAll('input[data-password]')
             .forEach((input) => (input.value = ''));
       }
     } finally {

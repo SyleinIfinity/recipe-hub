@@ -9,6 +9,7 @@ export const publicCardProjection = {
   slug: 1,
   title: 1,
   description: 1,
+  coverImageAssetId: 1,
   categoryId: 1,
   difficulty: 1,
   totalMinutes: 1,

@@ -1,6 +1,7 @@
 import { createElement as h, useEffect, useRef, useState } from 'react';
 import { navigationRoutes } from '../../app/registry.js';
 import { Link } from '../../app/router.js';
+import { KitchenScene } from './KitchenScene.js';
 import { useRead } from '../../services/api.js';
 import { Icon, IconButton } from '../ui/primitives.js';
 
@@ -18,7 +19,7 @@ function Brand({ compact = false }) {
       width: 48,
       height: 48,
     }),
-    h('h2', null, 'Recipe Hub'),
+    h('span', null, 'Recipe Hub'),
   );
 }
 function Navigation({ pathname, onNavigate }) {
@@ -99,108 +100,96 @@ export function MobileDrawer({ open, onClose, triggerRef, pathname }) {
     h(Navigation, { pathname, onNavigate: onClose }),
   );
 }
-export function AccountDisplay({ auth }) {
-  const user =
-    auth.status === 'ready' && typeof auth.body?.data?.displayName === 'string'
-      ? auth.body.data
-      : null;
-  const guest = auth.status === 'error' && auth.error?.status === 401;
+function AccountDisplay({ auth }) {
+  const name = auth.status === 'ready' && auth.body?.data?.displayName;
+  return h(
+    Link,
+    {
+      href: name ? '/account' : '/auth/login',
+      className: 'account-entry',
+      'aria-label': name ? 'Tài khoản của tôi' : 'Đăng nhập',
+    },
+    h(Icon, { name: 'user', size: 18 }),
+    h('span', null, name || 'Đăng nhập'),
+  );
+}
+export function AuthShell({ children }) {
   return h(
     'div',
-    { className: 'account-display' },
+    { className: 'auth-shell' },
+    h('a', { className: 'skip-link', href: '#main' }, 'Đến biểu mẫu'),
     h(
-      'span',
-      { className: 'avatar', 'aria-hidden': true },
-      user
-        ? Array.from(user.displayName.trim())[0] || '•'
-        : h(Icon, { name: 'user' }),
-    ),
-    h(
-      'div',
-      null,
-      h('small', null, user ? 'Góc bếp của' : 'Recipe Hub'),
+      'header',
+      { className: 'auth-header' },
+      h(Brand),
       h(
         Link,
-        {
-          href: user ? '/account' : '/auth/login',
-          className: 'account-entry',
-          'aria-label': user ? 'Tài khoản của tôi' : 'Đăng nhập',
-        },
-        h(
-          'strong',
-          null,
-          user
-            ? user.displayName
-            : guest
-              ? 'Khách ghé bếp'
-              : auth.status === 'loading'
-                ? 'Đang tải…'
-                : 'Góc bếp cộng đồng',
-        ),
+        { href: '/', className: 'back-link' },
+        h(Icon, { name: 'back', size: 17 }),
+        'Về trang chủ',
       ),
+    ),
+    h(
+      'main',
+      { id: 'main', tabIndex: -1, className: 'auth-main' },
+      h('div', { className: 'auth-art', 'aria-hidden': true }, h(KitchenScene)),
+      h('div', { className: 'auth-column' }, children),
     ),
   );
 }
-export function KitchenShell({ children, pathname, auth, suggestion }) {
+export function KitchenShell({ children, pathname, auth }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef(null);
   const close = useRef(() => setOpen(false)).current;
   const health = useRead(import.meta.env.DEV ? '/health' : null);
-  const healthText =
-    health.status === 'loading'
-      ? 'Đang kết nối…'
-      : health.status === 'ready' && health.body?.data?.status === 'ready'
-        ? 'Kết nối thành công'
-        : 'Chưa thể kết nối dịch vụ';
   return h(
     'div',
     { className: 'kitchen-shell' },
     h('a', { className: 'skip-link', href: '#main' }, 'Bỏ qua điều hướng'),
     h(
-      'aside',
-      { className: 'wood-sidebar' },
-      h(Brand),
-      h(Navigation, { pathname }),
+      'header',
+      { className: 'site-header' },
       h(
         'div',
-        { className: 'sidebar-decoration', 'aria-hidden': true },
-        h('img', {
-          src: '/assets/kitchen/sidebar-plant.svg',
-          alt: '',
-          width: 200,
-          height: 250,
-        }),
-      ),
-      import.meta.env.DEV &&
-        h('p', { role: 'status', className: 'sr-only' }, healthText),
-    ),
-    h(
-      'header',
-      { className: 'mobile-header' },
-      h(
-        'button',
-        {
+        { className: 'header-inner' },
+        h(IconButton, {
           ref: trigger,
-          className: 'icon-button button',
-          type: 'button',
-          'aria-label': 'Mở menu',
+          label: 'Mở menu',
+          icon: 'menu',
           'aria-expanded': open,
           'aria-controls': 'mobile-navigation',
           onClick: () => setOpen(true),
-        },
-        h(Icon, { name: 'menu' }),
-      ),
-      h(Brand, { compact: true }),
-      h(
-        Link,
-        {
-          href: auth.status === 'ready' ? '/account' : '/auth/login',
-          'aria-label':
-            auth.status === 'ready' ? 'Tài khoản của tôi' : 'Đăng nhập',
-          className: 'mobile-account',
-          title: auth.body?.data?.displayName || 'Khách',
-        },
-        h(Icon, { name: 'user' }),
+        }),
+        h(Brand),
+        h(Navigation, { pathname }),
+        h(
+          'div',
+          { className: 'header-end' },
+          auth.status === 'ready' &&
+            h(
+              Link,
+              {
+                href: '/my/recipes',
+                className: 'draft-entry',
+                'aria-current': pathname.startsWith('/my/recipes')
+                  ? 'page'
+                  : undefined,
+              },
+              h(Icon, { name: 'book', size: 18 }),
+              'Bản nháp',
+            ),
+          h(AccountDisplay, { auth }),
+        ),
+        import.meta.env.DEV &&
+          h(
+            'p',
+            { className: 'sr-only', role: 'status' },
+            health.status === 'ready' && health.body?.data?.status === 'ready'
+              ? 'Kết nối thành công'
+              : health.status === 'loading'
+                ? 'Đang kết nối…'
+                : 'Chưa thể kết nối dịch vụ',
+          ),
       ),
     ),
     h(MobileDrawer, { open, onClose: close, triggerRef: trigger, pathname }),
@@ -208,12 +197,6 @@ export function KitchenShell({ children, pathname, auth, suggestion }) {
       'main',
       { id: 'main', tabIndex: -1, className: 'main-content' },
       children,
-    ),
-    h(
-      'aside',
-      { className: 'right-rail', 'aria-label': 'Góc bếp' },
-      h(AccountDisplay, { auth }),
-      suggestion,
     ),
   );
 }

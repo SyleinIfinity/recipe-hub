@@ -146,11 +146,11 @@ it('M-U06 uncertain upload keeps one frozen key, no automatic retry or new selec
   });
   await screen.findByAltText('Xem trước cục bộ: Ảnh bìa');
   fireEvent.click(screen.getByRole('button', { name: 'Tải ảnh bìa' }));
-  await screen.findByRole('button', { name: 'Kiểm tra lại cùng upload' });
+  await screen.findByRole('button', { name: 'Kiểm tra lần tải ảnh này' });
   expect(fetch.mock.calls).toHaveLength(2);
   expect(screen.getByLabelText('Chọn ảnh bìa').disabled).toBe(true);
   fireEvent.click(
-    screen.getByRole('button', { name: 'Kiểm tra lại cùng upload' }),
+    screen.getByRole('button', { name: 'Kiểm tra lần tải ảnh này' }),
   );
   await waitFor(() => expect(fetch.mock.calls).toHaveLength(3));
   expect(fetch.mock.calls[1][1].headers['Idempotency-Key']).toBe(

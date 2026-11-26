@@ -1,333 +1,459 @@
-import { createElement as h, useEffect, useState } from 'react';
-import { Link, navigate } from '../app/router.js';
+import { createElement as h, useEffect, useRef, useState } from 'react';
+import { navigate } from '../app/router.js';
 import { useRead, searchQuery } from '../services/api.js';
-import { SearchForm, ErrorState, Button } from '../components/ui/primitives.js';
+import {
+  SearchForm,
+  ErrorState,
+  Button,
+  Icon,
+} from '../components/ui/primitives.js';
 import { useCategoryOptions } from './category-options.js';
-import { RecipeGrid } from './recipes.js';
+import { RecipeGrid, difficulties } from './recipes.js';
 
-function Field({ label, name, value, children, type = 'text', min, max }) {
-  const [selection, setSelection] = useState(value || '');
+const filterKeys = [
+  'q',
+  'category',
+  'tag',
+  'difficulty',
+  'maxMinutes',
+  'ingredientIds',
+  'ingredientMatch',
+];
+const readFilters = (params) =>
+  Object.fromEntries(filterKeys.map((k) => [k, params.get(k) || '']));
+const idsOf = (value) => (value ? value.split(',') : []);
+function Field({ name, label, value, onChange, options, ...props }) {
+  const attrs = {
+    name,
+    id: 'filter-' + name,
+    value,
+    onChange: (e) => onChange(e.target.value),
+    ...props,
+  };
   return h(
     'div',
     { className: 'filter-field' },
-    h('label', { htmlFor: 'filter-' + name }, label),
-    children
+    h('label', { htmlFor: attrs.id }, label),
+    options
       ? h(
           'select',
-          {
-            id: 'filter-' + name,
-            name,
-            value: selection,
-            onChange: (e) => setSelection(e.target.value),
-          },
-          children,
+          attrs,
+          options.map(([v, text]) => h('option', { key: v, value: v }, text)),
         )
-      : h('input', {
-          id: 'filter-' + name,
-          name,
-          type,
-          defaultValue: value || '',
-          min,
-          max,
-          maxLength: name === 'tag' ? 40 : undefined,
-        }),
+      : h('input', attrs),
   );
 }
+// The public ingredient catalog supports prefix search; keep the labels selected in this tab across navigation.
+function rememberedNames() {
+  try {
+    return new Map(
+      JSON.parse(sessionStorage.getItem('rh.selectedIngredients') || '[]'),
+    );
+  } catch {
+    return new Map();
+  }
+}
 export function Explore({ search }) {
-  const parsed = searchQuery(search);
-  const [reload, setReload] = useState(0);
-  const result = useRead(parsed.path || null, reload);
+  const { params, error, path } = searchQuery(search);
+  const [reload, setReload] = useState(0),
+    result = useRead(path || null, reload);
   const categories = useCategoryOptions();
-  const params = parsed.params || new URLSearchParams();
-  const [ingredientTerm, setIngredientTerm] = useState('');
-  const [catalogTerm, setCatalogTerm] = useState('');
-  const [catalogLimit, setCatalogLimit] = useState(20);
-  const [catalogReload, setCatalogReload] = useState(0);
+  const applied = readFilters(params);
+  const signature = JSON.stringify(applied);
+  const [draft, setDraft] = useState(applied);
+  const previous = useRef(signature);
+  useEffect(() => {
+    const before = JSON.parse(previous.current),
+      next = JSON.parse(signature);
+    previous.current = signature;
+    setDraft((old) => ({
+      ...old,
+      ...Object.fromEntries(
+        filterKeys
+          .filter((k) => before[k] !== next[k])
+          .map((k) => [k, next[k]]),
+      ),
+    }));
+  }, [signature]);
+  const change = (key, value) => setDraft((old) => ({ ...old, [key]: value }));
+  const [term, setTerm] = useState(''),
+    [catalogTerm, setCatalogTerm] = useState(''),
+    [limit, setLimit] = useState(20),
+    [catalogReload, reloadCatalog] = useState(0);
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCatalogTerm(ingredientTerm);
-      setCatalogLimit(20);
+      setCatalogTerm(term);
+      setLimit(20);
     }, 250);
     return () => clearTimeout(timer);
-  }, [ingredientTerm]);
+  }, [term]);
   const catalog = useRead(
     '/ingredients?' +
-      new URLSearchParams({ q: catalogTerm, limit: String(catalogLimit) }),
+      new URLSearchParams({ q: catalogTerm, limit: String(limit) }),
     catalogReload,
   );
-  const updateQuery = (patch) => {
-    const next = new URLSearchParams(params);
+  const options = Array.isArray(catalog.body?.data) ? catalog.body.data : [];
+  const [names, setNames] = useState(rememberedNames);
+  const labelFor = (id, index) =>
+    options.find((o) => o.id === id)?.name ||
+    names.get(id) ||
+    'Nguyên liệu đã chọn ' + (index + 1);
+  const selected = idsOf(draft.ingredientIds);
+  function selectIngredient(id, checked, name) {
+    const ids = checked ? [...selected, id] : selected.filter((v) => v !== id);
+    if (checked && name) {
+      const map = new Map([...names, [id, name]].slice(-100));
+      setNames(map);
+      try {
+        sessionStorage.setItem(
+          'rh.selectedIngredients',
+          JSON.stringify([...map]),
+        );
+      } catch {
+        /* Optional cache. */
+      }
+    }
+    setDraft((old) => ({
+      ...old,
+      ingredientIds: ids.join(','),
+      ingredientMatch: ids.length ? old.ingredientMatch || 'any' : '',
+    }));
+  }
+  function update(patch, reset = false) {
+    const next = reset ? new URLSearchParams() : new URLSearchParams(params);
     for (const [key, value] of Object.entries(patch)) {
       if (value == null || value === '') next.delete(key);
       else next.set(key, value);
     }
     if (!Object.hasOwn(patch, 'page')) next.delete('page');
-    navigate('/recipes' + (next.size ? '?' + next.toString() : ''));
-  };
-  const selectedIds = params.get('ingredientIds')?.split(',') || [];
-  const options =
-    catalog.status === 'ready' && Array.isArray(catalog.body?.data)
-      ? catalog.body.data
-      : [];
-  const filterForm = h(
-    'form',
-    {
-      key: search,
-      onSubmit(e) {
-        e.preventDefault();
-        const form = new FormData(e.currentTarget);
-        updateQuery(
-          Object.fromEntries(
-            [
-              'category',
-              'tag',
-              'difficulty',
-              'maxMinutes',
-              'sort',
-              'limit',
-            ].map((key) => [key, form.get(key)]),
-          ),
-        );
-      },
-    },
-    h(
-      'div',
-      { className: 'filter-grid' },
+    navigate('/recipes' + (next.size ? '?' + next : ''));
+  }
+  function apply(q = draft.q) {
+    update({
+      ...draft,
+      q: q.trim(),
+      tag: draft.tag.trim(),
+      ingredientMatch: draft.ingredientIds
+        ? draft.ingredientMatch || 'any'
+        : '',
+    });
+  }
+  const chips = [];
+  function chip(key, label, patch) {
+    chips.push(
       h(
-        Field,
-        { label: 'Danh mục', name: 'category', value: params.get('category') },
-        h('option', { value: '' }, 'Tất cả'),
-        params.get('category') &&
-          !categories.options.some((c) => c.id === params.get('category')) &&
-          h('option', { value: params.get('category') }, 'Danh mục đã chọn'),
-        categories.options.map((c) =>
-          h('option', { key: c.id, value: c.id }, c.name),
-        ),
-      ),
-      h(Field, { label: 'Nhãn', name: 'tag', value: params.get('tag') }),
-      h(
-        Field,
+        Button,
         {
-          label: 'Độ khó',
-          name: 'difficulty',
-          value: params.get('difficulty'),
+          key,
+          className: 'applied-chip',
+          'aria-label': 'Bỏ ' + label,
+          onClick: () => update(patch),
         },
-        ['', 'easy', 'medium', 'hard'].map((v, i) =>
-          h('option', { key: v, value: v }, ['Tất cả', 'Dễ', 'Vừa', 'Khó'][i]),
-        ),
+        label,
+        h(Icon, { name: 'close', size: 13 }),
       ),
-      h(Field, {
-        label: 'Tối đa (phút)',
-        name: 'maxMinutes',
-        type: 'number',
-        min: 0,
-        max: 2880,
-        value: params.get('maxMinutes'),
-      }),
-      h(
-        Field,
-        {
-          label: 'Sắp xếp',
-          name: 'sort',
-          value: params.get('sort') || '-publishedAt',
-        },
-        h('option', { value: '-publishedAt' }, 'Mới nhất'),
-        h('option', { value: 'publishedAt' }, 'Cũ nhất'),
-      ),
-      h(
-        Field,
-        {
-          label: 'Số món mỗi trang',
-          name: 'limit',
-          value: params.get('limit') || '20',
-        },
-        [
-          ...new Set([params.get('limit') || '20', '12', '20', '24', '100']),
-        ].map((v) => h('option', { key: v, value: v }, v)),
-      ),
-    ),
-    h(Button, { type: 'submit' }, 'Áp dụng bộ lọc'),
+    );
+  }
+  if (applied.q) chip('q', applied.q, { q: '' });
+  if (applied.category)
+    chip(
+      'category',
+      categories.options.find((o) => o.id === applied.category)?.name ||
+        'Danh mục đã chọn',
+      { category: '' },
+    );
+  if (applied.tag) chip('tag', '#' + applied.tag, { tag: '' });
+  if (applied.difficulty)
+    chip('difficulty', difficulties[applied.difficulty] || 'Độ khó', {
+      difficulty: '',
+    });
+  if (applied.maxMinutes)
+    chip('maxMinutes', '≤ ' + applied.maxMinutes + ' phút', { maxMinutes: '' });
+  const activeIds = idsOf(applied.ingredientIds);
+  activeIds.forEach((id, i) => {
+    const rest = activeIds.filter((v) => v !== id);
+    chip(id, labelFor(id, i), {
+      ingredientIds: rest.join(','),
+      ingredientMatch: rest.length ? applied.ingredientMatch || 'any' : '',
+    });
+  });
+  const [expanded, setExpanded] = useState(
+    () =>
+      typeof matchMedia === 'undefined' ||
+      !matchMedia('(max-width: 800px)').matches,
   );
-  const ingredientPicker = h(
-    'fieldset',
-    { className: 'ingredient-filter' },
-    h('legend', null, 'Nguyên liệu'),
-    h(
-      'label',
-      null,
-      h('span', { className: 'sr-only' }, 'Tìm trong danh mục nguyên liệu'),
-      h('input', {
-        type: 'search',
-        placeholder: 'Tìm nguyên liệu',
-        value: ingredientTerm,
-        maxLength: 100,
-        onChange: (e) => setIngredientTerm(e.target.value),
-      }),
-    ),
-    catalog.status === 'error' &&
-      h(
-        'p',
-        { className: 'form-error', role: 'alert' },
-        'Chưa tải được danh mục nguyên liệu.',
-        h(
-          Button,
-          { onClick: () => setCatalogReload((n) => n + 1) },
-          'Thử lại nguyên liệu',
-        ),
-      ),
-    h(
-      'div',
-      {
-        className: 'ingredient-options',
-        'aria-busy': catalog.status === 'loading',
-      },
-      options.map((v) =>
-        h(
-          'label',
-          { key: v.id },
-          h('input', {
-            type: 'checkbox',
-            checked: selectedIds.includes(v.id),
-            disabled: !selectedIds.includes(v.id) && selectedIds.length >= 20,
-            onChange: (e) => {
-              const ids = e.target.checked
-                ? [...selectedIds, v.id]
-                : selectedIds.filter((id) => id !== v.id);
-              updateQuery({
-                ingredientIds: ids.join(','),
-                ingredientMatch: ids.length
-                  ? params.get('ingredientMatch') || 'any'
-                  : null,
-              });
-            },
-          }),
-          v.name,
-        ),
-      ),
-    ),
-    catalog.status === 'loading' &&
-      h('p', { role: 'status' }, 'Đang tải nguyên liệu…'),
-    catalog.status === 'ready' &&
-      options.length === catalogLimit &&
-      h(
-        'div',
-        null,
-        h(
-          'p',
-          null,
-          `Đang hiển thị ${catalogLimit} kết quả đầu. Nhập tên cụ thể hơn để thu hẹp danh mục.`,
-        ),
-        catalogLimit < 100 &&
-          h(
-            Button,
-            { onClick: () => setCatalogLimit((n) => Math.min(100, n + 20)) },
-            'Tải thêm nguyên liệu',
-          ),
-      ),
-    selectedIds.length > 0 &&
-      h(
-        'div',
-        { className: 'ingredient-selection' },
-        h('p', null, `Đã chọn ${selectedIds.length} nguyên liệu`),
-        h(
-          Button,
-          {
-            className: 'button-secondary',
-            onClick: () =>
-              updateQuery({ ingredientIds: null, ingredientMatch: null }),
-          },
-          'Bỏ chọn nguyên liệu',
-        ),
-        h(
-          'label',
-          null,
-          'Cách khớp ',
-          h(
-            'select',
-            {
-              'aria-label': 'Cách khớp',
-              value: params.get('ingredientMatch') || 'any',
-              onChange: (e) => updateQuery({ ingredientMatch: e.target.value }),
-            },
-            h('option', { value: 'any' }, 'Có ít nhất một'),
-            h('option', { value: 'all' }, 'Có tất cả'),
-          ),
-        ),
-      ),
-  );
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined') return;
+    const media = matchMedia('(max-width: 800px)');
+    const resize = () => setExpanded(!media.matches);
+    media.addEventListener('change', resize);
+    return () => media.removeEventListener('change', resize);
+  }, []);
+  const field = (name, label, props = {}) =>
+    h(Field, {
+      name,
+      label,
+      value: draft[name],
+      onChange: (v) => change(name, v),
+      ...props,
+    });
   const meta = result.body?.meta,
     page = Number(params.get('page') || 1);
-  const pagination =
-    result.status === 'ready' &&
-    Number.isFinite(meta?.total) &&
-    meta.total > 0 &&
-    h(
-      'nav',
-      { className: 'pagination', 'aria-label': 'Phân trang công thức' },
-      page > 1 &&
-        h(
-          Button,
-          {
-            className: 'button-secondary',
-            onClick: () => updateQuery({ page: String(page - 1) }),
-          },
-          'Trang trước',
-        ),
-      h('span', null, `Trang ${page}`),
-      page * meta.limit < meta.total &&
-        page < 1000 &&
-        h(
-          Button,
-          {
-            className: 'button-secondary',
-            onClick: () => updateQuery({ page: String(page + 1) }),
-          },
-          'Trang sau',
-        ),
-    );
+  const view = {
+    sort: params.get('sort') || '-publishedAt',
+    limit: params.get('limit') || '20',
+  };
   return h(
     'section',
-    { className: 'page-panel explore' },
+    { className: 'explore' },
     h(
       'header',
-      { className: 'page-heading' },
+      { className: 'explore-heading' },
       h('h1', null, 'Khám phá công thức'),
+      h(SearchForm, {
+        id: 'explore-search',
+        value: draft.q,
+        onQueryChange: (v) => change('q', v),
+        onSearch: apply,
+      }),
     ),
-    h(SearchForm, {
-      key: search,
-      id: 'explore-search',
-      initialQuery: params.get('q') || '',
-      onSearch: (q) => updateQuery({ q }),
-    }),
     h(
-      'details',
-      { className: 'filter-panel', open: true },
-      h('summary', null, 'Bộ lọc'),
-      filterForm,
-      categories.controls,
-      ingredientPicker,
-    ),
-    params.size > 0 &&
+      'div',
+      { className: 'explore-layout' },
       h(
-        Link,
-        {
-          className: 'text-link clear-filters',
-          href:
-            '/recipes?' +
-            new URLSearchParams({
-              sort: params.get('sort') || '-publishedAt',
-              limit: params.get('limit') || '20',
+        'aside',
+        { className: 'filter-aside' },
+        h(
+          'details',
+          {
+            className: 'filter-panel',
+            open: expanded,
+            onToggle: (e) => setExpanded(e.currentTarget.open),
+          },
+          h('summary', null, h(Icon, { name: 'settings', size: 18 }), 'Bộ lọc'),
+          h(
+            'form',
+            {
+              onSubmit: (e) => {
+                e.preventDefault();
+                apply();
+              },
+            },
+            field('category', 'Danh mục', {
+              options: [
+                ['', 'Tất cả'],
+                ...(draft.category &&
+                !categories.options.some((c) => c.id === draft.category)
+                  ? [[draft.category, 'Danh mục đã chọn']]
+                  : []),
+                ...categories.options.map((c) => [c.id, c.name]),
+              ],
             }),
-        },
-        'Xóa bộ lọc',
+            categories.controls,
+            field('difficulty', 'Độ khó', {
+              options: [['', 'Tất cả'], ...Object.entries(difficulties)],
+            }),
+            h(
+              'div',
+              { className: 'filter-pair' },
+              field('maxMinutes', 'Tối đa (phút)', {
+                type: 'number',
+                min: 0,
+                max: 2880,
+              }),
+              field('tag', 'Nhãn', { maxLength: 40 }),
+            ),
+            h(
+              'fieldset',
+              { className: 'ingredient-filter' },
+              h('legend', null, 'Nguyên liệu'),
+              h('input', {
+                type: 'search',
+                'aria-label': 'Tìm trong danh mục nguyên liệu',
+                placeholder: 'Tìm nguyên liệu',
+                value: term,
+                maxLength: 100,
+                onChange: (e) => setTerm(e.target.value),
+              }),
+              h(
+                'div',
+                {
+                  className: 'ingredient-options',
+                  'aria-busy': catalog.status === 'loading',
+                },
+                options.map((o) =>
+                  h(
+                    'label',
+                    { key: o.id },
+                    h('input', {
+                      type: 'checkbox',
+                      checked: selected.includes(o.id),
+                      disabled:
+                        !selected.includes(o.id) && selected.length >= 20,
+                      onChange: (e) =>
+                        selectIngredient(o.id, e.target.checked, o.name),
+                    }),
+                    o.name,
+                  ),
+                ),
+              ),
+              catalog.status === 'loading' &&
+                h('small', { role: 'status' }, 'Đang tải nguyên liệu…'),
+              catalog.status === 'error' &&
+                h(
+                  'div',
+                  { role: 'alert' },
+                  'Chưa tải được nguyên liệu.',
+                  h(
+                    Button,
+                    {
+                      className: 'quiet-button',
+                      onClick: () => reloadCatalog((n) => n + 1),
+                    },
+                    'Thử lại nguyên liệu',
+                  ),
+                ),
+              catalog.status === 'ready' &&
+                !options.length &&
+                term &&
+                h('small', null, 'Không tìm thấy nguyên liệu.'),
+              options.length === limit &&
+                (limit < 100
+                  ? h(
+                      Button,
+                      {
+                        className: 'quiet-button',
+                        onClick: () => setLimit((n) => Math.min(n + 20, 100)),
+                      },
+                      'Tải thêm nguyên liệu',
+                    )
+                  : h('small', null, 'Nhập tên cụ thể hơn để tìm tiếp.')),
+              selected.length > 0 &&
+                h(
+                  'div',
+                  { className: 'ingredient-selection' },
+                  h(
+                    'small',
+                    null,
+                    'Đã chọn ' + selected.map(labelFor).join(', '),
+                  ),
+                  h(Field, {
+                    label: 'Cách khớp',
+                    name: 'ingredientMatch',
+                    value: draft.ingredientMatch || 'any',
+                    options: [
+                      ['any', 'Có ít nhất một'],
+                      ['all', 'Có tất cả'],
+                    ],
+                    onChange: (v) => change('ingredientMatch', v),
+                  }),
+                  h(
+                    Button,
+                    {
+                      className: 'quiet-button',
+                      onClick: () =>
+                        setDraft((old) => ({
+                          ...old,
+                          ingredientIds: '',
+                          ingredientMatch: '',
+                        })),
+                    },
+                    'Bỏ chọn nguyên liệu',
+                  ),
+                ),
+            ),
+            h(Button, { type: 'submit' }, 'Áp dụng bộ lọc'),
+          ),
+        ),
       ),
-    parsed.error
-      ? h(ErrorState, { error: { status: 400 } })
-      : h(RecipeGrid, {
-          result,
-          onRetry: () => setReload(reload + 1),
-          emptyTitle: 'Không tìm thấy công thức phù hợp',
-        }),
-    pagination,
+      h(
+        'div',
+        { className: 'explore-results' },
+        h(
+          'div',
+          { className: 'results-tools' },
+          h(
+            'h2',
+            null,
+            Number.isFinite(meta?.total)
+              ? meta.total + ' công thức'
+              : 'Kết quả',
+          ),
+          h(
+            'div',
+            { className: 'view-tools' },
+            h(Field, {
+              name: 'sort',
+              label: 'Sắp xếp',
+              value: view.sort,
+              onChange: (v) => update({ sort: v }),
+              options: [
+                ['-publishedAt', 'Mới nhất'],
+                ['publishedAt', 'Cũ nhất'],
+              ],
+            }),
+            h(Field, {
+              name: 'limit',
+              label: 'Số món mỗi trang',
+              value: view.limit,
+              onChange: (v) => update({ limit: v }),
+              options: [...new Set([view.limit, '12', '20', '24', '100'])].map(
+                (v) => [v, v],
+              ),
+            }),
+          ),
+        ),
+        (chips.length > 0 || error) &&
+          h(
+            'div',
+            { className: 'applied-filters' },
+            chips,
+            h(
+              Button,
+              {
+                className: 'quiet-button',
+                onClick: () => {
+                  setDraft(readFilters(new URLSearchParams()));
+                  update(view, true);
+                },
+              },
+              'Xóa bộ lọc',
+            ),
+          ),
+        error
+          ? h(ErrorState, { error: { status: 400 } })
+          : h(RecipeGrid, {
+              result,
+              onRetry: () => setReload((n) => n + 1),
+              emptyTitle: 'Không tìm thấy công thức phù hợp',
+            }),
+        meta &&
+          (page > 1 || page * meta.limit < meta.total) &&
+          h(
+            'nav',
+            { className: 'pagination', 'aria-label': 'Phân trang công thức' },
+            page > 1 &&
+              h(
+                Button,
+                {
+                  className: 'button-secondary',
+                  onClick: () => update({ page: String(page - 1) }),
+                },
+                'Trang trước',
+              ),
+            h('span', null, 'Trang ' + page),
+            page * meta.limit < meta.total &&
+              page < 1000 &&
+              h(
+                Button,
+                {
+                  className: 'button-secondary',
+                  onClick: () => update({ page: String(page + 1) }),
+                },
+                'Trang sau',
+              ),
+          ),
+      ),
+    ),
   );
 }
