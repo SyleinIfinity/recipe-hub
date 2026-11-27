@@ -1,11 +1,16 @@
-export function publicUserDto(user) {
+export function publicAuthorDto(user) {
   return {
     id: String(user._id),
     displayName: user.displayName,
-    bio: user.bio,
     avatarUrl: user.avatarAssetId
       ? `/api/v1/users/${user._id}/avatar/${user.avatarAssetId}`
       : null,
+  };
+}
+export function publicUserDto(user) {
+  return {
+    ...publicAuthorDto(user),
+    bio: user.bio,
     createdAt: user.createdAt,
   };
 }

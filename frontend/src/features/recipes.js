@@ -1,3 +1,11 @@
+import { RecipePagination } from '../components/ui/RecipePagination.js';
+import { listLocation } from '../app/library-location.js';
+import { CommentSection } from './community/comments.js';
+import {
+  InteractionScope,
+  RecipeActions,
+  useInteractionRefresh,
+} from './community/interactions.js';
 import { createElement as h, useState } from 'react';
 import { Link } from '../app/router.js';
 import { useRead, recipeHref, profileHref } from '../services/api.js';
@@ -91,7 +99,7 @@ export function PageError({ forbidden = false }) {
     ),
   );
 }
-export function RecipeDetail({ slug }) {
+export function RecipeDetail({ slug, session }) {
   const [reload, setReload] = useState(0);
   const result = useRead('/recipes/' + encodeURIComponent(slug), reload);
   const categoryId = result.body?.data?.categoryId;
@@ -129,23 +137,83 @@ export function RecipeDetail({ slug }) {
       { className: 'page-panel' },
       h(ErrorState, { onRetry: () => setReload(reload + 1) }),
     );
-  const authorHref = profileHref(r.author);
+  return h(
+    InteractionScope,
+    { session, recipes: [r], onUnavailable: () => setReload((n) => n + 1) },
+    h(DetailReader, { recipe: r, category, session }),
+  );
+}
+
+function DetailReader({ recipe, category, session }) {
+  const refresh = useInteractionRefresh();
+  const [commentsOpen, setCommentsOpen] = useState(true);
+  const owner =
+    session?.status === 'authenticated' &&
+    session.body?.data?.id === recipe.author?.id;
+  return h(
+    'div',
+    { className: 'recipe-reader' },
+    h(RecipeContent, {
+      recipe,
+      categoryName: category?.name,
+      navigation: h(
+        'div',
+        { className: 'reader-navigation' },
+        h(
+          Link,
+          { href: '/recipes?view=posts', className: 'back-link' },
+          h(Icon, { name: 'back', size: 17 }),
+          'Cộng đồng',
+        ),
+        owner &&
+          h(
+            Link,
+            {
+              href: `/my/recipes/${recipe.recipeId}/edit`,
+              className: 'text-link',
+            },
+            'Chỉnh sửa công thức',
+          ),
+      ),
+    }),
+    h(
+      'div',
+      { className: 'recipe-discussion' },
+      h(RecipeActions, {
+        recipe,
+        expanded: commentsOpen,
+        onComments: () => setCommentsOpen((v) => !v),
+      }),
+      commentsOpen &&
+        h(CommentSection, {
+          recipe,
+          session,
+          onChanged: () => refresh(recipe),
+        }),
+    ),
+  );
+}
+
+export function RecipeContent({
+  recipe: r,
+  categoryName,
+  navigation,
+  preview = false,
+  renderImage,
+}) {
+  const authorHref = !preview && profileHref(r.author);
+  const picture = renderImage || ((url) => h(RecipeImage, { url }));
   return h(
     'article',
     {
       className:
         'page-panel recipe-detail' + (r.coverImageUrl ? ' has-cover' : ''),
     },
-    h(
-      Link,
-      { href: '/recipes', className: 'back-link' },
-      h(Icon, { name: 'back', size: 17 }),
-      'Khám phá',
-    ),
+    navigation,
     h(
       'div',
       { className: 'detail-heading' },
-      h('h1', null, r.title),
+      h(preview ? 'h3' : 'h1', null, r.title),
       h(
         'div',
         { className: 'detail-author' },
@@ -163,29 +231,27 @@ export function RecipeDetail({ slug }) {
         h('p', { className: 'recipe-description' }, r.description),
     ),
     r.coverImageUrl &&
-      h(
-        'div',
-        { className: 'detail-cover' },
-        h(RecipeImage, { url: r.coverImageUrl }),
-      ),
+      h('div', { className: 'detail-cover' }, picture(r.coverImageUrl)),
     h(
       'dl',
       { className: 'detail-facts' },
       [
         [
           'Danh mục',
-          /^[a-f0-9]{24}$/i.test(r.categoryId || '')
-            ? h(
-                Link,
-                {
-                  className: 'text-link',
-                  href:
-                    '/recipes?' +
-                    new URLSearchParams({ category: r.categoryId }),
-                },
-                category?.name || 'Xem công thức cùng danh mục',
-              )
-            : null,
+          preview
+            ? categoryName
+            : /^[a-f0-9]{24}$/i.test(r.categoryId || '')
+              ? h(
+                  Link,
+                  {
+                    className: 'text-link',
+                    href:
+                      '/recipes?' +
+                      new URLSearchParams({ category: r.categoryId }),
+                  },
+                  categoryName || 'Xem công thức cùng danh mục',
+                )
+              : null,
         ],
         ['Khẩu phần', r.servings],
         ['Chuẩn bị', r.prepMinutes == null ? null : r.prepMinutes + ' phút'],
@@ -200,7 +266,8 @@ export function RecipeDetail({ slug }) {
     h(
       'section',
       { className: 'ingredients' },
-      h('h2', null, 'Nguyên liệu'),
+      h(preview ? 'h4' : 'h2', null, 'Nguyên liệu'),
+      preview && !r.ingredients.length && h('p', null, 'Chưa có nguyên liệu.'),
       h(
         'ul',
         null,
@@ -226,7 +293,8 @@ export function RecipeDetail({ slug }) {
     h(
       'section',
       { className: 'cooking-steps' },
-      h('h2', null, 'Cách làm'),
+      h(preview ? 'h4' : 'h2', null, 'Cách làm'),
+      preview && !r.steps.length && h('p', null, 'Chưa có bước nấu.'),
       h(
         'ol',
         null,
@@ -240,18 +308,14 @@ export function RecipeDetail({ slug }) {
               s.durationMinutes != null &&
                 h('small', null, s.durationMinutes + ' phút'),
               s.imageUrl &&
-                h(
-                  'div',
-                  { className: 'step-image' },
-                  h(RecipeImage, { url: s.imageUrl }),
-                ),
+                h('div', { className: 'step-image' }, picture(s.imageUrl)),
             ),
           ),
       ),
     ),
   );
 }
-export function PublicProfile({ userId }) {
+export function PublicProfile({ userId, search }) {
   const [reload, setReload] = useState(0);
   const result = useRead('/users/' + userId, reload);
   if (result.status === 'loading')
@@ -315,11 +379,43 @@ export function PublicProfile({ userId }) {
         h('h2', null, 'Giới thiệu'),
         h('p', null, user.bio),
       ),
+    h(AuthorRecipes, { userId, search }),
+  );
+}
+
+function AuthorRecipes({ userId, search }) {
+  const [reload, setReload] = useState(0);
+  const location = listLocation(search);
+  const result = useRead(
+    location
+      ? '/users/' + userId + '/recipes?page=' + location.page + '&limit=12'
+      : null,
+    reload,
+  );
+  const meta = result.body?.meta;
+  const href = (n) => '/users/' + userId + (n > 1 ? '?page=' + n : '');
+  return h(
+    'section',
+    { className: 'author-recipes' },
     h(
-      Link,
-      { href: '/recipes', className: 'text-link' },
-      'Khám phá công thức',
-      h(Icon, { name: 'forward', size: 17 }),
+      'h2',
+      null,
+      'Công thức đã đăng',
+      Number.isInteger(meta?.total) &&
+        h('span', { className: 'library-total' }, ' · ' + meta.total),
     ),
+    location
+      ? h(RecipeGrid, {
+          result,
+          onRetry: () => setReload((n) => n + 1),
+          emptyTitle: 'Chưa có công thức ở trang này.',
+        })
+      : h(Link, { href: href(1) }, 'Về trang đầu'),
+    meta &&
+      h(RecipePagination, {
+        meta,
+        href,
+        label: 'Phân trang công thức của tác giả',
+      }),
   );
 }

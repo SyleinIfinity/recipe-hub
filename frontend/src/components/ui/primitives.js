@@ -2,6 +2,11 @@ import { createElement as h, useEffect, useState } from 'react';
 import { Link } from '../../app/router.js';
 
 const icons = {
+  heart:
+    'M20.8 4.7a5.4 5.4 0 0 0-7.6 0L12 5.9l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6l8.8 8.4 8.8-8.4a5.4 5.4 0 0 0 0-7.6Z',
+  comment: 'M21 11.5a8.5 8.5 0 0 1-8.5 8.5H9l-6 2 1.7-5A8.5 8.5 0 1 1 21 11.5Z',
+  bookmark: 'M6 3h12v18l-6-4-6 4V3Z',
+  grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
   eyeOff:
     'm3 3 18 18M10 5.2A12 12 0 0 1 12 5c6.4 0 10 7 10 7a20 20 0 0 1-3.2 4M6.3 6.7A22 22 0 0 0 2 12s3.6 7 10 7c2 0 3.8-.7 5.2-1.5',

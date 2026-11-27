@@ -176,12 +176,14 @@ export function confirmedRecipe(response, status = 200) {
 }
 export function recipeError(error) {
   if (error?.code === 'CSRF_INVALID')
-    return 'Phiên bảo vệ thay đổi. Tải lại trang trước khi gửi tiếp.';
+    return 'Phiên bảo vệ thay đổi. Xác nhận lại phiên để tiếp tục với phần đang soạn.';
   if (error?.status === 401) return 'Phiên đăng nhập đã hết hạn.';
   if (error?.status === 404)
     return 'Không tìm thấy công thức hoặc bạn không có quyền truy cập.';
   if (error?.status === 403)
     return 'Bạn không có quyền thực hiện thao tác này.';
+  if (error?.code === 'PUBLISHED_MEDIA_CHANGE')
+    return 'Chuyển công thức về bản nháp trước khi thay ảnh hoặc xóa bước có ảnh.';
   if (error?.status === 409)
     return 'Dữ liệu hoặc trạng thái đã thay đổi. Đối chiếu bản trên máy chủ trước khi gửi tiếp.';
   if (error?.status === 429)
@@ -191,4 +193,56 @@ export function recipeError(error) {
   if (error?.mutationOutcomeUncertain)
     return 'Chưa xác định được kết quả. Không tự gửi lại; hãy đối chiếu dữ liệu trên máy chủ.';
   return 'Chưa tải được dữ liệu. Kiểm tra kết nối rồi thử lại.';
+}
+
+// Local files live only in the mounted editor. IDs are used solely to match an
+// attached gateway URL returned by the server, never to construct a new URL.
+export function toPreviewModel(values, author, localImages = {}) {
+  const amount = (value, max, min = 0, integer = true) => {
+    const n = numeric(value);
+    return n !== null &&
+      Number.isFinite(n) &&
+      (!integer || Number.isInteger(n)) &&
+      n >= min &&
+      n <= max
+      ? n
+      : null;
+  };
+  const attached = (id, url) => (id && url?.endsWith('/' + id) ? url : null);
+  const prepMinutes = amount(values.prepMinutes, 1440),
+    cookMinutes = amount(values.cookMinutes, 1440);
+  return {
+    title: values.title.trim() || 'Công thức chưa có tên',
+    description: values.description,
+    summary: values.description.slice(0, 200),
+    categoryId: values.categoryId,
+    difficulty: values.difficulty,
+    prepMinutes,
+    cookMinutes,
+    totalMinutes:
+      prepMinutes !== null && cookMinutes !== null
+        ? prepMinutes + cookMinutes
+        : null,
+    servings: amount(values.servings, 100, 1),
+    author,
+    publishedAt: values.publishedAt,
+    coverImageUrl:
+      localImages.cover ||
+      attached(values.coverImageAssetId, values.coverImageUrl),
+    ingredients: values.ingredients.map((row, i) => ({
+      ...row,
+      order: i + 1,
+      name: row.name || 'Chưa nhập nguyên liệu',
+      quantity: amount(row.quantity, 1e9, 0, false),
+    })),
+    steps: values.steps.map((row, i) => ({
+      ...row,
+      stepId: row.stepId || row.key,
+      order: i + 1,
+      instruction: row.instruction || 'Chưa nhập hướng dẫn',
+      durationMinutes: amount(row.durationMinutes, 1440),
+      imageUrl:
+        localImages[row.key] || attached(row.imageAssetId, row.imageUrl),
+    })),
+  };
 }

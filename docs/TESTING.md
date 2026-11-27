@@ -58,3 +58,7 @@ Config phục vụ bản lịch sử ở cổng 5176. Kịch bản kiểm cùng 
 - Ảnh và JSON chẩn đoán mới ở `test-results/<test>/screenshots/` và `verification/` theo Playwright outputDir. Với `--output`, Playwright dùng thư mục đã chỉ định. CI upload chẩn đoán chọn lọc khi thất bại, giữ 7 ngày. Golden vẫn ở thư mục snapshot của spec.
 - Trước khi chia sẻ, kiểm tra nội dung không có token, key hay dữ liệu riêng tư. Chỉ lưu ảnh nghiệm thu đại diện, phạm vi, revision, môi trường, loại provider và kết quả có liên kết. Console output đầy đủ và metrics do test sinh nằm ở output hoặc CI artifact.
 - Phân biệt pass, fail, blocked, chưa chạy và chưa xác minh. Gắn case đã chạy với Requirement ID ở [Requirements](REQUIREMENTS.md) hoặc Test ID gốc trong [Archive](archive/README.md). [Ảnh giao diện](screenshots/README.md) ghi mốc và dữ liệu dùng chụp.
+
+### Hành trình cộng đồng
+
+Chạy `npx playwright test e2e/community.spec.js` trên database test. Hai browser context dùng tài khoản synthetic riêng. Harness chạy API thực với transport Cloudinary stub. Ảnh fixture, ảnh chụp các kích thước, trạng thái tương tác sau reload và preview cục bộ được kiểm tra trong cùng hành trình. Có thể đặt `RECIPE_TEST_PHOTO` là đường dẫn ảnh món kiểm thử trên máy. CI dùng ảnh tạo offline. Hành trình còn mở hai tab soạn để kiểm tra CAS, xác minh nội dung riêng trước khi lưu, thu hồi quyền đọc ảnh giữa hai lần xuất bản và kiểm tra các quan hệ sau khi thay ảnh.

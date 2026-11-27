@@ -420,6 +420,36 @@ it('DOC-09..16 success responses for every live operation conform to schemas', a
     undefined,
     '/api/v1/me/favorites/{recipeId}',
   );
+  contract(
+    'get',
+    '/api/v1/me/bookmarks',
+    await admin.get('/api/v1/me/bookmarks'),
+  );
+  contract(
+    'get',
+    '/api/v1/me/recipe-interactions',
+    await admin.get('/api/v1/me/recipe-interactions').query({ recipeIds: rid }),
+  );
+  contract(
+    'get',
+    '/api/v1/users/{userId}/recipes',
+    await admin.get(`/api/v1/users/${userId}/recipes`),
+  );
+  for (const method of ['put', 'delete'])
+    await write(
+      admin,
+      method,
+      `/api/v1/me/bookmarks/${rid}`,
+      undefined,
+      '/api/v1/me/bookmarks/{recipeId}',
+    );
+  await write(
+    admin,
+    'patch',
+    `/api/v1/recipes/${rid}/published-content`,
+    { version: 0, title: 'Món đang đăng' },
+    '/api/v1/recipes/{recipeId}/published-content',
+  );
   const socialOperations = [
     [
       'get',
@@ -475,7 +505,7 @@ it('DOC-09..16 success responses for every live operation conform to schemas', a
     '/api/v1/users/{userId}/avatar/{assetId}',
     await request(app).get(`/api/v1/users/${userId}/avatar/${rid}`),
   );
-  expect(covered.size).toBe(54);
+  expect(covered.size).toBe(60);
 });
 it('DOC-16/19/20 actual CSRF, permission, expiry and validation error contracts', async () => {
   const guest = request.agent(app);

@@ -61,7 +61,7 @@ async function login(page, u) {
   await page.getByLabel('Mật khẩu *', { exact: true }).fill(u.password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(
-    page.getByRole('heading', { name: 'Bản nháp của tôi', exact: true }),
+    page.getByRole('heading', { name: 'Công thức của tôi', exact: true }),
   ).toBeVisible();
 }
 async function create(page, title = 'Canh rau của tôi') {
@@ -156,8 +156,9 @@ test('ED-E01 real create/edit ingredients/steps ordering, persistence, publish/p
   await expect(
     page.getByRole('button', { name: 'Xóa bản nháp', exact: true }),
   ).toHaveCount(0);
+  await expect(page.getByLabel('Tên công thức', { exact: true })).toBeEnabled();
   await expect(
-    page.getByLabel('Tên công thức', { exact: true }),
+    page.getByRole('button', { name: 'Cập nhật công thức', exact: true }),
   ).toBeDisabled();
   const link = page.getByRole('link', {
     name: 'Xem công thức công khai',
@@ -300,7 +301,8 @@ test('ED-E04 dirty navigation and hard reload warning, row focus, single submit 
   await page.getByLabel('Tên công thức', { exact: true }).fill('Tên hợp lệ');
   page.once('dialog', (d) => d.dismiss());
   await page
-    .getByRole('link', { name: 'Bản nháp của tôi', exact: true })
+    .getByRole('main')
+    .getByRole('link', { name: 'Công thức của tôi', exact: true })
     .click();
   await expect(page).toHaveURL(/\/edit$/);
   page.once('dialog', (d) => d.dismiss());

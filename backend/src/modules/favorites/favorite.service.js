@@ -1,4 +1,5 @@
-import mongoose from 'mongoose';
+import { activeActor, oid } from '../social/social.policy.js';
+import { interactionSummaryStages } from '../social/interaction-summary.js';
 import { AppError } from '../../shared/errors.js';
 import { publicRecipePipeline } from '../recipes/recipe-visibility.js';
 import {
@@ -6,7 +7,11 @@ import {
   publicCardProjection,
 } from '../recipes/search.service.js';
 import { favoriteQuery } from './favorite.validation.js';
-export function favoritePipeline({ Recipe, User }, userId, { page, limit }) {
+export function recipeRelationPipeline(
+  { Recipe, User },
+  userId,
+  { page, limit },
+) {
   return [
     { $match: { userId } },
     { $sort: { createdAt: -1, _id: -1 } },
@@ -29,31 +34,28 @@ export function favoritePipeline({ Recipe, User }, userId, { page, limit }) {
           { $skip: (page - 1) * limit },
           { $limit: limit },
           { $replaceWith: '$recipe' },
+          ...interactionSummaryStages(User),
         ],
         count: [{ $count: 'total' }],
       },
     },
   ];
 }
-export function createFavoriteService({ Favorite, Recipe, User, publication }) {
-  async function owner(actor) {
-    if (
-      !actor?.user?._id ||
-      actor.user.status !== 'active' ||
-      !(await User.exists({ _id: actor.user._id, status: 'active' }))
-    )
-      throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required');
-    return new mongoose.Types.ObjectId(String(actor.user._id));
-  }
+export function createRecipeRelationService({
+  Relation,
+  Recipe,
+  User,
+  publication,
+}) {
   return {
     async add(actor, id) {
-      const userId = await owner(actor),
-        recipeId = new mongoose.Types.ObjectId(id);
+      const userId = await activeActor(User, actor),
+        recipeId = oid(id);
       if (!(await publication.isPublic(recipeId)))
         throw new AppError(404, 'RECIPE_NOT_FOUND', 'Recipe not found');
       // The unique pair, not the visibility read, serializes concurrent PUTs.
       try {
-        const result = await Favorite.updateOne(
+        const result = await Relation.updateOne(
           { userId, recipeId },
           { $setOnInsert: { userId, recipeId, createdAt: new Date() } },
           { upsert: true, runValidators: true },
@@ -73,14 +75,17 @@ export function createFavoriteService({ Favorite, Recipe, User, publication }) {
       }
     },
     async remove(actor, id) {
-      await Favorite.deleteOne({ userId: await owner(actor), recipeId: id });
+      await Relation.deleteOne({
+        userId: await activeActor(User, actor),
+        recipeId: id,
+      });
     },
     async list(actor, raw) {
-      const userId = await owner(actor),
+      const userId = await activeActor(User, actor),
         query = favoriteQuery.parse(raw);
       const [result] = await boundedAggregate(
-        Favorite,
-        favoritePipeline({ Recipe, User }, userId, query),
+        Relation,
+        recipeRelationPipeline({ Recipe, User }, userId, query),
       );
       return {
         rows: result.rows,

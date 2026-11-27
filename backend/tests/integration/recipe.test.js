@@ -871,3 +871,142 @@ it('RCP-73 schema has one version counter and required unique/index behavior', a
   ).rejects.toMatchObject({ code: 11000 });
   expect(db.connection.name).toBe('recipe-hub-test');
 });
+
+async function publishFor(owner, title) {
+  const draft = await recipes.service.create(
+    owner,
+    {
+      title,
+      description: 'Nấu trên lửa nhỏ rồi thưởng thức.',
+      categoryId: String(category._id),
+      difficulty: 'easy',
+      prepMinutes: 5,
+      cookMinutes: 20,
+      servings: 2,
+      ingredients: [{ name: 'Gạo', quantity: 1, unit: 'bát', order: 1 }],
+      steps: [{ order: 1, instruction: 'Nấu đến khi gạo chín.' }],
+    },
+    randomUUID(),
+  );
+  return recipes.publication.publish(owner, draft._id, {
+    version: draft.version,
+  });
+}
+
+it('owner filters select only completed, non-deleted recipes; moderators retain control of hidden recipes', async () => {
+  const draft = await create({ title: 'Bản nháp' });
+  const live = await publishFor(a, 'Cơm trắng');
+  const hidden = await publishFor(a, 'Cơm gừng');
+  const pending = await create({ title: 'Tạo dở' });
+  const deleted = await create({ title: 'Đã xóa' });
+  await publishFor(b, 'Món của đầu bếp khác');
+  await recipes.Recipe.updateOne(
+    { _id: hidden._id },
+    { moderationStatus: 'hidden' },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: pending._id },
+    { creationState: 'pending' },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: deleted._id },
+    { deletedAt: new Date() },
+  );
+  await recipes.Recipe.collection.updateMany(
+    { authorId: a.user._id },
+    { $set: { updatedAt: new Date('2026-01-01') } },
+  );
+
+  const list = (query = {}) => client.get('/api/v1/me/recipes').query(query);
+  const ids = (response) => response.body.data.map((row) => row.recipeId);
+  expect(ids(await list())).toEqual([String(draft._id)]);
+  expect(ids(await list({ status: 'draft' }))).toEqual([String(draft._id)]);
+  const published = await list({ status: 'published' });
+  expect(published.body.meta.total).toBe(2);
+  expect(ids(published)).toEqual([String(hidden._id), String(live._id)]);
+  expect(published.body.data[0]).toMatchObject({
+    status: 'published',
+    moderationStatus: 'hidden',
+    publishedAt: hidden.publishedAt.toISOString(),
+  });
+  const first = await list({ status: 'all', limit: 2 });
+  const second = await list({ status: 'all', limit: 2, page: 2 });
+  expect(first.body.meta).toEqual({ page: 1, limit: 2, total: 3 });
+  expect([...ids(first), ...ids(second)]).toEqual(
+    [hidden, live, draft].map((r) => String(r._id)),
+  );
+  expect((await list({ status: 'deleted' })).status).toBe(400);
+  expect(
+    (await list({ status: 'all', authorId: String(b.user._id) })).status,
+  ).toBe(400);
+});
+
+it('public author pages respect visibility before counting and use first publication and ID for stable paging', async () => {
+  const authorList = (id, query = {}) =>
+    request(app)
+      .get('/api/v1/users/' + id + '/recipes')
+      .query(query);
+  const empty = await authorList(a.user._id);
+  expect(empty.status).toBe(200);
+  expect(empty.body).toEqual({
+    success: true,
+    data: [],
+    meta: { page: 1, limit: 20, total: 0 },
+  });
+  const first = await publishFor(a, 'Cá hấp');
+  const second = await publishFor(a, 'Cá kho');
+  const hidden = await publishFor(a, 'Canh cá');
+  const deleted = await publishFor(a, 'Cá rán');
+  const pending = await publishFor(a, 'Cá nướng');
+  await publishFor(b, 'Món tác giả khác');
+  await create({ title: 'Bản nháp riêng tư' });
+  await recipes.Recipe.updateOne(
+    { _id: hidden._id },
+    { moderationStatus: 'hidden' },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: deleted._id },
+    { deletedAt: new Date() },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: pending._id },
+    { creationState: 'pending' },
+  );
+  await recipes.Recipe.updateMany(
+    { _id: { $in: [first._id, second._id] } },
+    { publishedAt: first.publishedAt },
+  );
+  for (const [page, recipe] of [
+    [1, second],
+    [2, first],
+  ]) {
+    const response = await authorList(a.user._id, { page, limit: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.meta).toEqual({ page, limit: 1, total: 2 });
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      recipeId: String(recipe._id),
+      title: recipe.title,
+      author: { id: String(a.user._id), displayName: a.user.displayName },
+    });
+    expect(response.body.data[0].author).not.toHaveProperty('email');
+    expect(response.body.data[0]).not.toHaveProperty('moderationStatus');
+    validates(
+      spec.components.schemas.PublicRecipeCardDTO,
+      response.body.data[0],
+    );
+  }
+  expect((await authorList(a.user._id, { limit: 101 })).status).toBe(400);
+  expect((await authorList(a.user._id, { status: 'draft' })).status).toBe(400);
+  expect((await authorList('invalid-id')).status).toBe(400);
+  expect((await authorList('f'.repeat(24))).body.error.code).toBe(
+    'USER_NOT_FOUND',
+  );
+  await identity.models.User.updateOne(
+    { _id: a.user._id },
+    { status: 'suspended' },
+  );
+  const suspended = await authorList(a.user._id);
+  expect(suspended.status).toBe(404);
+  expect(suspended.body.error.code).toBe('USER_NOT_FOUND');
+});

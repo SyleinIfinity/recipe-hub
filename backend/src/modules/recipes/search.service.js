@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 import { searchTokens } from './search.normalization.js';
 import { searchQuery } from './search.validation.js';
 import { publicRecipePipeline } from './recipe-visibility.js';
-import { AppError } from '../../shared/errors.js';
-export const QUERY_MAX_TIME_MS = 3000;
+import { boundedAggregate } from '../../shared/aggregate.js';
+import { interactionSummaryStages } from '../social/interaction-summary.js';
+export { boundedAggregate, QUERY_MAX_TIME_MS } from '../../shared/aggregate.js';
 export const publicCardProjection = {
   _id: 1,
   slug: 1,
@@ -33,8 +34,10 @@ export function searchFilter(query) {
     };
   return filter;
 }
-export function searchPipeline(User, query) {
-  const [match, ...author] = publicRecipePipeline(User, searchFilter(query));
+export function searchPipeline(User, query, authorId) {
+  const filter = searchFilter(query);
+  if (authorId) filter.authorId = authorId;
+  const [match, ...author] = publicRecipePipeline(User, filter);
   const direction = query.sort.startsWith('-') ? -1 : 1;
   return [
     match,
@@ -46,35 +49,20 @@ export function searchPipeline(User, query) {
         rows: [
           { $skip: (query.page - 1) * query.limit },
           { $limit: query.limit },
+          ...interactionSummaryStages(User),
         ],
         count: [{ $count: 'total' }],
       },
     },
   ];
 }
-export async function boundedAggregate(Model, pipeline) {
-  try {
-    return await Model.aggregate(pipeline).option({
-      maxTimeMS: QUERY_MAX_TIME_MS,
-      allowDiskUse: false,
-    });
-  } catch (err) {
-    if (err.code === 50)
-      throw new AppError(
-        503,
-        'QUERY_TIMEOUT',
-        'Query took too long; narrow the filters',
-      );
-    throw err;
-  }
-}
 export function createSearchService({ Recipe, User }) {
   return {
-    async list(raw) {
+    async list(raw, authorId) {
       const query = searchQuery.parse(raw);
       const [result] = await boundedAggregate(
         Recipe,
-        searchPipeline(User, query),
+        searchPipeline(User, query, authorId),
       );
       return {
         rows: result.rows,

@@ -1,7 +1,10 @@
+import { createBookmarkModel } from '../bookmarks/bookmark.model.js';
+import { bookmarkRoutes } from '../bookmarks/bookmark.routes.js';
+import { createMembershipReader } from '../bookmarks/membership.js';
 import { createSocial } from '../social/index.js';
 import { createFavoriteModel } from '../favorites/favorite.model.js';
-import { createFavoriteService } from '../favorites/favorite.service.js';
-import { createFavoriteController } from '../favorites/favorite.controller.js';
+import { createRecipeRelationService } from '../favorites/favorite.service.js';
+import { createRecipeRelationController } from '../favorites/favorite.controller.js';
 import { favoriteRoutes } from '../favorites/favorite.routes.js';
 import { createPublicationService } from './publication.service.js';
 import { createRecipeMedia } from './recipe-media.service.js';
@@ -21,16 +24,33 @@ export async function createRecipes({ connection, identity, catalog, media }) {
     MediaAsset: media.MediaAsset,
   });
   const Favorite = createFavoriteModel(connection);
-  await Favorite.createIndexes();
-  const favorites = createFavoriteService({
-    Favorite,
-    Recipe,
-    User: identity.models.User,
-    publication,
+  const Bookmark = createBookmarkModel(connection);
+  await Promise.all([Favorite.createIndexes(), Bookmark.createIndexes()]);
+  const shared = { Recipe, User: identity.models.User, publication };
+  const favorites = createRecipeRelationService({
+    ...shared,
+    Relation: Favorite,
   });
+  const bookmarks = createRecipeRelationService({
+    ...shared,
+    Relation: Bookmark,
+  });
+  const requireAuth = authenticate(
+    identity.sessions,
+    identity.security.sessionCookie,
+  );
+  const writeLimit = identity.security.limit(identity.security.socialRateLimit);
   const favoriteRouter = favoriteRoutes(
-    createFavoriteController(favorites),
-    authenticate(identity.sessions, identity.security.sessionCookie),
+    createRecipeRelationController(favorites, 'favorited'),
+    requireAuth,
+    writeLimit,
+  );
+  const bookmarkRouter = bookmarkRoutes(
+    createRecipeRelationController(bookmarks, 'saved'),
+    createMembershipReader({ ...shared, Favorite, Bookmark }),
+    requireAuth,
+    writeLimit,
+    identity.security.limit(600),
   );
   const social = await createSocial({
     connection,
@@ -57,13 +77,16 @@ export async function createRecipes({ connection, identity, catalog, media }) {
     Favorite,
     favorites,
     favoriteRouter,
+    Bookmark,
+    bookmarks,
+    bookmarkRouter,
     publication,
     images,
     Recipe,
     service,
     router: recipeRoutes(
       createRecipeController(service, publication, images),
-      authenticate(identity.sessions, identity.security.sessionCookie),
+      requireAuth,
       optionalAuth,
       identity.security.limit(600),
     ),

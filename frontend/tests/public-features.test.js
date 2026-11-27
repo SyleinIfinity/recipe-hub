@@ -157,8 +157,8 @@ it('PUB-U05 Detail renders category, sorted steps/ingredients and literal text s
   expect(container.querySelector('.detail-author a')).toBeNull();
   expect(screen.queryByText('Chuẩn bị')).toBeNull();
 });
-it('PUB-U06 Profile renders only public fields and never fetches author recipes', async () => {
-  const fetch = vi.fn().mockResolvedValue(
+it('PUB-U06 Profile renders only public fields and requests only the public author page', async () => {
+  const fetch = vi.fn().mockResolvedValueOnce(
     response({
       displayName: 'Bếp Việt',
       bio: '<script>secret</script>',
@@ -168,6 +168,7 @@ it('PUB-U06 Profile renders only public fields and never fetches author recipes'
       preferences: { secret: true },
     }),
   );
+  fetch.mockResolvedValue(response([]));
   vi.stubGlobal('fetch', fetch);
   const { container } = render(h(PublicProfile, { userId: id }));
   await screen.findByRole('heading', { name: 'Bếp Việt' });
@@ -175,7 +176,10 @@ it('PUB-U06 Profile renders only public fields and never fetches author recipes'
   expect(container.textContent).not.toContain('private-hash');
   expect(container.querySelector('script')).toBeNull();
   expect(container.textContent).not.toContain('admin');
-  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual([
+    '/api/v1/users/' + id,
+    '/api/v1/users/' + id + '/recipes?page=1&limit=12',
+  ]);
 });
 it('PUB-U07 category page2 and ingredient limits expose real supported GETs', async () => {
   const categories = Array.from({ length: 100 }, (_, i) => ({

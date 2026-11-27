@@ -39,10 +39,17 @@ export const socialQuery = z.strictObject({
   ...paginationFields,
   sort: z.enum(['createdAt', '-createdAt']).default('-createdAt'),
 });
-export const commentQuery = z.strictObject({
-  ...paginationFields,
-  sort: z.enum(['createdAt', '-createdAt']).default('createdAt'),
-});
+export const commentQuery = z
+  .strictObject({
+    ...paginationFields,
+    sort: z.enum(['createdAt', '-createdAt']).default('createdAt'),
+    scope: z.enum(['all', 'roots', 'replies']).default('all'),
+    parentId: socialId.optional(),
+  })
+  .refine((q) => (q.scope === 'replies') === (q.parentId !== undefined), {
+    path: ['parentId'],
+    message: 'parentId is required only for replies',
+  });
 export const reportQuery = z.strictObject({
   ...paginationFields,
   status: z.enum(['pending', 'resolved', 'rejected']).default('pending'),

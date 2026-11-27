@@ -18,7 +18,7 @@ const same = (a, b) => String(a ?? '') === String(b ?? '');
 export function createCommentService({ Comment, Recipe, User, publication }) {
   async function publicComment(id, recipeId) {
     const [row] = await boundedAggregate(Comment, [
-      ...commentVisibilityPipeline(Comment, User, {
+      ...commentVisibilityPipeline(User, {
         _id: oid(id),
         ...(recipeId ? { recipeId: oid(recipeId) } : {}),
       }),
@@ -189,7 +189,7 @@ export function createCommentService({ Comment, Recipe, User, publication }) {
       if (!result) fail(409, 'VERSION_CONFLICT', 'Comment changed');
       return {
         ...result.toObject(),
-        publicAuthor: { _id: authorId, displayName: actor.user.displayName },
+        publicAuthor: actor.user,
       };
     },
     async remove(actor, id) {
@@ -216,13 +216,42 @@ export function createCommentService({ Comment, Recipe, User, publication }) {
     },
     async list(id, raw) {
       const query = commentQuery.parse(raw);
+      const filter = { recipeId: oid(id) };
+      if (query.scope === 'roots') filter.parentId = null;
+      if (query.scope === 'replies') filter.parentId = oid(query.parentId);
+      // Count eligible replies only for the roots on this page.
+      const replyCounts =
+        query.scope === 'roots'
+          ? [
+              {
+                $lookup: {
+                  from: Comment.collection.name,
+                  localField: '_id',
+                  foreignField: 'parentId',
+                  pipeline: [
+                    ...commentVisibilityPipeline(User, { recipeId: oid(id) }),
+                    { $count: 'total' },
+                  ],
+                  as: 'visibleReplies',
+                },
+              },
+              {
+                $set: {
+                  replyCount: {
+                    $ifNull: [{ $first: '$visibleReplies.total' }, 0],
+                  },
+                },
+              },
+              { $unset: 'visibleReplies' },
+            ]
+          : [];
       const result = await publicInteractions(
         { Recipe, User },
         id,
         Comment.collection.name,
         [
-          ...commentVisibilityPipeline(Comment, User, { recipeId: oid(id) }),
-          ...pageFacet(query),
+          ...commentVisibilityPipeline(User, filter),
+          ...pageFacet(query, {}, replyCounts),
         ],
       );
       return pageResult(result, query);

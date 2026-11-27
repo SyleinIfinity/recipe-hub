@@ -28,6 +28,7 @@ export function MediaPicker({
   assetId,
   url,
   onChange,
+  onPreview,
   onBusy = () => {},
   onUnresolved = () => {},
   disabled = false,
@@ -36,6 +37,8 @@ export function MediaPicker({
     [preview, setPreview] = useState(null),
     [state, setState] = useState('ready'),
     [message, setMessage] = useState('');
+  const previewListener = useRef(onPreview);
+  previewListener.current = onPreview;
   const unresolved = useRef(onUnresolved);
   unresolved.current = onUnresolved;
   const intent = useRef(null),
@@ -55,7 +58,9 @@ export function MediaPicker({
     if (!file) return;
     const local = URL.createObjectURL(file);
     setPreview(local);
+    previewListener.current?.(local);
     return () => {
+      previewListener.current?.(null);
       URL.revokeObjectURL(local);
     };
   }, [file]);

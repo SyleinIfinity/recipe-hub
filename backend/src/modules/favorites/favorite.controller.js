@@ -1,5 +1,5 @@
 import { publicRecipeCardDTO } from '../recipes/recipe.dto.js';
-export function createFavoriteController(service) {
+export function createRecipeRelationController(service, stateField) {
   return {
     async add(req, res) {
       const result = await service.add(
@@ -8,7 +8,7 @@ export function createFavoriteController(service) {
       );
       res.status(result.created ? 201 : 200).json({
         success: true,
-        data: { recipeId: result.recipeId, favorited: true },
+        data: { recipeId: result.recipeId, [stateField]: true },
       });
     },
     async remove(req, res) {

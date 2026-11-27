@@ -56,6 +56,7 @@ export function createApp({
     if (recipes) {
       app.use('/api/v1', recipes.router);
       if (recipes.favoriteRouter) app.use('/api/v1', recipes.favoriteRouter);
+      if (recipes.bookmarkRouter) app.use('/api/v1', recipes.bookmarkRouter);
       if (recipes.social) app.use('/api/v1', recipes.social.router);
     }
   }

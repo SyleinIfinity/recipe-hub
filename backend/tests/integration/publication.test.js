@@ -896,3 +896,218 @@ it('PUB-57/65 stale session cookie cannot bypass media authorization', async () 
   expect(result.status).toBe(401);
   expect((await guest(path)).status).toBe(503);
 });
+
+const editPublished = (recipe, changes, agent = client, csrf = token) =>
+  agent
+    .patch('/api/v1/recipes/' + recipe.recipeId + '/published-content')
+    .set('X-CSRF-Token', csrf)
+    .send({ version: recipe.version, ...changes });
+async function publishedRecipe(body = content()) {
+  const response = await publish(await create(body));
+  expect(response.status).toBe(200);
+  return response.body.data;
+}
+it('updates complete published content with one CAS and preserves public identity and date', async () => {
+  const recipe = await publishedRecipe();
+  const changes = {
+    title: 'Súp bí ngô',
+    cookMinutes: 12,
+    steps: [
+      {
+        stepId: recipe.steps[0].stepId,
+        order: 1,
+        instruction: 'Ninh bí đến khi mềm.',
+      },
+      { order: 2, instruction: 'Nêm vừa ăn.' },
+    ],
+  };
+  const results = await Promise.all([
+    editPublished(recipe, changes),
+    editPublished(recipe, changes),
+  ]);
+  expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+  const updated = results.find((r) => r.status === 200).body.data;
+  validates(spec.components.schemas.OwnerRecipeDTO, updated);
+  expect(updated).toMatchObject({
+    recipeId: recipe.recipeId,
+    slug: recipe.slug,
+    publishedAt: recipe.publishedAt,
+    version: recipe.version + 1,
+    status: 'published',
+    title: changes.title,
+    totalMinutes: 22,
+  });
+  expect(updated.steps[0].stepId).toBe(recipe.steps[0].stepId);
+  expect((await detail(recipe.slug)).body.data.title).toBe(changes.title);
+  expect(
+    (await guest('/api/v1/recipes?q=sup')).body.data.map((r) => r.recipeId),
+  ).toContain(recipe.recipeId);
+});
+it('rejects unpublishable changes, protected fields and inactive references while preserving the public version', async () => {
+  const recipe = await publishedRecipe();
+  for (const changes of [
+    { ingredients: [] },
+    { steps: [] },
+    { description: 'a' },
+    { authorId: b.user.id },
+    { publishedAt: new Date().toISOString() },
+    { slug: 'other' },
+    { moderationStatus: 'normal' },
+  ]) {
+    expect((await editPublished(recipe, changes)).status).toBe(422);
+  }
+  await catalog.models.Ingredient.updateOne(
+    { _id: ingredient.id },
+    { isActive: false },
+  );
+  expect(
+    (await editPublished(recipe, { title: 'Món đang cập nhật' })).status,
+  ).toBe(422);
+  expect((await detail(recipe.slug)).body.data.title).toBe(recipe.title);
+  expect((await recipes.Recipe.findById(recipe.recipeId)).version).toBe(
+    recipe.version,
+  );
+});
+it('requires the active owner, a CSRF token and a visible moderation state', async () => {
+  const recipe = await publishedRecipe(),
+    changes = { title: 'Thịt kho mật ong' };
+  expect((await editPublished(recipe, changes, other, otherToken)).status).toBe(
+    404,
+  );
+  expect(
+    (
+      await client
+        .patch('/api/v1/recipes/' + recipe.recipeId + '/published-content')
+        .send({ version: recipe.version, ...changes })
+    ).status,
+  ).toBe(403);
+  await recipes.Recipe.updateOne(
+    { _id: recipe.recipeId },
+    { moderationIntent: b.user._id },
+  );
+  expect((await editPublished(recipe, changes)).status).toBe(409);
+  await recipes.Recipe.updateOne(
+    { _id: recipe.recipeId },
+    { moderationIntent: null, moderationStatus: 'hidden' },
+  );
+  expect((await editPublished(recipe, changes)).status).toBe(409);
+  await identity.models.User.updateOne(
+    { _id: a.user._id },
+    { status: 'suspended' },
+  );
+  await expect(
+    service().updatePublished(a, recipe.recipeId, {
+      version: recipe.version,
+      ...changes,
+    }),
+  ).rejects.toMatchObject({ status: 401 });
+});
+it('only one concurrent unpublish and published update commits', async () => {
+  const recipe = await publishedRecipe();
+  const results = await Promise.all([
+    unpublish({ _id: recipe.recipeId, version: recipe.version }),
+    editPublished(recipe, { description: 'Nấu lửa nhỏ đến khi thịt mềm.' }),
+  ]);
+  expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+  expect((await recipes.Recipe.findById(recipe.recipeId)).version).toBe(
+    recipe.version + 1,
+  );
+});
+it('keeps attached image slots on reorder and rejects replacing, deleting or moving a published image', async () => {
+  const asset = await upload('recipe_step'),
+    cover = await upload();
+  const recipe = await publishedRecipe({
+    ...content(),
+    coverImageAssetId: String(cover._id),
+    steps: [
+      {
+        order: 1,
+        instruction: 'Đun sôi nước.',
+        imageAssetId: String(asset._id),
+      },
+      { order: 2, instruction: 'Dọn món ra đĩa.' },
+    ],
+  });
+  const first = recipe.steps[0].stepId,
+    second = recipe.steps[1].stepId;
+  for (const changes of [
+    { coverImageAssetId: null },
+    { steps: [{ stepId: second, order: 1 }] },
+    {
+      steps: [
+        { stepId: first, order: 1, imageAssetId: null },
+        { stepId: second, order: 2, imageAssetId: String(asset._id) },
+      ],
+    },
+  ]) {
+    const response = await editPublished(recipe, changes);
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe('PUBLISHED_MEDIA_CHANGE');
+  }
+  const updated = await editPublished(recipe, {
+    steps: [
+      { stepId: second, order: 1 },
+      { stepId: first, order: 2 },
+    ],
+  });
+  expect(updated.status).toBe(200);
+  expect(updated.body.data.steps[1].imageAssetId).toBe(String(asset._id));
+  await media.MediaAsset.updateOne(
+    { _id: asset._id },
+    { status: 'pending_delete' },
+  );
+  expect(
+    (await editPublished(updated.body.data, { title: 'Thịt kho trứng mềm' }))
+      .status,
+  ).toBe(409);
+});
+
+it('fails closed if moderation starts after validating the proposed content', async () => {
+  const recipe = await publishedRecipe();
+  const original = recipes.Recipe.findOneAndUpdate.bind(recipes.Recipe);
+  const update = vi
+    .spyOn(recipes.Recipe, 'findOneAndUpdate')
+    .mockImplementationOnce(async (...args) => {
+      // Interleave a real moderation claim exactly at the write boundary.
+      await recipes.Recipe.updateOne(
+        { _id: recipe.recipeId },
+        { moderationIntent: b.user._id },
+      );
+      return original(...args);
+    });
+  try {
+    const response = await editPublished(recipe, { title: 'Bữa tối gia đình' });
+    expect(response.status).toBe(409);
+    expect((await recipes.Recipe.findById(recipe.recipeId)).title).toBe(
+      recipe.title,
+    );
+  } finally {
+    update.mockRestore();
+  }
+});
+it('rechecks the owner after the catalog and media reads and before the published write', async () => {
+  const recipe = await publishedRecipe();
+  const mediaRead = vi
+    .spyOn(media.MediaAsset, 'exists')
+    .mockImplementationOnce(async () => {
+      await identity.models.User.updateOne(
+        { _id: a.user._id },
+        { status: 'suspended' },
+      );
+      return null;
+    });
+  try {
+    await expect(
+      service().updatePublished(a, recipe.recipeId, {
+        version: recipe.version,
+        title: 'Bữa tối gia đình',
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+    expect((await recipes.Recipe.findById(recipe.recipeId)).version).toBe(
+      recipe.version,
+    );
+    expect((await detail(recipe.slug)).status).toBe(404);
+  } finally {
+    mediaRead.mockRestore();
+  }
+});

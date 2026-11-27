@@ -1,3 +1,4 @@
+import { listLocation } from './library-location.js';
 import { accountRoutes } from './registry.js';
 import { createElement as h, useSyncExternalStore } from 'react';
 
@@ -150,6 +151,13 @@ export function safeReturnPath(value, fallback = '/') {
     )
   )
     return fallback;
+  if (
+    url.pathname === '/my/recipes' ||
+    matchRoute(url.pathname).page === 'profile'
+  )
+    return listLocation(url.search, url.pathname === '/my/recipes')
+      ? url.pathname + url.search
+      : fallback;
   // Only public, implemented destinations; no credentials or token-bearing queries.
   const allowed = new Set([
     'q',
@@ -162,6 +170,7 @@ export function safeReturnPath(value, fallback = '/') {
     'page',
     'limit',
     'sort',
+    'view',
   ]);
   for (const [key] of url.searchParams)
     if (

@@ -163,6 +163,7 @@ export function createRecipeModel(connection) {
   for (const [field, name] of [
     ['searchTokens', 'public_search_tokens'],
     ['categoryId', 'public_category'],
+    ['authorId', 'public_author'],
     ['ingredients.ingredientId', 'public_ingredients'],
   ])
     schema.index(

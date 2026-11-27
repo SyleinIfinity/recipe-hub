@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Recipe Hub API
-  version: 0.13.2
+  version: 0.15.0
   description: >-
     Live APIs BE-00..13 (private media upload/list/delete). Docs development only. Cookie HttpOnly
     do browser quản lý, không dán session token vào Authorize.
@@ -14,7 +14,7 @@ info:
 
     Email endpoints có thể gửi thư nếu SMTP bật; chỉ thử khi được phép. 202 không chứng minh
     delivery. Admin được cấp qua quy trình quản trị, không có public API cấp quyền. Recipe draft
-    owner CRUD và publish/unpublish/public read đã live; P2 chưa có; media có upload/list/delete;
+    owner CRUD và publish/unpublish/public read đã live; thư viện cá nhân có Bookmarks và Favorites; media có upload/list/delete;
     attach/release là internal service. Search/filter/favorites live. Cloudinary authenticated
     binary delivery uses the same-origin authorization gateway; fake provider remains metadata-only.
     P1 isolated live synthetic smoke verified; production traffic not certified. Reviews, comments
@@ -34,6 +34,8 @@ tags:
     description: Owner drafts, publication, strict public visibility and fail-closed media gateway.
   - name: Favorites
     description: Private relations; visible public recipes only. A relation never grants private access.
+  - name: Bookmarks
+    description: Private saved recipes, independent of favorites.
   - name: Reviews
   - name: Comments
   - name: Reports
@@ -1898,7 +1900,7 @@ paths:
       operationId: listOwnRecipes
       tags:
         - Recipes
-      summary: List own nondeleted drafts
+      summary: List owned, completed recipes by publication status
       security:
         - SessionCookie: []
       parameters:
@@ -1907,7 +1909,9 @@ paths:
         - name: status
           in: query
           schema:
-            const: draft
+            type: string
+            enum: [draft, published, all]
+            default: draft
         - name: sort
           in: query
           schema:
@@ -2355,6 +2359,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/recipes/{recipeId}/published-content:
+    patch:
+      operationId: updatePublishedRecipeContent
+      tags: [Recipes]
+      summary: Update a published recipe in place as its active owner
+      description: >
+        Strict editable fields and expected version. Omitted fields and existing images on
+        identified steps are preserved. Canonical cover and step image references must match.
+        Validate the whole proposed publication and commit its content, search fields and
+        total duration in one compare-and-swap. Slug, author and first publication time persist.
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-fA-F0-9]{24}$' }
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecipeDraftUpdate' }
+      responses:
+        '200':
+          description: Updated publication and new version, confirmed by the database.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/OwnerRecipeDTO' }
+                required: [success, data]
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: VERSION_CONFLICT, RECIPE_STATE_CONFLICT, PUBLISHED_MEDIA_CHANGE or MEDIA_RECONCILIATION_REQUIRED. Re-read before retry.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /api/v1/recipes/{recipeId}/publish:
     patch:
       operationId: publishRecipe
@@ -2757,7 +2808,7 @@ paths:
       operationId: addFavorite
       tags:
         - Favorites
-      summary: Save a public recipe idempotently
+      summary: Like a public recipe idempotently
       security:
         - SessionCookie: []
       parameters: &a2
@@ -2820,6 +2871,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Sanitized database error
           content:
@@ -2865,12 +2918,331 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Sanitized database error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/bookmarks:
+    get:
+      operationId: listMyBookmarks
+      tags:
+        - Bookmarks
+      summary: List my visible saved recipes
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      description:
+        Active session. Only page/limit accepted. Sort bookmark.createdAt DESC, bookmark._id
+        DESC. Shared public predicate and author policy applied before pagination/count. Hidden
+        relations retained and reappear on valid republish. No private DTO or userId filter. No
+        cross-request snapshot.
+      responses:
+        '200':
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicRecipeCardDTO'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - page
+                      - limit
+                      - total
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: QUERY_TIMEOUT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/bookmarks/{recipeId}:
+    put:
+      operationId: addBookmark
+      tags:
+        - Bookmarks
+      summary: Bookmark a public recipe idempotently
+      security:
+        - SessionCookie: []
+      parameters: &bookmarkParams
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-fA-F0-9]{24}$
+        - $ref: '#/components/parameters/CsrfToken'
+      description:
+        Active actor from session; valid CSRF. No body (empty object tolerated), no query.
+        Requires current public eligibility; invisible/unknown404. Unique (userId,recipeId) index
+        serializes concurrent PUT. First201, existing200. Visibility may change after eligibility
+        read; retained relation never grants access. Retry unknown outcome with same PUT.
+      responses:
+        '200': &bookmarkResponse
+          description: Bookmark relation saved; no private access granted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/BookmarkStateDTO'
+                required:
+                  - success
+                  - data
+        '201': *bookmarkResponse
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: RECIPE_NOT_FOUND; invisible or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Unexpected body fields or type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: removeBookmark
+      tags:
+        - Bookmarks
+      summary: Remove my bookmark idempotently
+      security:
+        - SessionCookie: []
+      parameters: *bookmarkParams
+      description:
+        Active session and CSRF. No body (empty object tolerated), no query. Delete only actor
+        relation; absent/hidden/deleted target still204. Recipe/Media/other users relations
+        unchanged.
+      responses:
+        '204':
+          description: Removed or already absent. No body.
+        '400':
+          description: Invalid params/query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: UNAUTHENTICATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: CSRF_INVALID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Unexpected body fields or type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/users/{userId}/recipes:
+    get:
+      operationId: listAuthorRecipes
+      tags:
+        - Recipes
+      summary: List an active author's public recipes
+      description: Canonical visibility before pagination. Newest first by publishedAt and ID.
+      security: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-fA-F0-9]{24}$' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description:
+            Success. No-store. Image references use the same-origin authorization gateway; assets
+            absent return null.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success:
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicRecipeCardDTO'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - page
+                      - limit
+                      - total
+                required:
+                  - success
+                  - data
+                  - meta
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: USER_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Sanitized database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: QUERY_TIMEOUT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/me/recipe-interactions:
+    get:
+      operationId: listMyRecipeInteractions
+      tags: [Bookmarks, Favorites]
+      summary: Read personal membership for the supplied visible recipes
+      description: Active session only. Cache-Control no-store. Duplicate IDs are normalized. Ineligible or unknown IDs are omitted. Unknown query parameters are rejected.
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - name: recipeIds
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 100
+            items: { type: string, pattern: '^[a-fA-F0-9]{24}$' }
+      responses:
+        '200':
+          description: Membership for the current session only.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: array
+                    maxItems: 100
+                    items: { $ref: '#/components/schemas/RecipeInteractionDTO' }
+                required: [success, data]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /api/v1/recipes/{recipeId}/reviews:
     get:
       operationId: listRecipeReviews
@@ -3202,6 +3574,14 @@ paths:
               - -createdAt
             default: createdAt
           description: createdAt and _id same direction, bounded pages, no cross-request snapshot.
+        - name: scope
+          in: query
+          schema: { type: string, enum: [all, roots, replies], default: all }
+          description: Default flat list; roots include replyCount. Replies page independently.
+        - name: parentId
+          in: query
+          schema: { type: string, pattern: '^[a-fA-F0-9]{24}$' }
+          description: Required only with scope=replies. Missing or invisible parents return an empty list.
       responses:
         '200':
           description: Success; Cache-Control no-store.
@@ -5242,6 +5622,9 @@ components:
       type: object
       additionalProperties: false
       properties:
+        publishedAt:
+          type: [string, 'null']
+          format: date-time
         recipeId:
           type: string
           pattern: ^[a-fA-F0-9]{24}$
@@ -5448,6 +5831,7 @@ components:
           type: string
           format: date-time
       required:
+        - publishedAt
         - recipeId
         - title
         - slug
@@ -5482,6 +5866,8 @@ components:
       type: object
       additionalProperties: false
       properties:
+        interactionSummary:
+          $ref: '#/components/schemas/InteractionSummaryDTO'
         recipeId:
           type: string
           pattern: ^[0-9a-f]{24}$
@@ -5537,6 +5923,7 @@ components:
             - id
             - displayName
       required:
+        - interactionSummary
         - recipeId
         - slug
         - title
@@ -5551,6 +5938,8 @@ components:
       type: object
       additionalProperties: false
       properties:
+        interactionSummary:
+          $ref: '#/components/schemas/InteractionSummaryDTO'
         recipeId:
           type: string
           pattern: ^[0-9a-f]{24}$
@@ -5730,6 +6119,7 @@ components:
               - durationMinutes
               - imageUrl
       required:
+        - interactionSummary
         - recipeId
         - slug
         - title
@@ -5747,6 +6137,28 @@ components:
         - tags
         - ingredients
         - steps
+    InteractionSummaryDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        favoriteCount: { type: integer, minimum: 0 }
+        commentCount: { type: integer, minimum: 0 }
+      required: [favoriteCount, commentCount]
+    BookmarkStateDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId: { type: string, pattern: '^[a-f0-9]{24}$' }
+        saved: { const: true }
+      required: [recipeId, saved]
+    RecipeInteractionDTO:
+      type: object
+      additionalProperties: false
+      properties:
+        recipeId: { type: string, pattern: '^[a-f0-9]{24}$' }
+        favorited: { type: boolean }
+        saved: { type: boolean }
+      required: [recipeId, favorited, saved]
     FavoriteStateDTO:
       type: object
       additionalProperties: false
@@ -5960,12 +6372,25 @@ components:
       type: object
       additionalProperties: false
       properties:
+        replyCount:
+          type: integer
+          minimum: 0
+          description: Visible direct replies. Returned on root-scope listing.
         commentId: *a3
         recipeId: *a3
         parentId: *a9
         content:
           type: string
-        author: *a10
+        author:
+          type: object
+          additionalProperties: false
+          properties:
+            id: *a3
+            displayName: { type: string }
+            avatarUrl:
+              type: [string, 'null']
+              pattern: '^/api/v1/users/[a-fA-F0-9]{24}/avatar/[a-fA-F0-9]{24}$'
+          required: [id, displayName, avatarUrl]
         version: *a7
         createdAt: *a8
         updatedAt: *a8

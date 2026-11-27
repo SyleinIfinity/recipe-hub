@@ -13,7 +13,7 @@ Dùng tài liệu này khi xem quyền, session và cách xử lý lỗi hoặc 
 
 Guest đọc projection public. Chủ tài khoản active có quyền profile, preferences, bản nháp và asset của mình theo policy. Admin có các thao tác catalog, user status, report và moderation đã khai báo. Role lấy từ server. Admin không trở thành owner của nháp và không có quyền đọc hàng loạt nháp hoặc ảnh private.
 
-Canonical visibility yêu cầu recipe published, normal, chưa xóa, creation hoàn tất và tác giả active. Áp điều kiện trước khi count, phân trang hoặc hiển thị tương tác để tránh lộ dữ liệu qua metadata. Bình luận có thêm điều kiện về parent và tác giả. Các quan hệ yêu thích và báo cáo không cấp quyền đọc nội dung private. [Visibility policy](../backend/src/modules/recipes/recipe-visibility.js) · [Social policy](../backend/src/modules/social/social.policy.js)
+Canonical visibility yêu cầu recipe published, normal, chưa xóa, creation hoàn tất và tác giả active. Áp điều kiện trước khi count, phân trang hoặc hiển thị tương tác để tránh lộ dữ liệu qua metadata. Bình luận có thêm điều kiện về parent và tác giả. Các quan hệ Bookmark, Favorite và báo cáo không cấp quyền đọc nội dung private. [Visibility policy](../backend/src/modules/recipes/recipe-visibility.js) · [Social policy](../backend/src/modules/social/social.policy.js)
 
 Ảnh nháp chỉ đọc được theo canonical owner/reference. Avatar công khai khi là ảnh hiện tại của user active. Khi detach, thay ảnh, unpublish hoặc thay đổi visibility, gateway đánh giá lại reference và quyền trước lẫn sau khi đọc có giới hạn. Nếu kết quả không xác minh được, trả lỗi fail-closed. Response ảnh dùng `private, no-store` và `nosniff`. Thu hồi áp dụng cho request sau đó và các lượt đọc đang chạy trước khi trả bytes. [Media](MEDIA.md) · [ADR 005](adr/005-media-privacy-and-upload.md) · [ADR 008](adr/008-recipe-publication-and-media-visibility.md)
 
@@ -25,3 +25,7 @@ Canonical visibility yêu cầu recipe published, normal, chưa xóa, creation h
 - Lấy secrets từ cấu hình môi trường hoặc secret manager. Dùng file env mẫu để tra tên biến. Redact cookie, token, email, provider key, signed URLs và nội dung request khi chia sẻ log hoặc ảnh. [Cấu hình](DEVELOPMENT.md)
 
 Kiểm thử local bao gồm quyền, CSRF, thu hồi phiên và race với MongoDB test. Chứng cứ Cloudinary kiểm soát chỉ có giá trị trong phạm vi mô tả. Gmail inbox, vận hành nhiều instance, production cleanup và triển khai thực cần xác minh riêng. [Kiểm thử](TESTING.md) · [Roadmap](ROADMAP.md)
+
+Membership riêng tư lấy user từ session, giới hạn 100 ID và bỏ qua ID ngoài phạm vi công khai. Gỡ quan hệ theo cặp user/recipe vẫn thực hiện được khi món tạm ẩn. Cache-Control của batch là `private, no-store`.
+
+Cập nhật nội dung đã xuất bản yêu cầu chủ sở hữu active, phiên và CSRF hợp lệ, version hiện hành, moderation bình thường, không có moderation intent và ảnh đã ổn định. CAS bảo vệ Recipe trước thay đổi đồng thời. Trạng thái tác giả và catalog thuộc collection khác, được kiểm tra trong request. MongoDB standalone không cung cấp transaction xuyên các lần đọc đó. Gateway và truy vấn public tiếp tục đánh giá visibility khi đọc.

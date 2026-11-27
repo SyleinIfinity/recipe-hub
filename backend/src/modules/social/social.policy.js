@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import { AppError } from '../../shared/errors.js';
 import { publicRecipePipeline } from '../recipes/recipe-visibility.js';
-import { boundedAggregate } from '../recipes/search.service.js';
+import { boundedAggregate } from '../../shared/aggregate.js';
+import { COMMENT_COLLECTION } from '../comments/comment.model.js';
 export const oid = (v) => new mongoose.Types.ObjectId(String(v));
 export const fail = (status, code, message) => {
   throw new AppError(status, code, message);
@@ -31,7 +32,7 @@ export function activeAuthorPipeline(
         foreignField: '_id',
         pipeline: [
           { $match: { status: 'active' } },
-          { $project: { _id: 1, displayName: 1 } },
+          { $project: { _id: 1, displayName: 1, avatarAssetId: 1 } },
         ],
         as,
       },
@@ -44,13 +45,13 @@ export const visibleCommentMatch = () => ({
   deletedAt: null,
   creationState: 'complete',
 });
-export function commentVisibilityPipeline(Comment, User, filter = {}) {
+export function commentVisibilityPipeline(User, filter = {}) {
   return [
     { $match: { ...filter, ...visibleCommentMatch() } },
     ...activeAuthorPipeline(User),
     {
       $lookup: {
-        from: Comment.collection.name,
+        from: COMMENT_COLLECTION,
         localField: 'parentId',
         foreignField: '_id',
         let: { recipe: '$recipeId' },
@@ -89,7 +90,7 @@ export async function publicInteractions(
   if (!row) fail(404, 'RECIPE_NOT_FOUND', 'Recipe not found');
   return row.interactions[0];
 }
-export const pageFacet = (query, extra = {}) => {
+export const pageFacet = (query, extra = {}, rowStages = []) => {
   const direction = query.sort.startsWith('-') ? -1 : 1;
   return [
     { $sort: { createdAt: direction, _id: direction } },
@@ -98,6 +99,7 @@ export const pageFacet = (query, extra = {}) => {
         rows: [
           { $skip: (query.page - 1) * query.limit },
           { $limit: query.limit },
+          ...rowStages,
         ],
         count: [{ $count: 'total' }],
         ...extra,

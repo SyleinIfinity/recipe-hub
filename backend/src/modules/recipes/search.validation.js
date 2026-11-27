@@ -17,6 +17,7 @@ export const paginationFields = {
   page: integer(1, 1000).default(1),
   limit: integer(1, 100).default(20),
 };
+export const publicAuthorRecipesQuery = z.strictObject(paginationFields);
 const plain = (max) =>
   z
     .string()

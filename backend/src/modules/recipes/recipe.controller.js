@@ -5,6 +5,14 @@ import {
 } from './recipe.dto.js';
 export function createRecipeController(service, publication, images) {
   return {
+    async updatePublished(req, res) {
+      const row = await publication.updatePublished(
+        req.actor,
+        req.validated.params.recipeId,
+        req.validated.body,
+      );
+      res.json({ success: true, data: ownerRecipeDTO(row) });
+    },
     async publish(req, res) {
       res.json({
         success: true,
@@ -31,6 +39,13 @@ export function createRecipeController(service, publication, images) {
     },
     async publicList(req, res) {
       const { rows, meta } = await publication.list(req.validated.query);
+      res.json({ success: true, data: rows.map(publicRecipeCardDTO), meta });
+    },
+    async publicAuthorList(req, res) {
+      const { rows, meta } = await publication.listByAuthor(
+        req.validated.params.userId,
+        req.validated.query,
+      );
       res.json({ success: true, data: rows.map(publicRecipeCardDTO), meta });
     },
     async publicDetail(req, res) {

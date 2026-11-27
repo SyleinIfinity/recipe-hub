@@ -12,7 +12,12 @@ export const features = Object.freeze({
     owner: 'FE-07',
   },
   editor: { backend: true, integrated: true, visible: true, owner: 'FE-08' },
-  social: { backend: true, integrated: false, visible: false, owner: 'FE-09' },
+  social: {
+    backend: true,
+    integrated: true,
+    visible: true,
+    owner: 'Community',
+  },
   admin: { backend: true, integrated: false, visible: false, owner: 'FE-10' },
   p2: { backend: false, integrated: false, visible: false, owner: 'FE-11+' },
 });
@@ -43,7 +48,7 @@ export const accountRoutes = [
   owner: 'FE-07',
 }));
 export const editorRoutes = [
-  ['myRecipes', '/my/recipes', 'Bản nháp của tôi'],
+  ['myRecipes', '/my/recipes', 'Công thức của tôi'],
   ['newRecipe', '/my/recipes/new', 'Tạo công thức'],
   ['editRecipe', '/my/recipes/:recipeId/edit', 'Quản lý công thức'],
 ].map(([id, pattern, title]) => ({
@@ -77,7 +82,7 @@ export const routes = Object.freeze([
     feature: 'publicRecipes',
     implemented: true,
     owner: 'FE-04',
-    label: 'Khám phá',
+    label: 'Cộng đồng',
     icon: 'search',
   },
   {

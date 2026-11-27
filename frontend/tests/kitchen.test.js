@@ -260,7 +260,7 @@ it('sidebar contains only implemented destinations; error routes work', async ()
   const nav = screen.getByRole('navigation', { name: 'Chính' });
   expect(
     [...nav.querySelectorAll('a')].map((a) => a.getAttribute('href')),
-  ).toEqual(['/', '/recipes']);
+  ).toEqual(['/', '/recipes?view=posts']);
 });
 
 it('authenticated greeting uses Backend displayName', async () => {

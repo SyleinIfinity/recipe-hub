@@ -16,7 +16,9 @@ Xem [Security](SECURITY.md) về cookie, ràng buộc origin, session revocation
 - JSON thành công có `success: true`, `data` và `meta` nếu operation trả thông tin phân trang. Lỗi JSON có `success: false`, `error.code`, `error.message`, có thể có `error.details`, và `requestId`. `X-Request-ID` dùng để tra log. Binary ảnh trả bytes, còn 204 không có body. 202 là chấp nhận xử lý, theo dõi trạng thái theo contract.
 - Lỗi query, path hoặc JSON không hợp lệ thường là 400. Body sai ràng buộc nghiệp vụ hoặc schema có thể là 422. Thiếu phiên trả 401 khi qua các kiểm tra trước đó, thiếu quyền hoặc CSRF sai trả 403. Tài nguyên private có thể trả 404 theo policy. Xử lý stale version hoặc khác intent khi dùng lại key theo 409. Xử lý 429 theo `Retry-After` nếu có và theo thông báo của operation.
 - Danh sách công thức công khai dùng `page` và `limit`, mặc định 1 và 20, tối đa 100 món/trang. Sort `publishedAt` hoặc `-publishedAt` có tie-break theo ID. Query hỗ trợ `q`, category ID, tag, difficulty, `maxMinutes` và danh sách `ingredientIds` kết hợp `ingredientMatch=any|all`. Tìm món theo token chính xác kiểu AND, không phân biệt dấu. Tìm **catalog** dùng prefix theo validator riêng. Danh sách ingredient có limit và không có `meta.total`.
-- `GET /api/v1/me/recipes` trả bản nháp. Owner detail và receipt publish có thể có `status: published`. Đọc [Roadmap](ROADMAP.md) trước khi tích hợp danh sách published hay author listing.
+- Danh sách của chủ sở hữu mặc định lấy nháp. `status=published` lấy món đã đăng, `status=all` lấy cả hai. Hồ sơ tác giả chỉ liệt kê món công khai, theo ngày đăng đầu tiên.
+- Favorites ghi nhận lượt thích. Bookmarks lưu món riêng cho từng tài khoản. Hai quan hệ độc lập. Batch `recipe-interactions` nhận tối đa 100 ID cách nhau bằng dấu phẩy và bỏ qua món ngoài phạm vi công khai. Thẻ món và chi tiết trả `interactionSummary` với lượt thích của tài khoản active và số bình luận hiển thị, gồm cả phản hồi.
+- Danh sách bình luận mặc định trả dạng phẳng. Dùng `scope=roots` để lấy cha cùng `replyCount`, hoặc `scope=replies&parentId=…` để phân trang riêng từng nhóm phản hồi.
 
 Ví dụ đọc công khai:
 
@@ -28,8 +30,10 @@ curl -sS -G 'http://127.0.0.1:3000/api/v1/recipes' \
 
 ## Viết dữ liệu
 
+Chủ sở hữu cập nhật món đang đăng qua `published-content` với version. Mọi thay đổi phải giữ công thức đủ điều kiện xuất bản và giữ nguyên asset ở từng vị trí. Thay ảnh cần ngừng xuất bản. Sau lỗi version hoặc kết quả chưa xác định, đối chiếu lại owner detail.
+
 - **Idempotency.** Những operation được contract đánh dấu bắt buộc `Idempotency-Key` UUID v4, gồm tạo recipe, upload ảnh, tạo comment và thao tác moderation/report resolution. Giữ cùng key và payload cho cùng thao tác khi cần kiểm tra kết quả chưa rõ. Khi đổi intent, tạo key mới. Dùng status/receipt hoặc đọc resource để xác minh kết quả theo từng operation.
-- **Optimistic concurrency.** Các ghi cần CAS nhận version hiện hành theo schema. Recipe edit/publish/unpublish dùng version của công thức. DELETE recipe dùng version trong query. Profile đổi avatar dùng `mediaVersion` độc lập. Khi 409 stale, đọc lại dữ liệu và cho người dùng rà soát trước khi gửi thay đổi.
+- **Optimistic concurrency.** Các ghi cần CAS nhận version hiện hành theo schema. Recipe edit/publish/unpublish dùng version của công thức. DELETE công thức chỉ áp dụng cho bản nháp và service kiểm tra trạng thái hiện hành. Profile đổi avatar dùng `mediaVersion` độc lập. Khi 409 stale, đọc lại dữ liệu và cho người dùng rà soát trước khi gửi thay đổi.
 - **Multipart.** Upload có session, CSRF, idempotency key, một part `file` và `purpose` (avatar, recipe_cover hoặc recipe_step). Browser dùng `FormData` để tự đặt multipart boundary. Asset tạm trả `assetId`; Save gắn asset vào recipe hoặc profile. [Media lifecycle](MEDIA.md)
 
 ## Đối chiếu contract
@@ -44,10 +48,11 @@ Swagger, spec JSON và static assets của docs thuộc phần phục vụ tài 
 <!-- live-operations:start -->
 
 - `DELETE /api/v1/comments/{commentId}`
+- `DELETE /api/v1/me/bookmarks/{recipeId}`
 - `DELETE /api/v1/me/favorites/{recipeId}`
 - `DELETE /api/v1/media/images/{assetId}`
-- `DELETE /api/v1/recipes/{recipeId}`
 - `DELETE /api/v1/recipes/{recipeId}/my-review`
+- `DELETE /api/v1/recipes/{recipeId}`
 - `GET /api/v1/admin/reports`
 - `GET /api/v1/admin/users`
 - `GET /api/v1/auth/csrf`
@@ -55,18 +60,21 @@ Swagger, spec JSON và static assets của docs thuộc phần phục vụ tài 
 - `GET /api/v1/categories`
 - `GET /api/v1/health`
 - `GET /api/v1/ingredients`
+- `GET /api/v1/me/bookmarks`
 - `GET /api/v1/me/favorites`
 - `GET /api/v1/me/media`
 - `GET /api/v1/me/preferences`
-- `GET /api/v1/me/recipes`
+- `GET /api/v1/me/recipe-interactions`
 - `GET /api/v1/me/recipes/{recipeId}`
-- `GET /api/v1/recipes`
+- `GET /api/v1/me/recipes`
 - `GET /api/v1/recipes/{recipeId}/comments`
 - `GET /api/v1/recipes/{recipeId}/images/{assetId}`
 - `GET /api/v1/recipes/{recipeId}/reviews`
 - `GET /api/v1/recipes/{slug}`
-- `GET /api/v1/users/{userId}`
+- `GET /api/v1/recipes`
 - `GET /api/v1/users/{userId}/avatar/{assetId}`
+- `GET /api/v1/users/{userId}/recipes`
+- `GET /api/v1/users/{userId}`
 - `GET /health/live`
 - `GET /health/ready`
 - `PATCH /api/v1/admin/categories/{categoryId}`
@@ -78,9 +86,10 @@ Swagger, spec JSON và static assets của docs thuộc phần phục vụ tài 
 - `PATCH /api/v1/comments/{commentId}`
 - `PATCH /api/v1/me/preferences`
 - `PATCH /api/v1/me/profile`
-- `PATCH /api/v1/recipes/{recipeId}`
 - `PATCH /api/v1/recipes/{recipeId}/publish`
+- `PATCH /api/v1/recipes/{recipeId}/published-content`
 - `PATCH /api/v1/recipes/{recipeId}/unpublish`
+- `PATCH /api/v1/recipes/{recipeId}`
 - `POST /api/v1/admin/categories`
 - `POST /api/v1/admin/ingredients`
 - `POST /api/v1/auth/change-password`
@@ -92,9 +101,10 @@ Swagger, spec JSON và static assets của docs thuộc phần phục vụ tài 
 - `POST /api/v1/auth/reset-password`
 - `POST /api/v1/auth/verify-email`
 - `POST /api/v1/media/images`
-- `POST /api/v1/recipes`
 - `POST /api/v1/recipes/{recipeId}/comments`
+- `POST /api/v1/recipes`
 - `POST /api/v1/reports`
+- `PUT /api/v1/me/bookmarks/{recipeId}`
 - `PUT /api/v1/me/favorites/{recipeId}`
 - `PUT /api/v1/recipes/{recipeId}/my-review`
 

@@ -1486,3 +1486,150 @@ it('REV-12 moderation survives review deletion; hidden review cannot be recreate
   expect(row.deletedAt).toBeInstanceOf(Date);
   expect((await reviews(r)).body.summary.ratingCount).toBe(0);
 });
+
+it('paginates roots and each reply thread independently while preserving the flat listing', async () => {
+  const r = await published();
+  const anotherRecipe = await published();
+  const first = (await newComment(r)).body.data;
+  const replyIds = [];
+  for (const content of ['Một', 'Hai', 'Ba']) {
+    const reply = await newComment(
+      r,
+      { content, parentId: first.commentId },
+      c,
+    );
+    expect(reply.status).toBe(201);
+    replyIds.push(reply.body.data.commentId);
+  }
+  const second = (await newComment(r, { content: 'Thử lần hai' }, a)).body.data;
+  const threads = (recipe, query) =>
+    get(`/api/v1/recipes/${recipe._id}/comments?${new URLSearchParams(query)}`);
+  const roots = await threads(r, { scope: 'roots', limit: 1 });
+  expect(roots.body.meta.total).toBe(2);
+  expect(roots.body.data).toMatchObject([
+    {
+      commentId: first.commentId,
+      replyCount: 3,
+      author: { id: String(b.actor.user._id), avatarUrl: null },
+    },
+  ]);
+  expect(
+    (await threads(r, { scope: 'roots', limit: 1, page: 2 })).body.data,
+  ).toMatchObject([{ commentId: second.commentId, replyCount: 0 }]);
+  const replies = await threads(r, {
+    scope: 'replies',
+    parentId: first.commentId,
+    limit: 1,
+    page: 2,
+  });
+  expect(replies.body.meta.total).toBe(3);
+  expect(replies.body.data).toMatchObject([
+    { commentId: replyIds[1], parentId: first.commentId },
+  ]);
+  expect(replies.body.data[0]).not.toHaveProperty('replyCount');
+  expect((await comments(r)).body.meta.total).toBe(5);
+  for (const [recipe, parentId] of [
+    [anotherRecipe, first.commentId],
+    [r, replyIds[0]],
+    [r, new mongoose.Types.ObjectId().toString()],
+  ]) {
+    const page = await threads(recipe, { scope: 'replies', parentId });
+    expect(page.status).toBe(200);
+    expect(page.body.meta.total).toBe(0);
+  }
+  for (const query of [
+    { scope: 'replies' },
+    { scope: 'roots', parentId: first.commentId },
+    { scope: 'all', parentId: first.commentId },
+    { scope: 'replies', parentId: 'bad' },
+    { scope: 'everything' },
+  ]) {
+    expect((await threads(r, query)).status).toBe(400);
+  }
+});
+
+it('computes public interaction counts from active members and visible roots and replies on every card', async () => {
+  const r = await published();
+  const detailPath = `/api/v1/recipes/${r.slug}`;
+  const detail = async () =>
+    (await request(app).get(detailPath).expect(200)).body.data
+      .interactionSummary;
+  expect(await detail()).toEqual({ favoriteCount: 0, commentCount: 0 });
+  for (const who of [b, c])
+    await recipes.favorites.add(who.actor, String(r._id));
+  const first = (await newComment(r)).body.data;
+  const reply = (
+    await newComment(r, { content: 'Thêm gừng', parentId: first.commentId }, c)
+  ).body.data;
+  await newComment(r, { content: 'Cảm ơn' }, a);
+  const counts = { favoriteCount: 2, commentCount: 3 };
+  expect(await detail()).toEqual(counts);
+  for (const response of [
+    await request(app)
+      .get('/api/v1/recipes')
+      .query({ category: String(category._id) }),
+    await b.client.get('/api/v1/me/favorites'),
+    await request(app).get(`/api/v1/users/${a.actor.user._id}/recipes`),
+  ]) {
+    expect(response.status).toBe(200);
+    expect(
+      response.body.data.find((row) => row.recipeId === String(r._id))
+        .interactionSummary,
+    ).toEqual(counts);
+  }
+  const Comment = recipes.social.models.Comment;
+  const readThread = () =>
+    get(
+      `/api/v1/recipes/${r._id}/comments?scope=replies&parentId=${first.commentId}`,
+    );
+  for (const fields of [
+    { status: 'hidden' },
+    { deletedAt: new Date() },
+    { creationState: 'pending' },
+  ]) {
+    await Comment.updateOne({ _id: first.commentId }, { $set: fields });
+    expect(await detail()).toEqual({ favoriteCount: 2, commentCount: 1 });
+    expect((await readThread()).body.data).toEqual([]);
+    await Comment.updateOne(
+      { _id: first.commentId },
+      {
+        $set: { status: 'visible', deletedAt: null, creationState: 'complete' },
+      },
+    );
+  }
+  await identity.models.User.updateOne(
+    { _id: b.actor.user._id },
+    { $set: { status: 'suspended' } },
+  );
+  expect(await detail()).toEqual({ favoriteCount: 1, commentCount: 1 });
+  expect((await readThread()).body.data).toEqual([]);
+  await identity.models.User.updateOne(
+    { _id: b.actor.user._id },
+    { $set: { status: 'active' } },
+  );
+  await Comment.updateOne(
+    { _id: reply.commentId },
+    { $set: { deletedAt: new Date() } },
+  );
+  expect(await detail()).toEqual({ favoriteCount: 2, commentCount: 2 });
+  const roots = await get(`/api/v1/recipes/${r._id}/comments?scope=roots`);
+  expect(
+    roots.body.data.find((x) => x.commentId === first.commentId).replyCount,
+  ).toBe(0);
+  await recipes.publication.unpublish(a.actor, r._id, { version: r.version });
+  expect((await request(app).get(detailPath)).status).toBe(404);
+  expect((await readThread()).status).toBe(404);
+  expect((await b.client.get('/api/v1/me/favorites')).body.data).toEqual([]);
+});
+
+it('returns a timeout error for a failed summary aggregate', async () => {
+  const r = await published();
+  const option = vi
+    .fn()
+    .mockRejectedValue(Object.assign(new Error('timeout'), { code: 50 }));
+  vi.spyOn(recipes.Recipe, 'aggregate').mockReturnValue({ option });
+  const response = await request(app).get(`/api/v1/recipes/${r.slug}`);
+  expect(response.status).toBe(503);
+  expect(response.body.error.code).toBe('QUERY_TIMEOUT');
+  expect(response.body).not.toHaveProperty('data');
+});

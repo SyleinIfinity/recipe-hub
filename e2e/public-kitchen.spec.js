@@ -496,9 +496,9 @@ test('FE04 native drawer keyboard, outside, focus restoration, resize and reduce
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
   await trigger.click();
-  await dialog.getByRole('link', { name: 'Khám phá', exact: true }).click();
+  await dialog.getByRole('link', { name: 'Cộng đồng', exact: true }).click();
   await expect(
-    page.getByRole('heading', { name: 'Khám phá công thức', level: 1 }),
+    page.getByRole('heading', { name: 'Cộng đồng công thức', level: 1 }),
   ).toBeVisible();
   await expect(dialog).not.toBeVisible();
   await trigger.click();

@@ -33,7 +33,7 @@ function Navigation({ pathname, onNavigate }) {
         Link,
         {
           key: href,
-          href,
+          href: href === '/recipes' ? '/recipes?view=posts' : href,
           onClick: onNavigate,
           'aria-current': active ? 'page' : undefined,
         },
@@ -43,7 +43,13 @@ function Navigation({ pathname, onNavigate }) {
     }),
   );
 }
-export function MobileDrawer({ open, onClose, triggerRef, pathname }) {
+export function MobileDrawer({
+  open,
+  onClose,
+  triggerRef,
+  pathname,
+  authenticated,
+}) {
   const dialog = useRef(null);
   useEffect(() => {
     const node = dialog.current;
@@ -98,6 +104,12 @@ export function MobileDrawer({ open, onClose, triggerRef, pathname }) {
       h(IconButton, { label: 'Đóng menu', icon: 'close', onClick: onClose }),
     ),
     h(Navigation, { pathname, onNavigate: onClose }),
+    authenticated &&
+      h(
+        Link,
+        { href: '/my/recipes', className: 'text-link', onClick: onClose },
+        'Công thức của tôi',
+      ),
   );
 }
 function AccountDisplay({ auth }) {
@@ -176,7 +188,7 @@ export function KitchenShell({ children, pathname, auth }) {
                   : undefined,
               },
               h(Icon, { name: 'book', size: 18 }),
-              'Bản nháp',
+              'Công thức của tôi',
             ),
           h(AccountDisplay, { auth }),
         ),
@@ -192,7 +204,13 @@ export function KitchenShell({ children, pathname, auth }) {
           ),
       ),
     ),
-    h(MobileDrawer, { open, onClose: close, triggerRef: trigger, pathname }),
+    h(MobileDrawer, {
+      authenticated: auth.status === 'ready',
+      open,
+      onClose: close,
+      triggerRef: trigger,
+      pathname,
+    }),
     h(
       'main',
       { id: 'main', tabIndex: -1, className: 'main-content' },

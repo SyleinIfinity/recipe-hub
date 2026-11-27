@@ -2,8 +2,8 @@
 
 Recipe Hub là website công thức nấu ăn tiếng Việt của đồ án Cơ sở dữ liệu phi quan hệ. Người dùng có thể tìm món, đọc nguyên liệu và các bước, quản lý tài khoản, soạn bản nháp và xuất bản công thức.
 
-- **Web** — Trang chủ, Khám phá, chi tiết công thức, hồ sơ công khai, xác thực, tài khoản và trình soạn. Chủ công thức có trang Bản nháp. Trình soạn hỗ trợ ảnh bìa, ảnh bước và xuất bản hoặc ngừng xuất bản.
-- **API** — Danh mục, nguyên liệu, xác thực qua session, tìm kiếm, quản lý công thức và ảnh. Backend cũng có Favorites, đánh giá, bình luận, báo cáo và kiểm duyệt. Các tính năng tương tác và quản trị này chưa có giao diện web.
+- **Web** — Trang chủ, Khám phá, chi tiết công thức, hồ sơ công khai, xác thực, tài khoản và trình soạn. Thư viện có bốn mục Đã đăng, Bản nháp, Đã lưu, Yêu thích. Cộng đồng hỗ trợ thích, lưu món, bình luận và phản hồi. Trình soạn có xem trước bài viết và trang chi tiết. Tác giả cập nhật trực tiếp nội dung đã đăng hoặc chuyển về nháp để thay ảnh trước khi xuất bản lại.
+- **API** — Danh mục, nguyên liệu, xác thực qua session, tìm kiếm, quản lý công thức và ảnh. Backend cũng có Favorites, đánh giá, bình luận, báo cáo và kiểm duyệt. Dashboard quản trị và giao diện review chưa được tích hợp.
 
 Repo `source/` dùng npm workspaces. Backend chạy Node.js, Express, Mongoose và MongoDB. Frontend dùng React, Vite, JavaScript và CSS. Media dùng Cloudinary qua backend hoặc adapter fake cho local. OpenAPI 3.1 mô tả contract. Vitest và Playwright kiểm thử.
 
@@ -40,4 +40,4 @@ npm run test:e2e
 - [Thiết kế UI](DESIGN.md) · [Ảnh giao diện](docs/screenshots/README.md)
 - [Roadmap và giới hạn hiện tại](docs/ROADMAP.md) · [Quy tắc Coding Agent](AGENTS.md)
 
-Danh sách của chủ sở hữu chỉ hiển thị bản nháp. Hồ sơ công khai hiển thị thông tin tác giả, chưa có danh sách món theo tác giả. Bookmarks và UI Cộng đồng còn trong roadmap. [Tình trạng theo tính năng](docs/ROADMAP.md)
+Xem [Roadmap](docs/ROADMAP.md) để tra giới hạn triển khai, bao gồm các chức năng đánh giá và quản trị còn mở.

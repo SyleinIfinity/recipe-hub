@@ -6,7 +6,8 @@ import {
   useState,
 } from 'react';
 import { useLocation, matchRoute, navigationScroll } from './app/router.js';
-import { EditorScreen, MyRecipes } from './features/editor/screens.js';
+import { MyRecipes } from './features/library.js';
+import { EditorScreen } from './features/editor/screens.js';
 import { accountRoutes, editorRoutes } from './app/registry.js';
 import { useTokenLink } from './app/token-link.js';
 import { confirmResponse } from './features/account/forms.js';
@@ -18,6 +19,7 @@ import { useSession } from './app/session.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { KitchenShell, AuthShell } from './components/kitchen/KitchenShell.js';
 import { Home, useHomeRecipes } from './features/home.js';
+import { InteractionSession } from './features/community/interactions.js';
 import { Explore } from './features/search.js';
 import { RecipeDetail, PublicProfile, PageError } from './features/recipes.js';
 
@@ -68,7 +70,7 @@ export function App() {
       navigate(
         '/auth/login?' +
           new URLSearchParams({
-            returnTo: safeReturnPath(pathname, '/account'),
+            returnTo: safeReturnPath(pathname + search, '/account'),
           }),
         { replace: true },
       );
@@ -106,13 +108,21 @@ export function App() {
       content = h(Home, { auth, ...home });
       break;
     case 'explore':
-      content = h(Explore, { search });
+      content = h(Explore, { search, session });
       break;
     case 'detail':
-      content = h(RecipeDetail, { key: route.value, slug: route.value });
+      content = h(RecipeDetail, {
+        key: route.value,
+        slug: route.value,
+        session,
+      });
       break;
     case 'profile':
-      content = h(PublicProfile, { key: route.value, userId: route.value });
+      content = h(PublicProfile, {
+        key: route.value,
+        userId: route.value,
+        search,
+      });
       break;
     default:
       content = h(PageError, { forbidden: route.page === 'forbidden' });
@@ -188,14 +198,20 @@ export function App() {
           ),
         ),
       h(
-        ErrorBoundary,
-        {
-          key:
-            pathname +
-            (route.page === 'explore' ? '' : search) +
-            (accountRoute?.access === 'authenticated' ? session.revision : ''),
-        },
-        content,
+        InteractionSession,
+        { session },
+        h(
+          ErrorBoundary,
+          {
+            key:
+              pathname +
+              (route.page === 'explore' ? '' : search) +
+              (accountRoute?.access === 'authenticated'
+                ? session.revision
+                : ''),
+          },
+          content,
+        ),
       ),
     ),
   );

@@ -1,5 +1,5 @@
 import { createElement as h, useEffect, useRef, useState } from 'react';
-import { navigate } from '../app/router.js';
+import { Link, navigate } from '../app/router.js';
 import { useRead, searchQuery } from '../services/api.js';
 import {
   SearchForm,
@@ -8,6 +8,8 @@ import {
   Icon,
 } from '../components/ui/primitives.js';
 import { useCategoryOptions } from './category-options.js';
+import { InteractionScope } from './community/interactions.js';
+import { RecipePost } from './community/post.js';
 import { RecipeGrid, difficulties } from './recipes.js';
 
 const filterKeys = [
@@ -53,8 +55,23 @@ function rememberedNames() {
     return new Map();
   }
 }
-export function Explore({ search }) {
-  const { params, error, path } = searchQuery(search);
+export function Explore({ search, session }) {
+  const location = new URLSearchParams(search);
+  const layouts = location.getAll('view');
+  const posts = layouts.length === 1 && layouts[0] === 'posts';
+  const invalidLayout =
+    layouts.length > 1 ||
+    (layouts.length === 1 && !posts && layouts[0] !== 'grid');
+  location.delete('view');
+  const parsed = searchQuery(location);
+  const { params } = parsed;
+  const error = invalidLayout || parsed.error;
+  const path = !error && parsed.path;
+  function viewHref(mode) {
+    const next = new URLSearchParams(params);
+    if (mode === 'posts') next.set('view', 'posts');
+    return '/recipes' + (next.size ? '?' + next : '');
+  }
   const [reload, setReload] = useState(0),
     result = useRead(path || null, reload);
   const categories = useCategoryOptions();
@@ -126,6 +143,7 @@ export function Explore({ search }) {
       else next.set(key, value);
     }
     if (!Object.hasOwn(patch, 'page')) next.delete('page');
+    if (posts) next.set('view', 'posts');
     navigate('/recipes' + (next.size ? '?' + next : ''));
   }
   function apply(q = draft.q) {
@@ -227,7 +245,18 @@ export function Explore({ search }) {
     h(
       'header',
       { className: 'explore-heading' },
-      h('h1', null, 'Khám phá công thức'),
+      h(
+        'div',
+        { className: 'community-heading-actions' },
+        h('h1', null, posts ? 'Cộng đồng công thức' : 'Khám phá công thức'),
+        posts &&
+          h(
+            Link,
+            { className: 'text-link', href: '/my/recipes/new' },
+            h(Icon, { name: 'plus', size: 16 }),
+            'Tạo công thức',
+          ),
+      ),
       h(SearchForm, {
         id: 'explore-search',
         value: draft.q,
@@ -400,6 +429,28 @@ export function Explore({ search }) {
           h(
             'div',
             { className: 'view-tools' },
+            h(
+              'nav',
+              { className: 'view-switch', 'aria-label': 'Cách xem công thức' },
+              h(
+                Link,
+                {
+                  href: viewHref('grid'),
+                  'aria-current': !posts ? 'page' : undefined,
+                },
+                h(Icon, { name: 'grid', size: 15 }),
+                'Lưới',
+              ),
+              h(
+                Link,
+                {
+                  href: viewHref('posts'),
+                  'aria-current': posts ? 'page' : undefined,
+                },
+                h(Icon, { name: 'book', size: 16 }),
+                'Bài viết',
+              ),
+            ),
             h(Field, {
               name: 'sort',
               label: 'Sắp xếp',
@@ -440,11 +491,34 @@ export function Explore({ search }) {
           ),
         error
           ? h(ErrorState, { error: { status: 400 } })
-          : h(RecipeGrid, {
-              result,
-              onRetry: () => setReload((n) => n + 1),
-              emptyTitle: 'Không tìm thấy công thức phù hợp',
-            }),
+          : posts && result.status === 'ready' && result.body?.data?.length
+            ? h(
+                InteractionScope,
+                {
+                  session,
+                  recipes: result.body.data,
+                  onUnavailable: () => setReload((n) => n + 1),
+                },
+                h(
+                  'div',
+                  { className: 'community-feed' },
+                  result.body.data.map((recipe) =>
+                    h(RecipePost, {
+                      key: recipe.recipeId,
+                      recipe,
+                      session,
+                      categoryName: categories.options.find(
+                        (c) => c.id === recipe.categoryId,
+                      )?.name,
+                    }),
+                  ),
+                ),
+              )
+            : h(RecipeGrid, {
+                result,
+                onRetry: () => setReload((n) => n + 1),
+                emptyTitle: 'Không tìm thấy công thức phù hợp',
+              }),
         meta &&
           (page > 1 || page * meta.limit < meta.total) &&
           h(

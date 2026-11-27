@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+export const FAVORITE_COLLECTION = 'favorites';
 export function createFavoriteModel(connection) {
   if (connection.models.Favorite) return connection.models.Favorite;
   const schema = new mongoose.Schema(
@@ -17,9 +18,10 @@ export function createFavoriteModel(connection) {
       },
       createdAt: { type: Date, default: Date.now, immutable: true },
     },
-    { collection: 'favorites', strict: 'throw', versionKey: false },
+    { collection: FAVORITE_COLLECTION, strict: 'throw', versionKey: false },
   );
   schema.index({ userId: 1, recipeId: 1 }, { unique: true });
   schema.index({ userId: 1, createdAt: -1, _id: -1 });
+  schema.index({ recipeId: 1 });
   return connection.model('Favorite', schema);
 }

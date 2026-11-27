@@ -1,3 +1,4 @@
+import { publicAuthorDto } from '../users/user.dto.js';
 const imageUrl = (recipeId, assetId) =>
   assetId
     ? `/api/v1/recipes/${String(recipeId)}/images/${String(assetId)}`
@@ -40,6 +41,7 @@ export function ownerRecipeDTO(r) {
     version: r.version,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
+    publishedAt: r.publishedAt ?? null,
   };
 }
 
@@ -54,13 +56,8 @@ export function publicRecipeCardDTO(r) {
     totalMinutes: r.totalMinutes,
     coverImageUrl: imageUrl(r._id, r.coverImageAssetId),
     publishedAt: r.publishedAt,
-    author: {
-      id: String(r.publicAuthor._id),
-      displayName: r.publicAuthor.displayName,
-      avatarUrl: r.publicAuthor.avatarAssetId
-        ? `/api/v1/users/${r.publicAuthor._id}/avatar/${r.publicAuthor.avatarAssetId}`
-        : null,
-    },
+    author: publicAuthorDto(r.publicAuthor),
+    interactionSummary: r.interactionSummary,
   };
 }
 export function publicRecipeDetailDTO(r) {

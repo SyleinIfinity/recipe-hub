@@ -1,3 +1,4 @@
+import { publicAuthorDto } from '../users/user.dto.js';
 const id = (v) => (v == null ? null : String(v));
 const author = (r) => ({ id: id(r._id), displayName: r.displayName });
 export const reviewDTO = (r) => ({
@@ -14,7 +15,8 @@ export const commentDTO = (r) => ({
   recipeId: id(r.recipeId),
   parentId: id(r.parentId),
   content: r.content,
-  author: author(r.publicAuthor),
+  author: publicAuthorDto(r.publicAuthor),
+  ...(r.replyCount !== undefined ? { replyCount: r.replyCount } : {}),
   version: r.version,
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,

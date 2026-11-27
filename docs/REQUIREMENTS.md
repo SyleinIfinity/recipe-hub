@@ -20,7 +20,7 @@ Tài liệu này giữ 76 Requirement ID của SRS P0–P2. Các bảng mô tả
 | USR-03  | Trang cá nhân riêng tư tổng hợp công thức, bộ sưu tập và kế hoạch của tôi.                                                             |
 | USR-04  | Đổi hoặc xóa tùy chọn ăn uống, loại trừ nguyên liệu và dùng chúng khi lọc hoặc gợi ý. Các khai báo khẩu vị và dị ứng chỉ để tham khảo. |
 
-**Hiện hành.** Auth, hồ sơ và cài đặt cơ bản có API và UI. Đổi hoặc reset mật khẩu tăng `authVersion`, thu hồi mọi phiên. Hồ sơ công khai mới có DTO và avatar hiện tại. Preferences có thêm trường ngoài những control đã tích hợp, chưa có hệ gợi ý áp dụng preferences. Trang Tài khoản chưa tổng hợp bộ sưu tập và thực đơn. [Auth integration](../backend/tests/integration/auth.test.js) · [ACC-E01–06](../e2e/account.spec.js)
+**Hiện hành.** Auth, hồ sơ và cài đặt cơ bản có API và UI. Đổi hoặc reset mật khẩu tăng `authVersion`, thu hồi mọi phiên. Hồ sơ công khai có projection tác giả, avatar và API danh sách công thức công khai theo tác giả. Preferences có thêm trường ngoài những control đã tích hợp, chưa có hệ gợi ý áp dụng preferences. Trang Tài khoản chưa tổng hợp bộ sưu tập và thực đơn. [Auth integration](../backend/tests/integration/auth.test.js) · [ACC-E01–06](../e2e/account.spec.js)
 
 ## Công thức và ảnh
 
@@ -38,7 +38,7 @@ Tài liệu này giữ 76 Requirement ID của SRS P0–P2. Các bảng mô tả
 | REC-10 | Điều chỉnh định lượng theo khẩu phần gốc lớn hơn 0. Giữ lượng mơ hồ và giải thích khi đơn vị không chuyển đổi được.                 |
 | REC-11 | Owner sao chép công thức thành nháp độc lập, có slug riêng khi xuất bản và không mang theo tương tác.                               |
 
-**Hiện hành.** Xóa công thức chỉ dành cho owner và yêu cầu nháp. Admin có quyền kiểm duyệt ẩn hoặc khôi phục. Danh sách owner vẫn là bản nháp. Owner có thể đọc món đã xuất bản theo ID và phải ngừng xuất bản trước khi sửa hoặc xóa. Chưa có đổi khẩu phần và sao chép. [Recipe integration](../backend/tests/integration/recipe.test.js) · [Publication integration](../backend/tests/integration/publication.test.js) · [ED-E01–09](../e2e/editor.spec.js)
+**Hiện hành.** Xóa công thức chỉ dành cho owner và yêu cầu nháp. Admin có quyền kiểm duyệt ẩn hoặc khôi phục. Chủ sở hữu có thể lọc danh sách theo draft, published hoặc all. Tác giả có thể cập nhật nội dung món đã đăng theo version. Việc thay ảnh, xóa bước có ảnh hoặc xóa công thức yêu cầu ngừng xuất bản. Preview lấy dữ liệu cục bộ của tác giả và dùng được khi nội dung còn thiếu. Chưa có đổi khẩu phần và sao chép. [Recipe integration](../backend/tests/integration/recipe.test.js) · [Publication integration](../backend/tests/integration/publication.test.js) · [ED-E01–09](../e2e/editor.spec.js)
 
 REC-09 có các ID mở rộng từ RTM:
 
@@ -89,7 +89,7 @@ REC-09 có các ID mở rộng từ RTM:
 | ADM-06 | Admin được cấp quyền đọc audit log, kiểm soát dữ liệu nhạy cảm.                                          |
 | ADM-07 | Admin quản lý dữ liệu nhãn và catalog nguyên liệu, gồm tên chuẩn và alias dùng cho tìm kiếm và shopping. |
 
-**Hiện hành.** Favorites, reviews, comments, reports và moderation có backend. Review DELETE của reviewer dùng tombstone. API kiểm duyệt hiện có cho recipe/comment, chưa có thao tác xóa review của admin riêng. Chưa có dashboard, endpoint đọc audit log, admin UI hoặc UI tương tác. ADM-07 có catalog nguyên liệu. Catalog nhãn riêng và shopping vẫn nằm ngoài phạm vi đã triển khai. Saved/Bookmarks là yêu cầu bổ sung về lưu món riêng tư và độc lập Favorites. [Social integration](../backend/tests/integration/social.test.js) · [Quyết định Saved](ROADMAP.md#saved-và-favorites)
+**Hiện hành.** Favorites, reviews, comments, reports và moderation có backend. Review DELETE của reviewer dùng tombstone. API kiểm duyệt hiện có cho recipe/comment, chưa có thao tác xóa review của admin riêng. Chưa có dashboard, endpoint đọc audit log, admin UI hoặc UI đánh giá. Cộng đồng đã tích hợp Like/Save, bình luận và trả lời một cấp. ADM-07 có catalog nguyên liệu. Catalog nhãn riêng và shopping vẫn nằm ngoài phạm vi đã triển khai. Saved/Bookmarks là yêu cầu bổ sung về lưu món riêng tư và độc lập Favorites. [Social integration](../backend/tests/integration/social.test.js) · [Quyết định Saved](ROADMAP.md#saved-và-favorites)
 
 ## Mở rộng đồ án
 

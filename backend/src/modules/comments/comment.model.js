@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+export const COMMENT_COLLECTION = 'comments';
 export function createCommentModel(connection) {
   if (connection.models.Comment) return connection.models.Comment;
   const id = mongoose.Schema.Types.ObjectId;
@@ -29,7 +30,7 @@ export function createCommentModel(connection) {
       parentVersion: { type: Number, select: false },
     },
     {
-      collection: 'comments',
+      collection: COMMENT_COLLECTION,
       timestamps: true,
       strict: 'throw',
       versionKey: false,

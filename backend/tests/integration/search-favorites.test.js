@@ -1,5 +1,5 @@
 const fixtureRecipeIds = [];
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import {
   beforeAll,
   beforeEach,
@@ -26,7 +26,7 @@ import { schemaValidator } from '../../../scripts/openapi-contract.js';
 import { backfillRecipeSearch } from '../../src/modules/recipes/search.backfill.js';
 import { searchQuery } from '../../src/modules/recipes/search.validation.js';
 import { searchPipeline } from '../../src/modules/recipes/search.service.js';
-import { favoritePipeline } from '../../src/modules/favorites/favorite.service.js';
+import { recipeRelationPipeline } from '../../src/modules/favorites/favorite.service.js';
 import { recipeRoutes } from '../../src/modules/recipes/recipe.routes.js';
 import { createRecipeController } from '../../src/modules/recipes/recipe.controller.js';
 const config = parseEnv({
@@ -147,6 +147,7 @@ afterEach(async () => {
   vi.spyOn(https, 'request').mockImplementation(() => {
     throw new Error('External network forbidden');
   });
+  await recipes.Bookmark.deleteMany({ userId: { $in: ids } });
   await recipes.Favorite.deleteMany({ userId: { $in: ids } });
   await recipes.Recipe.deleteMany({
     $or: [
@@ -662,7 +663,8 @@ it('SRCH-37..40 executionStats on 5000 recipes, bounded indexed pipelines and no
     }),
     ingredients: i % 100 === 0 ? content().ingredients : [],
     steps: [],
-    authorId: a.actor.user._id,
+    // A selective author listing must coexist with the broader public feed.
+    authorId: i % 101 === 0 ? b.actor.user._id : a.actor.user._id,
     status: i % 10 === 1 ? 'draft' : 'published',
     moderationStatus: 'normal',
     publishedAt: timestamp,
@@ -728,7 +730,7 @@ it('SRCH-37..40 executionStats on 5000 recipes, bounded indexed pipelines and no
     })),
   );
   const favoritePlan = await recipes.Favorite.aggregate(
-    favoritePipeline(
+    recipeRelationPipeline(
       { Recipe: recipes.Recipe, User: identity.models.User },
       b.actor.user._id,
       { page: 1, limit: 20 },
@@ -738,6 +740,39 @@ it('SRCH-37..40 executionStats on 5000 recipes, bounded indexed pipelines and no
     .explain('executionStats');
   expect(JSON.stringify(favoritePlan)).toContain(
     'userId_1_createdAt_-1__id_-1',
+  );
+  await recipes.Bookmark.insertMany(
+    visible.map((r) => ({
+      userId: b.actor.user._id,
+      recipeId: r._id,
+      createdAt: timestamp,
+    })),
+  );
+  const bookmarkPlan = await recipes.Bookmark.aggregate(
+    recipeRelationPipeline(
+      { Recipe: recipes.Recipe, User: identity.models.User },
+      b.actor.user._id,
+      { page: 2, limit: 12 },
+    ),
+  )
+    .option({ maxTimeMS: 3000 })
+    .explain('executionStats');
+  expect(JSON.stringify(bookmarkPlan)).toContain(
+    'userId_1_createdAt_-1__id_-1',
+  );
+  const authorPlan = await recipes.Recipe.aggregate(
+    searchPipeline(
+      identity.models.User,
+      searchQuery.parse({ limit: 12 }),
+      b.actor.user._id,
+    ),
+  )
+    .option({ maxTimeMS: 3000 })
+    .explain('executionStats');
+  const authorCursor =
+    authorPlan.stages?.find((v) => v.$cursor)?.$cursor ?? authorPlan;
+  expect(JSON.stringify(authorCursor.queryPlanner.winningPlan)).toContain(
+    'public_author',
   );
   const aggregate = vi.spyOn(recipes.Recipe, 'aggregate');
   const result = await recipes.publication.list({ q: 'ca tieu' });
@@ -750,13 +785,20 @@ it('SRCH-37..40 executionStats on 5000 recipes, bounded indexed pipelines and no
   expect(indexes.find((v) => v.name === 'userId_1_recipeId_1').unique).toBe(
     true,
   );
+  const output = new URL(
+    '../../../test-results/verification/',
+    import.meta.url,
+  );
+  mkdirSync(output, { recursive: true });
   writeFileSync(
-    '/tmp/be12-performance.json',
+    new URL('recipe-query-plans.json', output),
     JSON.stringify(
       {
         dataset: 5000,
         measurements: evidence,
         favorites: 100,
+        bookmarks: 100,
+        authorIndex: 'public_author',
         queryMaxTimeMS: 3000,
       },
       null,
@@ -824,4 +866,209 @@ it('FAV-05/25 invalid session and bounded favorite read errors preserve error co
   expect(res.status).toBe(503);
   expect(res.body.error.code).toBe('QUERY_TIMEOUT');
   expect(res.text).not.toContain('private-query-canary');
+});
+
+const bookmarkPath = '/api/v1/me/bookmarks';
+const membershipPath = '/api/v1/me/recipe-interactions';
+const bookmarkWrite = (who, method, recipe) =>
+  who.client[method](`${bookmarkPath}/${recipe._id}`).set(
+    'X-CSRF-Token',
+    who.token,
+  );
+const batch = (who, recipeIds) =>
+  who.client.get(membershipPath).query({ recipeIds: recipeIds.join(',') });
+
+it('bookmarks are private, require an active session and CSRF, and only accept server-owned fields', async () => {
+  const r = await published(),
+    guest = request.agent(app);
+  const guestToken = (await guest.get('/api/v1/auth/csrf')).body.data.csrfToken;
+  for (const path of [bookmarkPath, membershipPath]) {
+    expect((await guest.get(path)).status).toBe(401);
+  }
+  for (const method of ['put', 'delete']) {
+    expect(
+      (await bookmarkWrite({ client: guest, token: guestToken }, method, r))
+        .status,
+    ).toBe(401);
+    expect((await b.client[method](`${bookmarkPath}/${r._id}`)).status).toBe(
+      403,
+    );
+    expect(
+      (await bookmarkWrite(b, method, r).send({ userId: a.actor.user.id }))
+        .status,
+    ).toBe(422);
+    expect(
+      (await bookmarkWrite(b, method, r).query({ userId: a.actor.user.id }))
+        .status,
+    ).toBe(400);
+  }
+  expect((await bookmarkWrite(b, 'put', { _id: 'invalid' })).status).toBe(400);
+  expect(
+    (await b.client.get(bookmarkPath).query({ userId: a.actor.user.id }))
+      .status,
+  ).toBe(400);
+  await identity.models.User.updateOne(
+    { _id: b.actor.user._id },
+    { status: 'suspended' },
+  );
+  expect((await bookmarkWrite(b, 'put', r)).status).toBe(401);
+  expect((await b.client.get(bookmarkPath)).status).toBe(401);
+  expect((await batch(b, [r.id])).status).toBe(401);
+});
+
+it('concurrent saves preserve one reference, stable creation time and allow idempotent removal', async () => {
+  const r = await published();
+  const results = await Promise.all(
+    Array.from({ length: 8 }, () => bookmarkWrite(b, 'put', r)),
+  );
+  expect(results.filter((v) => v.status === 201)).toHaveLength(1);
+  expect(results.filter((v) => v.status === 200)).toHaveLength(7);
+  for (const res of results)
+    expect(res.body.data).toEqual({ recipeId: r.id, saved: true });
+  const pair = { userId: b.actor.user._id, recipeId: r._id };
+  const original = await recipes.Bookmark.findOne(pair);
+  expect((await bookmarkWrite(b, 'put', r)).status).toBe(200);
+  expect((await recipes.Bookmark.findOne(pair)).createdAt).toEqual(
+    original.createdAt,
+  );
+  expect(await recipes.Bookmark.countDocuments(pair)).toBe(1);
+  expect(
+    (await recipes.Bookmark.collection.indexes()).find(
+      (x) => x.name === 'userId_1_recipeId_1',
+    ).unique,
+  ).toBe(true);
+  expect((await bookmarkWrite(a, 'put', r)).status).toBe(201);
+  for (let i = 0; i < 2; i++)
+    expect((await bookmarkWrite(b, 'delete', r)).status).toBe(204);
+  expect(found(await a.client.get(bookmarkPath))).toEqual([r.id]);
+  expect(found(await b.client.get(bookmarkPath))).toEqual([]);
+  expect((await search()).body.meta.total).toBe(1);
+});
+
+it('batch reports all four independent combinations in one aggregate and isolates sessions', async () => {
+  const rows = [];
+  for (let i = 0; i < 4; i++) rows.push(await published());
+  const recipeIds = rows.map((r) => r.id);
+  await put(rows[1]);
+  await bookmarkWrite(b, 'put', rows[2]);
+  await bookmarkWrite(b, 'put', rows[3]);
+  await put(rows[3]);
+  const aggregate = vi.spyOn(recipes.Recipe, 'aggregate');
+  const res = await batch(b, [
+    ...recipeIds,
+    recipeIds[1].toUpperCase(),
+    String(new mongoose.Types.ObjectId()),
+  ]);
+  expect(res.status).toBe(200);
+  expect(res.headers['cache-control']).toContain('no-store');
+  expect(aggregate).toHaveBeenCalledTimes(1);
+  const rowsById = new Map(res.body.data.map((row) => [row.recipeId, row]));
+  expect(res.body.data).toHaveLength(4);
+  recipeIds.forEach((recipeId, i) =>
+    expect(rowsById.get(recipeId)).toEqual({
+      recipeId,
+      favorited: i === 1 || i === 3,
+      saved: i === 2 || i === 3,
+    }),
+  );
+  const other = await batch(a, recipeIds);
+  expect(other.body.data.every((row) => !row.saved && !row.favorited)).toBe(
+    true,
+  );
+  expect((await remove(rows[3])).status).toBe(204);
+  expect((await batch(b, [rows[3].id])).body.data[0]).toMatchObject({
+    saved: true,
+    favorited: false,
+  });
+  await put(rows[3]);
+  await bookmarkWrite(b, 'delete', rows[3]);
+  expect((await batch(b, [rows[3].id])).body.data[0]).toMatchObject({
+    saved: false,
+    favorited: true,
+  });
+});
+
+it('membership bounds and validates the entire CSV before deduplication', async () => {
+  const id = String(new mongoose.Types.ObjectId());
+  for (const query of [
+    {},
+    { recipeIds: '' },
+    { recipeIds: 'bad' },
+    { recipeIds: id + ',' },
+    { recipeIds: [id, id] },
+    { recipeIds: id, userId: b.actor.user.id },
+    { recipeIds: Array(101).fill(id).join(',') },
+  ]) {
+    expect((await b.client.get(membershipPath).query(query)).status).toBe(400);
+  }
+  expect((await batch(b, Array(100).fill(id))).status).toBe(200);
+});
+
+it.each(['draft', 'hidden', 'deleted', 'pending', 'suspended'])(
+  'bookmarks and membership omit %s, retain relation and allow removing private references',
+  async (state) => {
+    const r = await published();
+    await bookmarkWrite(b, 'put', r);
+    const change = async (hide) => {
+      if (state === 'suspended')
+        return identity.models.User.updateOne(
+          { _id: a.actor.user._id },
+          { status: hide ? 'suspended' : 'active' },
+        );
+      const fields = {
+        draft: { status: hide ? 'draft' : 'published' },
+        hidden: { moderationStatus: hide ? 'hidden' : 'normal' },
+        deleted: { deletedAt: hide ? new Date() : null },
+        pending: { creationState: hide ? 'pending' : 'complete' },
+      };
+      await recipes.Recipe.updateOne({ _id: r._id }, fields[state]);
+    };
+    await change(true);
+    expect((await bookmarkWrite(b, 'put', r)).status).toBe(404);
+    const list = await b.client.get(bookmarkPath);
+    expect(list.body.meta.total).toBe(0);
+    expect(list.body.data).toEqual([]);
+    expect((await batch(b, [r.id])).body.data).toEqual([]);
+    await change(false);
+    expect(found(await b.client.get(bookmarkPath))).toEqual([r.id]);
+    await change(true);
+    expect((await bookmarkWrite(b, 'delete', r)).status).toBe(204);
+    await change(false);
+    expect((await batch(b, [r.id])).body.data).toEqual([
+      { recipeId: r.id, saved: false, favorited: false },
+    ]);
+  },
+);
+
+it('bookmark totals and pages apply visibility first; cards read the current recipe', async () => {
+  const rows = [];
+  for (let i = 0; i < 3; i++) {
+    const recipe = await published();
+    rows.push(recipe);
+    await bookmarkWrite(b, 'put', recipe);
+  }
+  await recipes.Bookmark.updateMany(
+    { userId: b.actor.user._id },
+    { createdAt: new Date('2026-01-01') },
+    { overwriteImmutable: true },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: rows[2]._id },
+    { moderationStatus: 'hidden' },
+  );
+  await recipes.Recipe.updateOne(
+    { _id: rows[1]._id },
+    { title: 'Tên món đã thay đổi' },
+  );
+  const first = await b.client.get(bookmarkPath).query({ page: 1, limit: 1 });
+  const second = await b.client.get(bookmarkPath).query({ page: 2, limit: 1 });
+  expect(first.body.meta).toEqual({ page: 1, limit: 1, total: 2 });
+  expect(first.body.data[0]).toMatchObject({
+    recipeId: rows[1].id,
+    title: 'Tên món đã thay đổi',
+  });
+  expect(found(second)).toEqual([rows[0].id]);
+  expect(
+    found(await b.client.get(bookmarkPath).query({ page: 3, limit: 1 })),
+  ).toEqual([]);
 });

@@ -1,3 +1,4 @@
+import { toPreviewModel } from '../src/features/editor/model.js';
 import { createElement as h } from 'react';
 import { it, expect, vi, afterEach } from 'vitest';
 import {
@@ -257,7 +258,7 @@ it('ED-U14 uncertain create cannot start a new intent or auto retry', async () =
   );
   expect(writes[0][1].body).toBe(writes[1][1].body);
 });
-it('ED-U15 published owner view is read-only without save/delete actions', async () => {
+it('ED-U15 published editing requires an explicit update and keeps media controls private', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url) =>
@@ -273,6 +274,10 @@ it('ED-U15 published owner view is read-only without save/delete actions', async
   expect(screen.queryByRole('button', { name: 'Lưu bản nháp' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Xóa bản nháp' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Ngừng xuất bản' })).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Cập nhật công thức' }).disabled,
+  ).toBe(true);
+  expect(document.querySelector('input[type=file]')).toBeNull();
 });
 it('ED-U16 unexpected202 cannot produce saved confirmation', async () => {
   vi.stubGlobal(
@@ -327,4 +332,87 @@ it('ED-U18 unexpected205 must not masquerade as confirmed204 delete', async () =
     code: 'INVALID_RESPONSE',
     mutationOutcomeUncertain: true,
   });
+});
+
+it('preview preserves incomplete fields, row order and local image ownership', () => {
+  const values = {
+    ...emptyRecipe(),
+    prepMinutes: '',
+    cookMinutes: '-2',
+    servings: 'abc',
+    steps: [
+      { key: 'second', instruction: 'Chín', durationMinutes: '' },
+      {
+        key: 'first',
+        stepId: 'stable',
+        imageUrl: '/api/v1/previous',
+        imageAssetId: null,
+        instruction: '',
+      },
+    ],
+  };
+  const preview = toPreviewModel(
+    values,
+    { displayName: 'An' },
+    { second: 'blob:test' },
+  );
+  expect(preview.totalMinutes).toBeNull();
+  expect(preview.servings).toBeNull();
+  expect(preview.steps.map((r) => [r.stepId, r.imageUrl, r.order])).toEqual([
+    ['second', 'blob:test', 1],
+    ['stable', null, 2],
+  ]);
+  expect(preview.title).toBe('Công thức chưa có tên');
+});
+
+it('reconciles a lost published update response without sending a second write', async () => {
+  let current = {
+    ...recipe(),
+    title: 'Canh gừng',
+    description: 'Canh gừng dùng khi còn nóng.',
+    status: 'published',
+    coverImageAssetId: null,
+    categoryId: id,
+    difficulty: 'easy',
+    cookMinutes: 5,
+    prepMinutes: 4,
+    servings: 2,
+    ingredients: [{ name: 'Gừng', quantity: 1, order: 1 }],
+    steps: [
+      {
+        stepId: '5f3c6624-afbc-419c-b79a-bcb5e04638fa',
+        order: 1,
+        instruction: 'Đun sôi nước.',
+        imageAssetId: null,
+      },
+    ],
+  };
+  const fetch = vi.fn(async (url, init) => {
+    if (url.endsWith('/csrf')) return response({ csrfToken: 'test' });
+    if (url.includes('/me/recipes/')) return response(current);
+    if (init.method === 'PATCH') {
+      current = {
+        ...current,
+        ...JSON.parse(init.body),
+        version: current.version + 1,
+      };
+      throw new Error('Response lost after commit');
+    }
+    return response([]);
+  });
+  vi.stubGlobal('fetch', fetch);
+  render(h(EditorScreen, { recipeId: id, session }));
+  const title = await screen.findByLabelText('Tên công thức');
+  fireEvent.change(title, { target: { value: 'Canh gừng tươi' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Cập nhật công thức' }));
+  await screen.findByText(
+    'Đã đối chiếu. Nội dung đang soạn đã có trên máy chủ.',
+  );
+  expect(title.value).toBe('Canh gừng tươi');
+  expect(
+    screen.getByRole('button', { name: 'Cập nhật công thức' }).disabled,
+  ).toBe(true);
+  expect(
+    fetch.mock.calls.filter(([, init]) => init.method === 'PATCH'),
+  ).toHaveLength(1);
 });

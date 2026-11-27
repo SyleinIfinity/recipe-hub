@@ -143,3 +143,11 @@ Bo góc vừa phải cho nút, ô nhập và thẻ món. Ảnh đại diện hì
 - Dùng landmark, heading, control native, label và focus rõ. Drawer hỗ trợ Escape, trap và trả focus. Tôn trọng reduced motion.
 - Dùng chỉ báo trạng thái có chữ cùng màu. Kiểm bàn phím, nội dung dài và reflow. Các trường hợp có bằng chứng và giới hạn ở [Testing](docs/TESTING.md#visual-responsive-và-accessibility).
 - Chỉ dùng ảnh, số liệu và chức năng mà ứng dụng có. Xem [bộ ảnh đại diện](docs/screenshots/README.md) và [mốc nghiệm thu](docs/archive/README.md#media-live-và-ui-nghiệm-thu).
+
+## Cộng đồng, thư viện và xem trước
+
+Cùng một URL Khám phá giữ bộ lọc, phân trang và chế độ lưới hoặc bài viết. Trong bài viết, đặt tác giả và ngày đăng trên ảnh và giới thiệu món; nhóm Thích, Bình luận và Lưu ngay dưới nội dung. Bình luận mở theo nhu cầu. Thư viện phân loại bằng bốn liên kết có URL riêng, dùng hàng cho nội dung do mình quản lý và thẻ cho món đã lưu hoặc yêu thích.
+
+Editor trên desktop đặt bản soạn cạnh preview. Trên cửa sổ hẹp, mở preview toàn màn hình bằng nút cạnh thao tác lưu. Hai chế độ Bài viết và Trang chi tiết dùng chung phần trình bày với trang người đọc. Nhãn riêng tư và trạng thái chưa lưu giúp phân biệt bản đang soạn với món đang công khai.
+
+Ở món đang đăng, tác giả soạn nội dung riêng và xác nhận bằng **Cập nhật công thức**. Khu vực ảnh giải thích việc chuyển về nháp trước khi thay ảnh. Khi có lỗi phiên bản, bản trên máy chủ xuất hiện cạnh lựa chọn đối chiếu, còn phần đang soạn vẫn được giữ.

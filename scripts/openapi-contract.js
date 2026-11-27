@@ -1,3 +1,4 @@
+import { bookmarkRoutes } from '../backend/src/modules/bookmarks/bookmark.routes.js';
 import { socialRoutes } from '../backend/src/modules/social/social.routes.js';
 import { favoriteRoutes } from '../backend/src/modules/favorites/favorite.routes.js';
 import { recipeRoutes } from '../backend/src/modules/recipes/recipe.routes.js';
@@ -57,6 +58,7 @@ export function routeInventory(app, identity, catalog, media, recipes) {
     ...(media ? [[media.router, '/api/v1']] : []),
     ...(recipes ? [[recipes.router, '/api/v1']] : []),
     ...(recipes?.favoriteRouter ? [[recipes.favoriteRouter, '/api/v1']] : []),
+    ...(recipes?.bookmarkRouter ? [[recipes.bookmarkRouter, '/api/v1']] : []),
     ...(recipes?.social ? [[recipes.social.router, '/api/v1']] : []),
   ]);
   const found = [];
@@ -117,7 +119,8 @@ export function currentRouteInventory() {
   const media = { router: mediaRoutes(controller, pass, security) };
   const recipes = {
     router: recipeRoutes(controller, pass),
-    favoriteRouter: favoriteRoutes(controller, pass),
+    favoriteRouter: favoriteRoutes(controller, pass, pass),
+    bookmarkRouter: bookmarkRoutes(controller, pass, pass, pass, pass),
     social: { router: socialRoutes(controller, pass, security) },
   };
   return routeInventory(

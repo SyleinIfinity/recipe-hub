@@ -96,12 +96,18 @@ it('RCP-34 version required and version-only update forbidden', () => {
 });
 it.each([
   { authorId: 'spoof' },
-  { status: 'published' },
+  { status: 'archived' },
   { sort: 'title' },
   { page: 0 },
   { limit: 101 },
 ])('RCP-27 list query rejects %j', (q) => {
   expect(recipeQuery.safeParse(q).success).toBe(false);
+});
+it('owner list defaults to draft and accepts the published and combined views', () => {
+  expect(recipeQuery.parse({}).status).toBe('draft');
+  for (const status of ['draft', 'published', 'all']) {
+    expect(recipeQuery.parse({ status }).status).toBe(status);
+  }
 });
 it('RCP-28/52 DTO whitelists and never uses provider URL', () => {
   const dto = ownerRecipeDTO({

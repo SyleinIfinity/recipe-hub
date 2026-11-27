@@ -29,9 +29,9 @@ const spec = loadSpec();
 const validates = schemaValidator(spec);
 it('DOC-01..04/09/10/13/14/21/22 validates OAS and actual route-factory inventory offline', async () => {
   expect(await validateContract(spec)).toEqual({
-    paths: 47,
-    operations: 54,
-    schemas: 51,
+    paths: 52,
+    operations: 60,
+    schemas: 54,
   });
 });
 it.each(['ref', 'operationId', 'path', 'csrf', '204'])(

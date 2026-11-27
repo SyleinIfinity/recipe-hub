@@ -70,7 +70,7 @@ export const updateRecipeSchema = z
   .refine((v) => Object.keys(v).length > 1, 'Empty update');
 export const recipeParams = z.strictObject({ recipeId: objectId });
 export const recipeQuery = z.strictObject({
-  status: z.literal('draft').optional(),
+  status: z.enum(['draft', 'published', 'all']).default('draft'),
   page: z.coerce.number().int().min(1).max(1000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sort: z

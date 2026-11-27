@@ -5,6 +5,8 @@ import {
   recipeImageParams,
 } from './publication.validation.js';
 import { Router } from 'express';
+import { userParams } from '../auth/auth.validation.js';
+import { publicAuthorRecipesQuery } from './search.validation.js';
 import { validate } from '../../middleware/validate.js';
 import {
   createRecipeSchema,
@@ -53,6 +55,13 @@ export function recipeRoutes(
     controller.remove,
   );
   router.patch(
+    '/recipes/:recipeId/published-content',
+    requireAuth,
+    validate(recipeParams, 'params'),
+    validate(updateRecipeSchema),
+    controller.updatePublished,
+  );
+  router.patch(
     '/recipes/:recipeId/publish',
     requireAuth,
     validate(recipeParams, 'params'),
@@ -71,6 +80,13 @@ export function recipeRoutes(
     optionalAuth,
     validate(recipeImageParams, 'params'),
     controller.image,
+  );
+  router.get(
+    '/users/:userId/recipes',
+    searchLimit,
+    validate(userParams, 'params'),
+    validate(publicAuthorRecipesQuery, 'query'),
+    controller.publicAuthorList,
   );
   router.get(
     '/recipes',

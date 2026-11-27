@@ -11,6 +11,68 @@ const error = (status, code, message) => {
   throw new AppError(status, code, message);
 };
 const same = (a, b) => String(a ?? '') === String(b ?? '');
+export function normalizeRecipeContent(input, old) {
+  const data = { ...input };
+  delete data.version;
+  if (data.ingredients)
+    data.ingredients = [...data.ingredients]
+      .sort((a, b) => a.order - b.order)
+      .map((v, i) => ({
+        ingredientId: null,
+        quantity: null,
+        unit: null,
+        quantityText: null,
+        note: null,
+        ...v,
+        order: i + 1,
+      }));
+  if (data.steps)
+    data.steps = [...data.steps]
+      .sort((a, b) => a.order - b.order)
+      .map((v, i) => {
+        const prior = v.stepId
+          ? old?.steps.find((s) => s.stepId === v.stepId)
+          : null;
+        if (v.stepId && !prior)
+          error(
+            422,
+            'RECIPE_INVALID_STEP',
+            'Step ID must belong to this recipe',
+          );
+        return {
+          stepId: v.stepId || randomUUID(),
+          order: i + 1,
+          instruction: v.instruction ?? prior?.instruction ?? '',
+          durationMinutes:
+            v.durationMinutes === undefined
+              ? (prior?.durationMinutes ?? null)
+              : v.durationMinutes,
+          imageAssetId:
+            v.imageAssetId === undefined
+              ? (prior?.imageAssetId ?? null)
+              : v.imageAssetId,
+        };
+      });
+  const prep =
+      data.prepMinutes === undefined
+        ? (old?.prepMinutes ?? null)
+        : data.prepMinutes,
+    cook =
+      data.cookMinutes === undefined
+        ? (old?.cookMinutes ?? null)
+        : data.cookMinutes;
+  data.totalMinutes =
+    prep === null && cook === null ? null : (prep ?? 0) + (cook ?? 0);
+  Object.assign(
+    data,
+    recipeSearchFields({
+      title: data.title ?? old?.title,
+      description: data.description ?? old?.description,
+    }),
+  );
+  return data;
+}
+
 export function createRecipeService({
   Recipe,
   Category,
@@ -36,67 +98,6 @@ export function createRecipeService({
     const row = await Recipe.findOne(owned);
     if (!row) error(404, 'RECIPE_NOT_FOUND', 'Recipe not found');
     return row;
-  }
-  function normalize(input, old) {
-    const data = { ...input };
-    delete data.version;
-    if (data.ingredients)
-      data.ingredients = [...data.ingredients]
-        .sort((a, b) => a.order - b.order)
-        .map((v, i) => ({
-          ingredientId: null,
-          quantity: null,
-          unit: null,
-          quantityText: null,
-          note: null,
-          ...v,
-          order: i + 1,
-        }));
-    if (data.steps)
-      data.steps = [...data.steps]
-        .sort((a, b) => a.order - b.order)
-        .map((v, i) => {
-          const prior = v.stepId
-            ? old?.steps.find((s) => s.stepId === v.stepId)
-            : null;
-          if (v.stepId && !prior)
-            error(
-              422,
-              'RECIPE_INVALID_STEP',
-              'Step ID must belong to this recipe',
-            );
-          return {
-            stepId: v.stepId || randomUUID(),
-            order: i + 1,
-            instruction: v.instruction ?? prior?.instruction ?? '',
-            durationMinutes:
-              v.durationMinutes === undefined
-                ? (prior?.durationMinutes ?? null)
-                : v.durationMinutes,
-            imageAssetId:
-              v.imageAssetId === undefined
-                ? (prior?.imageAssetId ?? null)
-                : v.imageAssetId,
-          };
-        });
-    const prep =
-        data.prepMinutes === undefined
-          ? (old?.prepMinutes ?? null)
-          : data.prepMinutes,
-      cook =
-        data.cookMinutes === undefined
-          ? (old?.cookMinutes ?? null)
-          : data.cookMinutes;
-    data.totalMinutes =
-      prep === null && cook === null ? null : (prep ?? 0) + (cook ?? 0);
-    Object.assign(
-      data,
-      recipeSearchFields({
-        title: data.title ?? old?.title,
-        description: data.description ?? old?.description,
-      }),
-    );
-    return data;
   }
   async function catalog(data, old) {
     if (data.categoryId) {
@@ -240,7 +241,7 @@ export function createRecipeService({
           );
         return finishCreate(actor, row);
       }
-      const data = normalize(input);
+      const data = normalizeRecipeContent(input);
       await catalog(data);
       const desired = [
         ...(data.coverImageAssetId
@@ -300,11 +301,11 @@ export function createRecipeService({
       return finishCreate(actor, row);
     },
     async list(actor, query) {
-      const { page, limit, sort } = recipeQuery.parse(query);
+      const { page, limit, sort, status } = recipeQuery.parse(query);
       const f = {
         authorId: author(actor),
         deletedAt: null,
-        status: 'draft',
+        ...(status === 'all' ? {} : { status }),
         creationState: 'complete',
       };
       const field = sort.replace('-', ''),
@@ -325,7 +326,7 @@ export function createRecipeService({
         error(404, 'RECIPE_NOT_FOUND', 'Recipe not found');
       if (old.version !== input.version)
         error(409, 'VERSION_CONFLICT', 'Recipe version conflict');
-      const data = normalize(input, old);
+      const data = normalizeRecipeContent(input, old);
       await catalog(data, old);
       const proposed = { ...old.toObject(), ...data };
       return media.lifecycle.applyReferences(actor, {

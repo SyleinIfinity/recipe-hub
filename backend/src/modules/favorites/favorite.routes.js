@@ -6,10 +6,15 @@ import {
   emptyFavoriteBody,
   emptyFavoriteQuery,
 } from './favorite.validation.js';
-export function favoriteRoutes(controller, requireAuth) {
-  const router = Router();
+export function mountRecipeRelation(
+  router,
+  path,
+  controller,
+  requireAuth,
+  writeLimit,
+) {
   router.get(
-    '/me/favorites',
+    path,
     requireAuth,
     validate(favoriteQuery, 'query'),
     controller.list,
@@ -19,12 +24,23 @@ export function favoriteRoutes(controller, requireAuth) {
     ['delete', controller.remove],
   ])
     router[method](
-      '/me/favorites/:recipeId',
+      `${path}/:recipeId`,
       requireAuth,
+      writeLimit,
       validate(favoriteParams, 'params'),
       validate(emptyFavoriteQuery, 'query'),
       validate(emptyFavoriteBody),
       handler,
     );
   return router;
+}
+
+export function favoriteRoutes(controller, requireAuth, writeLimit) {
+  return mountRecipeRelation(
+    Router(),
+    '/me/favorites',
+    controller,
+    requireAuth,
+    writeLimit,
+  );
 }
