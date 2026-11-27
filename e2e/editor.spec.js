@@ -514,7 +514,7 @@ test('ED-E07 editor/list/publication responsive six widths and long dynamic list
     }
     await page.goto(rows.length ? '/my/recipes' : '/my/recipes');
     await page
-      .getByRole('link', { name: 'Canh rau của tôi', exact: true })
+      .getByRole('link', { name: 'Chỉnh sửa Canh rau của tôi', exact: true })
       .click();
   }
   await writeFile(

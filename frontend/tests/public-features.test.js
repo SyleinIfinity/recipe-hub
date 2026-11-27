@@ -270,3 +270,29 @@ it('PUB-U10 respects Retry-After and never retries without a user action', async
   fireEvent.click(screen.getByRole('button'));
   expect(retry).toHaveBeenCalledOnce();
 });
+
+it('keeps a newly checked ingredient when removing a different applied ingredient', async () => {
+  const options = [
+    { id, name: 'Cà rốt' },
+    { id: second, name: 'Đậu hũ' },
+  ];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => response(url.includes('/ingredients') ? options : [])),
+  );
+  const search = '?ingredientIds=' + id + '&ingredientMatch=any';
+  window.history.replaceState({}, '', '/recipes' + search);
+  const view = render(h(Explore, { search }));
+  const added = await screen.findByRole('checkbox', { name: 'Đậu hũ' });
+  fireEvent.click(added);
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Bỏ Cà rốt', exact: true }),
+  );
+  view.rerender(h(Explore, { search: window.location.search }));
+  expect(screen.getByRole('checkbox', { name: 'Cà rốt' }).checked).toBe(false);
+  expect(added.checked).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Áp dụng bộ lọc' }));
+  expect(new URLSearchParams(window.location.search).get('ingredientIds')).toBe(
+    second,
+  );
+});

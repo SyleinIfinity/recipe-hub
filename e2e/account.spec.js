@@ -26,7 +26,9 @@ test.afterAll(async () => {
 async function register(page, user) {
   await page.goto('/auth/register');
   await page.getByLabel('Tên hiển thị', { exact: false }).fill(user.name);
-  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
+  await page
+    .getByRole('textbox', { name: 'Email *', exact: true })
+    .fill(user.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill(user.password);
   await page
     .getByLabel('Xác nhận mật khẩu *', { exact: true })
@@ -40,7 +42,9 @@ async function register(page, user) {
 }
 async function login(page, user, returnTo = '/account') {
   await page.goto('/auth/login?' + new URLSearchParams({ returnTo }));
-  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
+  await page
+    .getByRole('textbox', { name: 'Email *', exact: true })
+    .fill(user.email);
   await page.getByLabel('Mật khẩu *', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL(
@@ -151,7 +155,9 @@ test('ACC-E02 captured verification and recovery mail journeys, one-use token an
   const user = credentials();
   await register(page, user);
   await page.goto('/auth/request-email-verification');
-  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
+  await page
+    .getByRole('textbox', { name: 'Email *', exact: true })
+    .fill(user.email);
   await page
     .getByRole('button', { name: 'Yêu cầu xác minh email', exact: true })
     .click();
@@ -170,7 +176,9 @@ test('ACC-E02 captured verification and recovery mail journeys, one-use token an
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto('/auth/forgot-password');
-  await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(user.email);
+  await page
+    .getByRole('textbox', { name: 'Email *', exact: true })
+    .fill(user.email);
   await page
     .getByRole('button', { name: 'Yêu cầu đặt lại mật khẩu', exact: true })
     .click();

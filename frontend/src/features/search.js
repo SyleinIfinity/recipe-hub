@@ -138,6 +138,24 @@ export function Explore({ search }) {
         : '',
     });
   }
+  function removeAppliedFilter(key, patch) {
+    // A chip changes the URL immediately. Preserve other edits awaiting Apply.
+    previous.current = JSON.stringify({ ...applied, ...patch });
+    setDraft((current) => {
+      if (!Object.hasOwn(patch, 'ingredientIds')) {
+        return current[key] === applied[key]
+          ? { ...current, [key]: '' }
+          : current;
+      }
+      const ids = idsOf(current.ingredientIds).filter((id) => id !== key);
+      return {
+        ...current,
+        ingredientIds: ids.join(','),
+        ingredientMatch: ids.length ? current.ingredientMatch || 'any' : '',
+      };
+    });
+    update(patch);
+  }
   const chips = [];
   function chip(key, label, patch) {
     chips.push(
@@ -147,7 +165,7 @@ export function Explore({ search }) {
           key,
           className: 'applied-chip',
           'aria-label': 'Bỏ ' + label,
-          onClick: () => update(patch),
+          onClick: () => removeAppliedFilter(key, patch),
         },
         label,
         h(Icon, { name: 'close', size: 13 }),

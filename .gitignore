@@ -23,3 +23,5 @@ temp/
 # Local database dumps
 dump/
 *.archive
+
+.impeccable
