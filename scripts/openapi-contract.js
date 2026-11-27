@@ -146,7 +146,7 @@ export async function validateContract(
     resolve: { external: false },
   });
   const markdown = readFileSync(
-    new URL('../docs/BE-06.5-api-docs.md', import.meta.url),
+    new URL('../docs/API.md', import.meta.url),
     'utf8',
   );
   const section = markdown

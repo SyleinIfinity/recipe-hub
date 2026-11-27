@@ -1,8 +1,0 @@
-npm notice run lint
-npm notice run eslint .
-
-/run/media/sylein/DRIVER F/23115053122114_K23_PhanVanKhanh/College_Year04/126/CSDL-phi-quan-he/source/frontend/src/features/editor/screens.js
-  208:34  error  'session' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
-
-✖ 1 problem (1 error, 0 warnings)
-

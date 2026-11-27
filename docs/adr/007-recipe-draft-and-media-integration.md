@@ -1,5 +1,7 @@
 # ADR 007 — Recipe draft, multi-reference CAS và media recovery
 
+> **Hiệu lực hiện hành.** Accepted cho authoring, version và orchestration ảnh. URL trong DTO chuyển sang gateway ở P1/P1.1. [API hiện hành](../API.md) · [Media](../MEDIA.md)
+
 Ngày 2026-11-09. BE-10 local; không publish/private delivery/live provider.
 
 Recipe dùng collection recipes, một field version (versionKey:false), owner-scoped CAS. Draft cho phép thiếu nội dung publish; mọi field gửi vào phải strict/bounded. PATCH body version bắt buộc; DELETE không body theo contract, CAS version đọc ở server, repeated deletion 204. Internal restore trong 30 ngày, không HTTP route; references soft-deleted tiếp tục bảo vệ vô thời hạn cho tới policy purge riêng.

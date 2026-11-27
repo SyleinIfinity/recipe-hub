@@ -1,5 +1,7 @@
 # ADR 003 — Category & Ingredient Catalog
 
+> **Hiệu lực hiện hành.** Accepted cho catalog. Chuẩn hóa prefix của catalog áp dụng riêng với search công thức. [API hiện hành](../API.md)
+
 Ngày 2026-11-08. BE-06; không thay đổi status BE-05 live email.
 
 ## Normalization và schema

@@ -1,5 +1,7 @@
 # ADR 010 — Reviews, Comments, Reports & Moderation
 
+> **Hiệu lực hiện hành.** Accepted cho reviews, comments, reports và audited moderation. Ghi chú hoãn binary/live là giới hạn của mốc BE-13. [Media hiện hành](../MEDIA.md) · [Roadmap](../ROADMAP.md)
+
 2026-11-10. BE-13 backend local. Kế thừa ADR006..009 và DEC-BE12-001/002.
 
 ## Reviews và rating

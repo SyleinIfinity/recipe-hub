@@ -1,5 +1,7 @@
 # ADR 004 — Image Storage Adapter (BE-07)
 
+> **Hiệu lực hiện hành.** Accepted cho ranh giới storage adapter. Lựa chọn folder, quyền ảnh nháp và gate delivery lúc BE-07 đã Superseded bởi [ADR 005](005-media-privacy-and-upload.md) và [Media hiện hành](../MEDIA.md).
+
 Ngày: 2026-11-09. Trạng thái: chấp nhận triển khai cục bộ; delivery policy và nghiệm thu Cloudinary live chưa chốt.
 
 ## Bối cảnh

@@ -1,5 +1,7 @@
 # ADR 009 — Recipe Search, Filtering & Favorites
 
+> **Hiệu lực hiện hành.** Accepted cho search và Favorites. DEC-BE12-001 là lịch sử sau P1/P1.1. DEC-BE12-002 về external timeout còn hiệu lực. [Roadmap](../ROADMAP.md) · [Development](../DEVELOPMENT.md)
+
 2026-11-10. BE-12 local. Kế thừa ADR 007/008, không thay private media policy.
 
 ## Search và chuẩn hóa
@@ -40,4 +42,4 @@ DEC-BE12-001: hoãn toàn bộ Cloudinary live/binary delivery/browser/CDN end-t
 
 DEC-BE12-002: external timeout có deadline/retry hữu hạn theo quyền; ghi thời điểm/elapsed/service/operation/status, dừng riêng test và tiếp tục local độc lập. Không biến lỗi local thành deferred. BE-12 không cần hoặc gọi Cloudinary/SMTP/Google Cloud live.
 
-Evidence và giới hạn benchmark/acceptance tại [BE-12 report](../BE-12-report.md).
+Evidence và giới hạn benchmark/acceptance tại [BE-12 report](https://github.com/SyleinIfinity/recipe-hub/blob/ded784835c5443f99ba22e393cfa2f20e4050826/docs/BE-12-report.md).

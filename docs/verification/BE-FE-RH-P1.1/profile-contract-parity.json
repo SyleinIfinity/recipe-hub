@@ -1,5 +1,0 @@
-{
-  "status": "passed",
-  "cases": 5,
-  "checks": "conditional avatarAssetId/mediaVersion requirements match Zod"
-}

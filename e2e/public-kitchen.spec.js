@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { screenshotPath, writeVerification } from './support/artifacts.js';
 import mongoose from 'mongoose';
 import { parseEnv } from '../backend/src/config/env.js';
 import { createDatabase } from '../backend/src/config/database.js';
@@ -9,7 +9,6 @@ import {
   hashToken,
 } from '../backend/src/modules/auth/session.service.js';
 import { recipeSearchFields } from '../backend/src/modules/recipes/search.normalization.js';
-const artifact = 'docs/screenshots/BE-FE-RH-P1.1';
 let db, authorId, categoryId, ingredientIds, rows, prefix;
 test.describe.configure({ mode: 'default' });
 test.beforeAll(async () => {
@@ -113,7 +112,6 @@ test.beforeAll(async () => {
     return { ...r, ...recipeSearchFields(r) };
   });
   await db.connection.collection('recipes').insertMany(rows);
-  await mkdir(artifact, { recursive: true });
 });
 test.afterAll(async () => {
   if (!db) return;
@@ -158,7 +156,7 @@ async function noOverflow(page) {
 }
 async function capture(page, name, fullPage = true) {
   await page.screenshot({
-    path: `${artifact}/${name}.png`,
+    path: screenshotPath(`${name}.png`),
     fullPage,
     animations: 'disabled',
   });
@@ -275,7 +273,7 @@ test('FE04 Home six viewports, real public data, artwork, fonts and console', as
     if (width === 1672 || width === 390) {
       const heading = page.locator('#home-heading');
       await heading.screenshot({
-        path: `${artifact}/heading-${width}.png`,
+        path: screenshotPath(`heading-${width}.png`),
         animations: 'disabled',
       });
       await heading.evaluate((el) => {
@@ -283,7 +281,7 @@ test('FE04 Home six viewports, real public data, artwork, fonts and console', as
         el.style.textShadow = 'none';
       });
       await heading.screenshot({
-        path: `${artifact}/heading-backdrop-${width}.png`,
+        path: screenshotPath(`heading-backdrop-${width}.png`),
         animations: 'disabled',
       });
       await heading.evaluate((el) => {
@@ -337,12 +335,12 @@ test('FE04 Home six viewports, real public data, artwork, fonts and console', as
   expect(external).toEqual([]);
   expect(mutations).toEqual([]);
   if (pairContexts.length)
-    await writeFile(
-      `${artifact}/pair-contexts.json`,
+    await writeVerification(
+      `pair-contexts.json`,
       JSON.stringify(pairContexts, null, 2),
     );
-  await writeFile(
-    `${artifact}/browser-metrics.json`,
+  await writeVerification(
+    `browser-metrics.json`,
     JSON.stringify(
       { metrics, errors, external, mutations, pairContexts },
       null,
@@ -638,8 +636,8 @@ test('FE04VR long authenticated name/title, loading and text-spacing reflow', as
       width: innerWidth,
       dpr: devicePixelRatio,
     }));
-    await writeFile(
-      `${artifact}/zoom-probe.json`,
+    await writeVerification(
+      `zoom-probe.json`,
       JSON.stringify(
         {
           attempt: 'Control+Equal six times in headless Firefox',
@@ -774,7 +772,7 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
       expect(m.fonts).toBe(true);
       evidence.push({ name, width, height, ...m });
       await page.screenshot({
-        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}x${height}.png`,
+        path: screenshotPath(`${name}-${width}x${height}.png`),
         fullPage: true,
         animations: 'disabled',
       });
@@ -818,7 +816,7 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
   expect(parseFloat(forced.focusWidth)).toBeGreaterThanOrEqual(3);
   await noOverflow(page);
   await page.screenshot({
-    path: 'docs/screenshots/BE-FE-RH-P1.1/forced-colors-360.png',
+    path: screenshotPath('forced-colors-360.png'),
     fullPage: true,
   });
   await page.emulateMedia({
@@ -834,8 +832,8 @@ test('PUB-E01 FE06 six viewport public screens, privacy, landmarks and forced co
     width: innerWidth,
     ratio: devicePixelRatio,
   }));
-  await writeFile(
-    'docs/screenshots/BE-FE-RH-P1.1/responsive-a11y.json',
+  await writeVerification(
+    'responsive-a11y.json',
     JSON.stringify(
       {
         evidence,
@@ -911,9 +909,19 @@ test('PUB-E02 FE06 real catalog page2 and ingredient result cap', async ({
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp('category=' + last._id));
     await page.goto('/recipes');
+    const term = `FE06 ${prefix}`;
+    const filtered = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        url.pathname === '/api/v1/ingredients' &&
+        url.searchParams.get('q') === term &&
+        url.searchParams.get('limit') === '20'
+      );
+    });
     await page
       .getByRole('searchbox', { name: 'Tìm trong danh mục nguyên liệu' })
-      .fill(`FE06 ${prefix}`);
+      .fill(term);
+    expect((await filtered).ok()).toBe(true);
     await expect(
       page.getByRole('checkbox', { name: ingredients[0].name, exact: true }),
     ).toBeVisible();
@@ -1107,13 +1115,13 @@ test('PUB-E04 FE06 inclusive time and long Detail/Profile text at six widths', a
               text: e.textContent.slice(0, 30),
             })),
         }));
-        await writeFile(
-          `docs/screenshots/BE-FE-RH-P1.1/long-layout-${name}-${width}.json`,
+        await writeVerification(
+          `long-layout-${name}-${width}.json`,
           JSON.stringify(overflow, null, 2) + '\n',
         );
         await noOverflow(page);
         await page.screenshot({
-          path: `docs/screenshots/BE-FE-RH-P1.1/long-${name}-${width}.png`,
+          path: screenshotPath(`long-${name}-${width}.png`),
           fullPage: false,
           animations: 'disabled',
         });

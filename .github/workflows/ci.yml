@@ -24,3 +24,16 @@ jobs:
       - run: npm run check
       - run: npx playwright install --with-deps firefox
       - run: npm run test:e2e
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-diagnostics
+          path: |
+            test-results/**/screenshots/*.png
+            test-results/**/verification/*.json
+            test-results/**/*-actual.png
+            test-results/**/*-expected.png
+            test-results/**/*-diff.png
+          retention-days: 7
+          if-no-files-found: ignore

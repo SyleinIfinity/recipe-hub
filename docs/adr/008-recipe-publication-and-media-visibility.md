@@ -1,5 +1,7 @@
 # ADR 008 — Recipe publication và quyền đọc media
 
+> **Hiệu lực hiện hành.** Accepted cho publication và quyền gateway. Giới hạn thiếu binary transport ở mốc BE-11 đã Superseded bởi P1/P1.1. [Media hiện hành](../MEDIA.md)
+
 Ngày 2026-11-09. Quyết định BE-11 local; Cloudinary/CDN live không được gọi hoặc nghiệm thu.
 
 ## State, validation và CAS

@@ -1,5 +1,7 @@
 # ADR 006 — Media lifecycle và reconciliation
 
+> **Hiệu lực hiện hành.** Accepted cho intent, fence, lease và cleanup. BE-10 thêm canonical Recipe checker. Thiết kế delivery và giới hạn worker ở mốc BE-09 cần đọc cùng [Media hiện hành](../MEDIA.md).
+
 Ngày 2026-11-09. Quyết định triển khai BE-09 local; không cho phép Cloudinary live.
 
 ## Nhất quán

@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import sharp from 'sharp';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { screenshotPath, writeVerification } from './support/artifacts.js';
 import { createMediaHarness } from './support/media-harness.js';
 let harness, category, png, png2;
 const emails = [];
 const live = process.env.RUN_CLOUDINARY_LIVE === '1';
-const artifact = 'docs/verification/BE-FE-RH-P1.1';
 test.beforeAll(async () => {
   harness = await createMediaHarness({ live });
   category = await harness.catalog.models.Category.create({
@@ -23,13 +22,12 @@ test.beforeAll(async () => {
   })
     .png()
     .toBuffer();
-  await mkdir(artifact, { recursive: true });
 });
 test.afterAll(async () => {
   if (!harness) return;
   const cleanup = await harness.cleanupOwned(emails);
-  await writeFile(
-    `${artifact}/${live ? 'live' : 'browser'}-cleanup.json`,
+  await writeVerification(
+    `${live ? 'live' : 'browser'}-cleanup.json`,
     JSON.stringify(cleanup, null, 2) + '\n',
   );
   await category?.deleteOne();
@@ -255,8 +253,8 @@ async function mainJourney({ page, browser }) {
   expect(await status(page, step)).toBe(404);
   await other.close();
   await guest.close();
-  await writeFile(
-    `${artifact}/${live ? 'live' : 'stub'}-journey.json`,
+  await writeVerification(
+    `${live ? 'live' : 'stub'}-journey.json`,
     JSON.stringify(
       {
         provider: live ? 'actual_cloudinary' : 'cloudinary_sdk_stub',
@@ -386,13 +384,13 @@ test('MEDIA-E09..11 invalid files, provider errors, selected-only guard, respons
     }));
     expect(m.scroll).toBeLessThanOrEqual(width);
     await page.screenshot({
-      path: `docs/screenshots/BE-FE-RH-P1.1/editor-media-${width}.png`,
+      path: screenshotPath(`editor-media-${width}.png`),
       fullPage: true,
     });
     metrics.push({ ...m, height });
   }
-  await writeFile(
-    artifact + '/media-responsive.json',
+  await writeVerification(
+    'media-responsive.json',
     JSON.stringify(metrics, null, 2) + '\n',
   );
   const tab = await page.context().newPage();

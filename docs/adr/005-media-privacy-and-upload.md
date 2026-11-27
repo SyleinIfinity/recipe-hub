@@ -1,10 +1,12 @@
 # ADR 005 — Dynamic folders, private draft media và durable upload
 
+> **Hiệu lực hiện hành.** Accepted cho Dynamic Folder Mode, private draft và durable reservation. Gate live của BE-08 đã Superseded bởi kết quả kiểm soát BE-RH-P1/P1.1. [Media hiện hành](../MEDIA.md)
+
 Ngày 2026-11-09. Accepted cho thiết kế; live Cloudinary not_verified.
 
 ## Quyết định
 
-DEC-MEDIA-001 chọn dynamic asset_folder, root recipe-hub, server UUID độc lập folder, không fallback fixed. DEC-MEDIA-002 chọn PRIVATE DRAFT. Nguồn persistent: [PROJECT_DECISIONS](../PROJECT_DECISIONS.md). ADR này supersede lựa chọn chưa chốt trong ADR 004; giữ nguyên báo cáo lịch sử.
+DEC-MEDIA-001 chọn dynamic asset_folder, root recipe-hub, server UUID độc lập folder, không fallback fixed. DEC-MEDIA-002 chọn PRIVATE DRAFT. Nguồn persistent: [PROJECT_DECISIONS](https://github.com/SyleinIfinity/recipe-hub/blob/ded784835c5443f99ba22e393cfa2f20e4050826/docs/PROJECT_DECISIONS.md). ADR này supersede lựa chọn chưa chốt trong ADR 004; giữ nguyên báo cáo lịch sử.
 
 BE-08 chỉ upload authenticated và metadata, bao gồm avatar để tránh public hóa khi policy avatar chưa chốt. URL DTO null; không signed URL vĩnh viễn. API từ chối public/unresolved/fixed hoặc root khác. Live upload bị khóa trong BE-08; chưa chứng minh rotation/account mode/delivery policy và chưa được phép thử thật.
 

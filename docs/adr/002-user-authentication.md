@@ -1,5 +1,7 @@
 # ADR 002 — User & Authentication (BE-05)
 
+> **Hiệu lực hiện hành.** Accepted cho session và auth. FE-07 đã bổ sung UI nhận link email, P1.1 thêm avatar. [Bảo mật hiện hành](../SECURITY.md) · [Media](../MEDIA.md)
+
 Ngày: 2026-11-08. Phạm vi chỉ BE-05; giữ npm workspaces, ESM, Mongo standalone và nhánh `dev`.
 
 ## Hợp đồng và phân lớp
@@ -56,4 +58,4 @@ Thư viện Argon2 dùng prebuilt native binary của package trên môi trườ
 
 Giữ Nodemailer và auth token lifecycle. Thêm explicit enable/disable (fallback host-presence để tương thích), sender name, APP_PUBLIC_URL origin validation và deadline tổng. Mẫu Gmail mặc định 465; 587 vẫn supported với requireTLS. Adapter lazy không verify/send khi startup, transport riêng cho mỗi thao tác, chỉ trả acceptance an toàn. Command verify phải có --connect, không gửi email.
 
-Link dùng fragment thay query để tránh token trong request URL/access log; chưa có frontend receiver. Deadline/SMTP error không đồng nghĩa chắc chắn không có delivery; token vẫn bị tiêu thụ theo policy hiện có, không tự retry. Tài liệu live procedure và giới hạn tại [SMTP-verification](../SMTP-verification.md). Không sử dụng App Password đã gửi trong chat.
+Link dùng fragment thay query để tránh token trong request URL/access log; chưa có frontend receiver. Deadline/SMTP error không đồng nghĩa chắc chắn không có delivery; token vẫn bị tiêu thụ theo policy hiện có, không tự retry. Tài liệu live procedure và giới hạn tại [SMTP-verification](https://github.com/SyleinIfinity/recipe-hub/blob/ded784835c5443f99ba22e393cfa2f20e4050826/docs/SMTP-verification.md). Không sử dụng App Password đã gửi trong chat.

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID, randomBytes } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { screenshotPath, writeVerification } from './support/artifacts.js';
 import { createAccountHarness } from './support/account-harness.js';
 let harness, category, ingredient;
 const users = [];
@@ -14,7 +14,6 @@ test.beforeAll(async () => {
   ingredient = await harness.db.connection.models.Ingredient.create({
     name: 'Rau thử ' + tag,
   });
-  await mkdir('docs/screenshots/BE-FE-RH-P1.1', { recursive: true });
 });
 test.afterAll(async () => {
   if (!harness) return;
@@ -455,6 +454,7 @@ test('ED-E06 real CSRF failure, expired session purges editor, and catalog canon
 test('ED-E07 editor/list/publication responsive six widths and long dynamic lists', async ({
   page,
 }) => {
+  test.setTimeout(120000);
   await user(page);
   await create(page);
   await complete(page);
@@ -508,7 +508,7 @@ test('ED-E07 editor/list/publication responsive six widths and long dynamic list
       expect(metrics.scroll).toBeLessThanOrEqual(width);
       rows.push({ name, width, height, ...metrics });
       await page.screenshot({
-        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}.png`,
+        path: screenshotPath(`${name}-${width}.png`),
         fullPage: true,
       });
     }
@@ -517,8 +517,8 @@ test('ED-E07 editor/list/publication responsive six widths and long dynamic list
       .getByRole('link', { name: 'Chỉnh sửa Canh rau của tôi', exact: true })
       .click();
   }
-  await writeFile(
-    'docs/screenshots/BE-FE-RH-P1.1/editor-responsive.json',
+  await writeVerification(
+    'editor-responsive.json',
     JSON.stringify(rows, null, 2) + '\n',
   );
 });

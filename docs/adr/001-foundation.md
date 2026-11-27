@@ -1,5 +1,7 @@
 # ADR 001 — Foundation BE-00–BE-04
 
+> **Hiệu lực hiện hành.** Accepted cho cấu trúc monorepo và vòng đời backend. Nhánh dev và giới hạn foundation bên dưới là bối cảnh lúc ghi. [Kiến trúc hiện hành](../ARCHITECTURE.md)
+
 ## Quyết định
 
 - Git repo thực tế ở `source/` của workspace môn học; workspace backend/frontend nằm trực tiếp trong repo, không thêm một tầng source. Giữ nhánh dev.

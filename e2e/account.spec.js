@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { screenshotPath, writeVerification } from './support/artifacts.js';
 import { createAccountHarness } from './support/account-harness.js';
 let harness;
 const users = [];
@@ -15,7 +15,6 @@ const credentials = () => {
 };
 test.beforeAll(async () => {
   harness = await createAccountHarness();
-  await mkdir('docs/screenshots/BE-FE-RH-P1.1', { recursive: true });
 });
 test.afterAll(async () => {
   if (harness) {
@@ -288,7 +287,7 @@ test('ACC-E03 six viewports for every implemented account screen and authenticat
       );
       expect(overflow).toBe(false);
       await page.screenshot({
-        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}.png`,
+        path: screenshotPath(`${name}-${width}.png`),
         fullPage: true,
         animations: 'disabled',
       });
@@ -316,15 +315,15 @@ test('ACC-E03 six viewports for every implemented account screen and authenticat
       expect(overflow).toBe(false);
       // Screenshots contain only synthetic test-account data; passwords are empty.
       await page.screenshot({
-        path: `docs/screenshots/BE-FE-RH-P1.1/${name}-${width}.png`,
+        path: screenshotPath(`${name}-${width}.png`),
         fullPage: true,
         animations: 'disabled',
       });
       report.push({ name, width, height, overflow });
     }
   }
-  await writeFile(
-    'docs/screenshots/BE-FE-RH-P1.1/responsive.json',
+  await writeVerification(
+    'responsive.json',
     JSON.stringify(report, null, 2) + '\n',
   );
 });
